@@ -1,22 +1,31 @@
-'use-strict';
+import * as functions from 'firebase-functions';
+import * as catAPI from './cat-api';
 
-const functions = require('firebase-functions');
-const catAPI = require('./cat-api.js');
-// const API_KEY = '267ae9223eb6dfa7289ce5084b3d3b744bb6eb919a362d0edbc8a08b0d8edcd8';
-const API_KEY = functions.config().unsplash.client_id;
+// Use environment variable for API key, fallback to functions config for backwards compatibility
+let API_KEY: string | undefined;
+try {
+  API_KEY = process.env.UNSPLASH_CLIENT_ID || functions.config()?.unsplash?.client_id;
+} catch (error) {
+  // Firebase config not available (likely in test environment)
+  API_KEY = process.env.UNSPLASH_CLIENT_ID;
+}
 
-
-exports.cat = functions.https.onRequest((request, response) => {
+export const cat = functions.https.onRequest((request, response) => {
   if (request.method !== 'GET') {
-    request.status(403).send('Forbidden!');
+    response.status(403).send('Forbidden!');
+    return;
+  }
+
+  if (!API_KEY) {
+    response.status(500).send('API key not configured');
+    return;
   }
 
   return catAPI.get({clientId: API_KEY })
     .then((cat) => {
       console.log(cat);
-      // response.set('Cache-Control', 'public, max-age=86400, s-maxage=86400');
       response.set('Cache-Control', 'public, max-age=1, s-maxage=1');
-      response.status(200)
+      response.status(200);
       response.send(`<!doctype html>
         <head>
           <title>Daily Cat</title>
@@ -46,5 +55,9 @@ exports.cat = functions.https.onRequest((request, response) => {
         </a>
         </body>
       </html>`);
+    })
+    .catch((error) => {
+      console.error('Error fetching cat:', error);
+      response.status(500).send('Error fetching cat image');
     });
 });
