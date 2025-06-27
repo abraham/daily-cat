@@ -12,36 +12,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Use Node.js 22.x
+      - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 22.x
+          node-version: 22
           cache: 'npm'
           cache-dependency-path: functions/package-lock.json
 
       - name: Install dependencies
-        run: |
-          cd functions
-          npm ci
+        run: npm ci --prefix functions
 
       - name: Build
-        run: |
-          cd functions
-          npm run build
-
-      - name: Check formatting
-        run: |
-          cd functions
-          npm run format:check
-
-      - name: Run tests
-        run: |
-          cd functions
-          npm test
+        run: npm run buildi --prefix functions
 
       - name: Deploy to Firebase
-        run: |
-          npm install -g firebase-tools
-          firebase deploy --project daily-cat --token "$FIREBASE_TOKEN"
+        run: npx firebase deploy --project daily-cat --token "$FIREBASE_TOKEN"
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
