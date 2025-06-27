@@ -1,7 +1,8 @@
 {
   "functions": {
     "source": "functions",
-    "runtime": "nodejs22"
+    "runtime": "nodejs22",
+    "predeploy": "npm run build --prefix functions"
   },
   "hosting": {
     "public": "public",
