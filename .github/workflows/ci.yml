@@ -21,22 +21,25 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-          cache-dependency-path: functions/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
 
-      - name: Install dependencies
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install function dependencies
         run: |
           cd functions
           npm ci
+
+      - name: Check formatting
+        run: npm run format:check
 
       - name: Build
         run: |
           cd functions
           npm run build
-
-      - name: Check formatting
-        run: |
-          cd functions
-          npm run format:check
 
       - name: Run tests
         run: |
