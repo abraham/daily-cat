@@ -1,0 +1,17 @@
+{
+  "name": "daily-cat",
+  "version": "1.0.0",
+  "description": "A Firebase Function that serves daily cat images from the Unsplash API",
+  "private": true,
+  "devDependencies": {
+    "firebase-tools": "^13.32.0",
+    "prettier": "^3.6.2"
+  },
+  "scripts": {
+    "format": "prettier --write \"functions/src/**/*.ts\" \"functions/test/**/*.ts\" \"functions/*.json\" \"public/*.html\" \"*.json\"",
+    "format:check": "prettier --check \"functions/src/**/*.ts\" \"functions/test/**/*.ts\" \"functions/*.json\" \"public/*.html\" \"*.json\""
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
