@@ -38,7 +38,7 @@ describe('Cat Function', () => {
     vi.clearAllMocks();
   });
 
-  describe('cat function', () => {
+  describe('catNextGen function', () => {
     it('should handle GET requests', async () => {
       const req = { method: 'GET' } as any;
 
@@ -56,7 +56,7 @@ describe('Cat Function', () => {
           sendCalled = true;
           resolve();
         };
-        myFunctions.cat(req, res);
+        myFunctions.catNextGen(req, res);
       });
 
       expect(catApiMock.get).toHaveBeenCalledOnce();
@@ -84,7 +84,7 @@ describe('Cat Function', () => {
           message = msg;
           resolve();
         };
-        myFunctions.cat(req, res);
+        myFunctions.catNextGen(req, res);
       });
 
       expect(statusCode).toBe(403);
@@ -119,7 +119,7 @@ describe('Cat Function', () => {
           message = msg;
           resolve();
         };
-        myFunctionsNoKey.cat(req, res);
+        myFunctionsNoKey.catNextGen(req, res);
       });
 
       expect(statusCode).toBe(500);
@@ -146,7 +146,7 @@ describe('Cat Function', () => {
           cacheValue = value;
           resolve();
         };
-        myFunctions.cat(req, res);
+        myFunctions.catNextGen(req, res);
       });
 
       expect(cacheKey).toBe('Cache-Control');
@@ -170,7 +170,7 @@ describe('Cat Function', () => {
           html = htmlContent;
           resolve();
         };
-        myFunctions.cat(req, res);
+        myFunctions.catNextGen(req, res);
       });
 
       expect(html).toContain('<!doctype html>');
@@ -199,7 +199,7 @@ describe('Cat Function', () => {
           html = htmlContent;
           resolve();
         };
-        myFunctions.cat(req, res);
+        myFunctions.catNextGen(req, res);
       });
 
       expect(html).toContain(`<a href="${mockApiResponse.links.html}">`);
@@ -230,7 +230,7 @@ describe('Cat Function', () => {
           message = msg;
           resolve();
         };
-        myFunctions.cat(req, res);
+        myFunctions.catNextGen(req, res);
       });
 
       expect(statusCode).toBe(500);
