@@ -3,42 +3,45 @@ name: CI
 on:
   push:
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
 
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
-        node-version: [20.x, 22.x]
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-        cache-dependency-path: functions/package-lock.json
-    
-    - name: Install dependencies
-      run: |
-        cd functions
-        npm ci
-    
-    - name: Build
-      run: |
-        cd functions
-        npm run build
-    
-    - name: Check formatting
-      run: |
-        cd functions
-        npm run format:check
+        node-version: [22.x, 24.x]
 
-    - name: Run tests
-      run: |
-        cd functions
-        npm test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install function dependencies
+        run: |
+          cd functions
+          npm ci
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Build
+        run: |
+          cd functions
+          npm run build
+
+      - name: Run tests
+        run: |
+          cd functions
+          npm test

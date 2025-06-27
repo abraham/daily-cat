@@ -10,7 +10,6 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@vitest/ui": "^3.2.4",
-    "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
@@ -25,9 +24,7 @@
     "logs": "firebase functions:log",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"*.json\" \"../public/*.html\" \"../*.json\"",
-    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\" \"*.json\" \"../public/*.html\" \"../*.json\""
+    "test:ui": "vitest --ui"
   },
   "engines": {
     "node": "22"
