@@ -19,6 +19,15 @@
       .right-column {
         flex: 1;
       }
+      @media (max-width: 768px) {
+        .left-column,
+        .right-column {
+          display: none;
+        }
+        .center-column {
+          flex: 1;
+        }
+      }
       .center-column {
         flex: 2;
         display: flex;
@@ -47,6 +56,17 @@
         align-items: flex-start;
         justify-content: space-between;
         gap: 12px;
+      }
+      @media (max-width: 768px) {
+        .user-row {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 12px;
+          margin-left: 5px;
+        }
+        .right-section {
+          align-items: flex-start !important;
+        }
       }
       .right-section {
         display: flex;
@@ -133,11 +153,13 @@
         </div>
         <div class="user-profile">
           <div class="user-row">
-            <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px">
               <img src="{{USER_PROFILE_IMAGE}}" alt="User profile" />
               <div class="user-info">
                 <div class="user-name">{{USER_NAME}}</div>
-                <a href="{{USER_PROFILE_URL}}" class="user-username">@{{USER_USERNAME}}</a>
+                <a href="{{USER_PROFILE_URL}}" class="user-username"
+                  >@{{USER_USERNAME}}</a
+                >
               </div>
             </div>
             <div class="right-section">
@@ -151,7 +173,11 @@
         </div>
         <div class="photo-container">
           <a href="{{LINK_URL}}">
-            <img class="cat-image" src="{{IMAGE_URL}}" alt="{{ALT_DESCRIPTION}}" />
+            <img
+              class="cat-image"
+              src="{{IMAGE_URL}}"
+              alt="{{ALT_DESCRIPTION}}"
+            />
           </a>
         </div>
       </div>
