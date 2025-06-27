@@ -42,7 +42,12 @@ describe('Cat API', () => {
 
       expect(fetchMock).toHaveBeenCalledOnce();
       expect(fetchMock).toHaveBeenCalledWith(
-        'https://api.unsplash.com/photos/random?query=cat&client_id=test-client-id'
+        'https://api.unsplash.com/photos/random?query=cat',
+        {
+          headers: {
+            Authorization: 'Client-ID test-client-id',
+          },
+        }
       );
       expect(result.id).toBe('test-id');
     });
@@ -57,7 +62,12 @@ describe('Cat API', () => {
       await catApi.get({ clientId: 'my-client-id-123' });
 
       expect(fetchMock).toHaveBeenCalledWith(
-        'https://api.unsplash.com/photos/random?query=cat&client_id=my-client-id-123'
+        'https://api.unsplash.com/photos/random?query=cat',
+        {
+          headers: {
+            Authorization: 'Client-ID my-client-id-123',
+          },
+        }
       );
     });
 
