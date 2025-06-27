@@ -10,22 +10,96 @@
         width: 100%;
         height: 100%;
       }
-      img {
-        position: fixed;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        right: 0;
+      .container {
+        display: flex;
+        width: 100%;
+        height: 100vh;
+      }
+      .left-column,
+      .right-column {
+        flex: 1;
+      }
+      .center-column {
+        flex: 2;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      .header {
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 20px;
+        text-align: center;
+      }
+      .header h1 {
+        color: #333;
+        font-family: Arial, sans-serif;
+        margin: 0;
+      }
+      .user-profile {
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 15px 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .user-profile img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+      }
+      .user-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .user-name {
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        font-weight: bold;
+        color: #333;
+        margin: 0;
+      }
+      .user-username {
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        color: #666;
+        margin: 0;
+      }
+      .photo-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .cat-image {
         max-width: 100%;
         max-height: 100%;
-        margin: auto;
-        overflow: auto;
+        object-fit: contain;
       }
     </style>
   </head>
   <body>
-    <a href="{{LINK_URL}}">
-      <img src="{{IMAGE_URL}}" />
-    </a>
+    <div class="container">
+      <div class="left-column"></div>
+      <div class="center-column">
+        <div class="header">
+          <h1>Daily Cat</h1>
+        </div>
+        <div class="user-profile">
+          <img src="{{USER_PROFILE_IMAGE}}" alt="User profile" />
+          <div class="user-info">
+            <div class="user-name">{{USER_NAME}}</div>
+            <div class="user-username">@{{USER_USERNAME}}</div>
+          </div>
+        </div>
+        <div class="photo-container">
+          <a href="{{LINK_URL}}">
+            <img class="cat-image" src="{{IMAGE_URL}}" />
+          </a>
+        </div>
+      </div>
+      <div class="right-column"></div>
+    </div>
   </body>
 </html>
