@@ -19,7 +19,9 @@ A Firebase Function that serves daily cat images from the Unsplash API, written 
 
 - **Build**: `npm run build` - Compiles TypeScript to JavaScript
 - **Build (watch)**: `npm run build:watch` - Compiles with file watching
-- **Test**: `npm test` - Runs tests with mocked dependencies
+- **Test**: `npm test` - Runs tests with Vitest
+- **Test (watch)**: `npm run test:watch` - Runs tests in watch mode
+- **Test (UI)**: `npm run test:ui` - Runs tests with Vitest UI
 - **Serve locally**: `npm run serve` - Starts local Firebase emulator
 - **Deploy**: `npm run deploy` - Deploys to Firebase
 - **Format**: `npm run format` - Format code with Prettier
@@ -34,7 +36,8 @@ src/
 └── types.ts      # TypeScript type definitions
 
 test/
-└── compiled.test.js  # Test suite
+├── index.test.ts    # Main function tests
+└── cat-api.test.ts  # API client tests
 
 lib/              # Compiled JavaScript output (gitignored)
 ```
@@ -44,7 +47,7 @@ lib/              # Compiled JavaScript output (gitignored)
 - **TypeScript**: Full type safety with proper interfaces for Unsplash API responses
 - **Error handling**: Graceful handling of API failures and missing configuration
 - **Caching**: Appropriate cache headers for performance
-- **Testing**: Comprehensive test suite with mocked dependencies
+- **Testing**: Comprehensive test suite with Vitest and mocked dependencies
 - **Environment flexibility**: Supports both Firebase config and environment variables
 
 ## API Response
@@ -66,4 +69,4 @@ The test suite covers:
 - Error handling for API failures
 - Unsplash API client functionality
 
-Run tests with `npm test`.
+Run tests with `npm test` or use `npm run test:watch` for watch mode.

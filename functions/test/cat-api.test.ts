@@ -1,24 +1,27 @@
-import { expect } from 'chai';
-import * as sinon from 'sinon';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-// Import after stubbing to avoid module loading issues
-const proxyquire = require('proxyquire');
+// Mock node-fetch at the module level
+vi.mock('node-fetch', () => ({
+  default: vi.fn(),
+}));
 
 describe('Cat API', () => {
-  let fetchStub: sinon.SinonStub;
+  let fetchMock: any;
   let catApi: any;
 
-  beforeEach(() => {
-    fetchStub = sinon.stub();
+  beforeEach(async () => {
+    // Clear all mocks before each test
+    vi.clearAllMocks();
 
-    // Use proxyquire to inject our mocked dependencies
-    catApi = proxyquire('../lib/cat-api', {
-      'node-fetch': fetchStub,
-    });
+    // Get the mock reference
+    fetchMock = (await import('node-fetch')).default;
+
+    // Dynamically import the module to ensure mocks are applied
+    catApi = await import('../src/cat-api');
   });
 
   afterEach(() => {
-    fetchStub.reset();
+    vi.clearAllMocks();
   });
 
   describe('get function', () => {
@@ -37,17 +40,15 @@ describe('Cat API', () => {
         json: () => Promise.resolve(mockResponse),
       };
 
-      fetchStub.resolves(mockFetchResponse);
+      fetchMock.mockResolvedValue(mockFetchResponse);
 
       const result = await catApi.get({ clientId: 'test-client-id' });
 
-      expect(fetchStub.calledOnce).to.be.true;
-      expect(
-        fetchStub.calledWith(
-          'https://api.unsplash.com/photos/random?query=cat&client_id=test-client-id'
-        )
-      ).to.be.true;
-      expect(result.id).to.equal('test-id');
+      expect(fetchMock).toHaveBeenCalledOnce();
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://api.unsplash.com/photos/random?query=cat&client_id=test-client-id'
+      );
+      expect(result.id).toBe('test-id');
     });
 
     it('should construct correct URL with client ID', async () => {
@@ -55,26 +56,21 @@ describe('Cat API', () => {
         json: () => Promise.resolve({}),
       };
 
-      fetchStub.resolves(mockFetchResponse);
+      fetchMock.mockResolvedValue(mockFetchResponse);
 
       await catApi.get({ clientId: 'my-client-id-123' });
 
-      expect(
-        fetchStub.calledWith(
-          'https://api.unsplash.com/photos/random?query=cat&client_id=my-client-id-123'
-        )
-      ).to.be.true;
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://api.unsplash.com/photos/random?query=cat&client_id=my-client-id-123'
+      );
     });
 
     it('should handle API errors', async () => {
-      fetchStub.rejects(new Error('Network error'));
+      fetchMock.mockRejectedValue(new Error('Network error'));
 
-      try {
-        await catApi.get({ clientId: 'test-client-id' });
-        expect.fail('Expected error to be thrown');
-      } catch (error: any) {
-        expect(error.message).to.equal('Network error');
-      }
+      await expect(catApi.get({ clientId: 'test-client-id' })).rejects.toThrow(
+        'Network error'
+      );
     });
   });
 });
