@@ -1,34 +1,28 @@
 import * as functions from 'firebase-functions';
 import * as catAPI from './cat-api';
 
-// Use environment variable for API key, fallback to functions config for backwards compatibility
-let API_KEY: string | undefined;
-try {
-  API_KEY =
-    process.env.UNSPLASH_CLIENT_ID || functions.config()?.unsplash?.client_id;
-} catch (error) {
-  // Firebase config not available (likely in test environment)
-  API_KEY = process.env.UNSPLASH_CLIENT_ID;
-}
+const API_KEY = process.env.UNSPLASH_CLIENT_ID;
 
-export const cat = functions.https.onRequest((request, response) => {
-  if (request.method !== 'GET') {
-    response.status(403).send('Forbidden!');
-    return;
-  }
+export const cat = functions.https.onRequest(
+  { secrets: ['UNSPLASH_CLIENT_ID'] },
+  (request, response) => {
+    if (request.method !== 'GET') {
+      response.status(403).send('Forbidden!');
+      return;
+    }
 
-  if (!API_KEY) {
-    response.status(500).send('API key not configured');
-    return;
-  }
+    if (!API_KEY) {
+      response.status(500).send('API key not configured');
+      return;
+    }
 
-  return catAPI
-    .get({ clientId: API_KEY })
-    .then((cat) => {
-      console.log(cat);
-      response.set('Cache-Control', 'public, max-age=1, s-maxage=1');
-      response.status(200);
-      response.send(`<!doctype html>
+    return catAPI
+      .get({ clientId: API_KEY })
+      .then((cat) => {
+        console.log(cat);
+        response.set('Cache-Control', 'public, max-age=1, s-maxage=1');
+        response.status(200);
+        response.send(`<!doctype html>
         <head>
           <title>Daily Cat</title>
           <style>
@@ -57,9 +51,10 @@ export const cat = functions.https.onRequest((request, response) => {
         </a>
         </body>
       </html>`);
-    })
-    .catch((error) => {
-      console.error('Error fetching cat:', error);
-      response.status(500).send('Error fetching cat image');
-    });
-});
+      })
+      .catch((error) => {
+        console.error('Error fetching cat:', error);
+        response.status(500).send('Error fetching cat image');
+      });
+  }
+);
