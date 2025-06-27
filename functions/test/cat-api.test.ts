@@ -1,10 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-// Mock node-fetch at the module level
-vi.mock('node-fetch', () => ({
-  default: vi.fn(),
-}));
-
 describe('Cat API', () => {
   let fetchMock: any;
   let catApi: any;
@@ -13,8 +8,9 @@ describe('Cat API', () => {
     // Clear all mocks before each test
     vi.clearAllMocks();
 
-    // Get the mock reference
-    fetchMock = (await import('node-fetch')).default;
+    // Mock global fetch
+    fetchMock = vi.fn();
+    global.fetch = fetchMock;
 
     // Dynamically import the module to ensure mocks are applied
     catApi = await import('../src/cat-api');
