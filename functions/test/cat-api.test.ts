@@ -12,10 +12,10 @@ describe('Cat API', () => {
   beforeEach(async () => {
     // Clear all mocks before each test
     vi.clearAllMocks();
-    
+
     // Get the mock reference
     fetchMock = (await import('node-fetch')).default;
-    
+
     // Dynamically import the module to ensure mocks are applied
     catApi = await import('../src/cat-api');
   });
@@ -68,7 +68,9 @@ describe('Cat API', () => {
     it('should handle API errors', async () => {
       fetchMock.mockRejectedValue(new Error('Network error'));
 
-      await expect(catApi.get({ clientId: 'test-client-id' })).rejects.toThrow('Network error');
+      await expect(catApi.get({ clientId: 'test-client-id' })).rejects.toThrow(
+        'Network error'
+      );
     });
   });
 });

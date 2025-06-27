@@ -41,7 +41,7 @@ describe('Cat Function', () => {
   describe('cat function', () => {
     it('should handle GET requests', async () => {
       const req = { method: 'GET' } as any;
-      
+
       let sendCalled = false;
       const res = {
         send: () => {
@@ -94,7 +94,7 @@ describe('Cat Function', () => {
     it('should return 500 when API key is not configured', async () => {
       // Reset the environment variable for this test
       delete process.env.UNSPLASH_CLIENT_ID;
-      
+
       // Re-import the module without API key
       vi.resetModules();
       const myFunctionsNoKey = await import('../src/index');
@@ -130,7 +130,7 @@ describe('Cat Function', () => {
       const req = { method: 'GET' } as any;
       let cacheKey: string = '';
       let cacheValue: string = '';
-      
+
       const res = {
         send: () => {},
         set: (key: string, value: string) => {
@@ -156,7 +156,7 @@ describe('Cat Function', () => {
     it('should render valid HTML', async () => {
       const req = { method: 'GET' } as any;
       let html: string = '';
-      
+
       const res = {
         send: (htmlContent: string) => {
           html = htmlContent;
@@ -185,7 +185,7 @@ describe('Cat Function', () => {
     it('should include cat image and link in HTML', async () => {
       const req = { method: 'GET' } as any;
       let html: string = '';
-      
+
       const res = {
         send: (htmlContent: string) => {
           html = htmlContent;
