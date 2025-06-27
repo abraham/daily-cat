@@ -8,7 +8,7 @@
   },
   "private": true,
   "devDependencies": {
-    "@types/node": "^24.0.4",
+    "@types/node": "^22.0.0",
     "@vitest/ui": "^3.2.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
@@ -27,6 +27,6 @@
     "test:ui": "vitest --ui"
   },
   "engines": {
-    "node": "24"
+    "node": "22"
   }
 }
