@@ -1,11 +1,21 @@
-import * as functions from 'firebase-functions';
-import * as catAPI from './cat-api';
+/**
+ * Import function triggers from their respective submodules:
+ *
+ * import {onCall} from "firebase-functions/v2/https";
+ * import {onDocumentWritten} from "firebase-functions/v2/firestore";
+ *
+ * See a full list of supported triggers at https://firebase.google.com/docs/functions
+ */
+
+import * as logger from 'firebase-functions/logger';
+import { onRequest } from 'firebase-functions/v2/https';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as catAPI from './cat-api';
 
 const API_KEY = process.env.UNSPLASH_CLIENT_ID;
 
-export const cat = functions.https.onRequest(
+export const cat = onRequest(
   { secrets: ['UNSPLASH_CLIENT_ID'] },
   async (request, response) => {
     if (request.method !== 'GET') {
@@ -20,7 +30,7 @@ export const cat = functions.https.onRequest(
 
     try {
       const cat = await catAPI.get({ clientId: API_KEY });
-      console.log(cat);
+      logger.log('Cat fetched successfully:', cat);
 
       const templatePath = path.join(__dirname, '..', 'template.html');
       const htmlTemplate = await fs.promises.readFile(templatePath, 'utf8');
