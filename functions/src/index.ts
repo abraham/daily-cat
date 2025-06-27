@@ -11,7 +11,7 @@ try {
   API_KEY = process.env.UNSPLASH_CLIENT_ID;
 }
 
-export const catNextGen = functions.https.onRequest((request, response) => {
+export const cat = functions.https.onRequest((request, response) => {
   if (request.method !== 'GET') {
     response.status(403).send('Forbidden!');
     return;
