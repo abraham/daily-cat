@@ -5,7 +5,7 @@ const API_KEY = process.env.UNSPLASH_CLIENT_ID;
 
 export const cat = functions.https.onRequest(
   { secrets: ['UNSPLASH_CLIENT_ID'] },
-  (request, response) => {
+  async (request, response) => {
     if (request.method !== 'GET') {
       response.status(403).send('Forbidden!');
       return;
@@ -16,13 +16,12 @@ export const cat = functions.https.onRequest(
       return;
     }
 
-    return catAPI
-      .get({ clientId: API_KEY })
-      .then((cat) => {
-        console.log(cat);
-        response.set('Cache-Control', 'public, max-age=1, s-maxage=1');
-        response.status(200);
-        response.send(`<!doctype html>
+    try {
+      const cat = await catAPI.get({ clientId: API_KEY });
+      console.log(cat);
+      response.set('Cache-Control', 'public, max-age=1, s-maxage=1');
+      response.status(200);
+      response.send(`<!doctype html>
         <head>
           <title>Daily Cat</title>
           <style>
@@ -51,10 +50,9 @@ export const cat = functions.https.onRequest(
         </a>
         </body>
       </html>`);
-      })
-      .catch((error) => {
-        console.error('Error fetching cat:', error);
-        response.status(500).send('Error fetching cat image');
-      });
+    } catch (error) {
+      console.error('Error fetching cat:', error);
+      response.status(500).send('Error fetching cat image');
+    }
   }
 );
