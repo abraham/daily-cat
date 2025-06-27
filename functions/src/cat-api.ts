@@ -1,4 +1,3 @@
-import fetch, { Response } from 'node-fetch';
 import { UnsplashPhoto, CatApiOptions } from './types';
 
 export function get(options: CatApiOptions): Promise<UnsplashPhoto> {
