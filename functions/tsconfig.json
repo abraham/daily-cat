@@ -12,12 +12,6 @@
     "declaration": true,
     "sourceMap": true
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "lib",
-    "test"
-  ]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "lib", "test"]
 }

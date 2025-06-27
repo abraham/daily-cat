@@ -1,8 +1,11 @@
 {
   "hosting": {
     "public": "public",
-    "rewrites": [{
-      "source": "/", "function": "cat"
-    }]
+    "rewrites": [
+      {
+        "source": "/",
+        "function": "cat"
+      }
+    ]
   }
 }

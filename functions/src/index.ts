@@ -4,7 +4,8 @@ import * as catAPI from './cat-api';
 // Use environment variable for API key, fallback to functions config for backwards compatibility
 let API_KEY: string | undefined;
 try {
-  API_KEY = process.env.UNSPLASH_CLIENT_ID || functions.config()?.unsplash?.client_id;
+  API_KEY =
+    process.env.UNSPLASH_CLIENT_ID || functions.config()?.unsplash?.client_id;
 } catch (error) {
   // Firebase config not available (likely in test environment)
   API_KEY = process.env.UNSPLASH_CLIENT_ID;
@@ -21,7 +22,8 @@ export const cat = functions.https.onRequest((request, response) => {
     return;
   }
 
-  return catAPI.get({clientId: API_KEY })
+  return catAPI
+    .get({ clientId: API_KEY })
     .then((cat) => {
       console.log(cat);
       response.set('Cache-Control', 'public, max-age=1, s-maxage=1');

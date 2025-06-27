@@ -5,13 +5,13 @@ const proxyquire = require('proxyquire');
 
 // Mock API response for testing
 const mockApiResponse = {
-  id: "jfQCT6XifkY",
+  id: 'jfQCT6XifkY',
   urls: {
-    full: "https://images.unsplash.com/photo-1468206449511-1af1a5c267ab?ixlib=rb-0.3.5&q=85&fm=jpg&crop=entropy&cs=srgb&s=7bb4c5cb67a099da47b4827552731b16"
+    full: 'https://images.unsplash.com/photo-1468206449511-1af1a5c267ab?ixlib=rb-0.3.5&q=85&fm=jpg&crop=entropy&cs=srgb&s=7bb4c5cb67a099da47b4827552731b16',
   },
   links: {
-    html: "http://unsplash.com/photos/jfQCT6XifkY"
-  }
+    html: 'http://unsplash.com/photos/jfQCT6XifkY',
+  },
 };
 
 describe('Cat Function', () => {
@@ -21,15 +21,15 @@ describe('Cat Function', () => {
   beforeEach(() => {
     // Set up the API key environment variable for testing
     process.env.UNSPLASH_CLIENT_ID = 'test_client_id';
-    
+
     // Create stub for cat API
     catApiStub = {
-      get: sinon.stub().resolves(mockApiResponse)
+      get: sinon.stub().resolves(mockApiResponse),
     };
 
     // Use proxyquire to inject mocked dependencies
     myFunctions = proxyquire('../lib/index', {
-      './cat-api': catApiStub
+      './cat-api': catApiStub,
     });
   });
 
@@ -46,7 +46,7 @@ describe('Cat Function', () => {
           done();
         },
         set: () => res,
-        status: () => res
+        status: () => res,
       } as any;
 
       myFunctions.cat(req, res);
@@ -55,7 +55,7 @@ describe('Cat Function', () => {
     it('should return 403 for non-GET requests', (done) => {
       const req = { method: 'POST' } as any;
       let statusCode: number = 0;
-      
+
       const res = {
         send: (message: string) => {
           expect(statusCode).to.equal(403);
@@ -66,7 +66,7 @@ describe('Cat Function', () => {
         status: (code: number) => {
           statusCode = code;
           return res;
-        }
+        },
       } as any;
 
       myFunctions.cat(req, res);
@@ -74,10 +74,10 @@ describe('Cat Function', () => {
 
     it('should return 500 when API key is not configured', (done) => {
       delete process.env.UNSPLASH_CLIENT_ID;
-      
+
       const req = { method: 'GET' } as any;
       let statusCode: number = 0;
-      
+
       const res = {
         send: (message: string) => {
           expect(statusCode).to.equal(500);
@@ -88,7 +88,7 @@ describe('Cat Function', () => {
         status: (code: number) => {
           statusCode = code;
           return res;
-        }
+        },
       } as any;
 
       myFunctions.cat(req, res);
@@ -103,7 +103,7 @@ describe('Cat Function', () => {
           expect(value).to.equal('public, max-age=1, s-maxage=1');
           done();
         },
-        status: () => res
+        status: () => res,
       } as any;
 
       myFunctions.cat(req, res);
@@ -123,7 +123,7 @@ describe('Cat Function', () => {
           done();
         },
         set: () => res,
-        status: () => res
+        status: () => res,
       } as any;
 
       myFunctions.cat(req, res);
@@ -138,7 +138,7 @@ describe('Cat Function', () => {
           done();
         },
         set: () => res,
-        status: () => res
+        status: () => res,
       } as any;
 
       myFunctions.cat(req, res);
@@ -147,10 +147,10 @@ describe('Cat Function', () => {
     it('should handle API errors gracefully', (done) => {
       // Replace stub with one that rejects
       catApiStub.get.rejects(new Error('API Error'));
-      
+
       const req = { method: 'GET' } as any;
       let statusCode: number = 0;
-      
+
       const res = {
         send: (message: string) => {
           expect(statusCode).to.equal(500);
@@ -161,7 +161,7 @@ describe('Cat Function', () => {
         status: (code: number) => {
           statusCode = code;
           return res;
-        }
+        },
       } as any;
 
       myFunctions.cat(req, res);
