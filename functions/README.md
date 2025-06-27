@@ -5,6 +5,7 @@ A Firebase Function that serves daily cat images from the Unsplash API, written 
 ## Setup
 
 1. Install dependencies:
+
    ```bash
    npm install
    ```
@@ -21,6 +22,8 @@ A Firebase Function that serves daily cat images from the Unsplash API, written 
 - **Test**: `npm test` - Runs tests with mocked dependencies
 - **Serve locally**: `npm run serve` - Starts local Firebase emulator
 - **Deploy**: `npm run deploy` - Deploys to Firebase
+- **Format**: `npm run format` - Format code with Prettier
+- **Format (check)**: `npm run format:check` - Check code formatting
 
 ## Project Structure
 
@@ -47,6 +50,7 @@ lib/              # Compiled JavaScript output (gitignored)
 ## API Response
 
 The function returns an HTML page with:
+
 - A cat image from Unsplash
 - Responsive CSS for full-screen display
 - A link to the original photo on Unsplash
@@ -54,6 +58,7 @@ The function returns an HTML page with:
 ## Tests
 
 The test suite covers:
+
 - HTTP method validation (GET only)
 - API key configuration validation
 - Cache header setting

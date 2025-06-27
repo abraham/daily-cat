@@ -33,6 +33,11 @@ jobs:
         cd functions
         npm run build
     
+    - name: Check formatting
+      run: |
+        cd functions
+        npm run format:check
+
     - name: Run tests
       run: |
         cd functions
