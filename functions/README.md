@@ -7,7 +7,7 @@ A Firebase Function that serves daily cat images from the Unsplash API, written 
 1. Install dependencies:
 
    ```bash
-   npm install
+   npm ci
    ```
 
 2. Set your Unsplash API client ID as an environment variable:
