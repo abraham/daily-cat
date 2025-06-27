@@ -5,7 +5,7 @@
   "dependencies": {
     "firebase-admin": "~4.2.1",
     "firebase-functions": "^0.5.7",
-    "node-fetch": "^1.7.0"
+    "node-fetch": "^3.3.2"
   },
   "private": true,
   "devDependencies": {
@@ -17,7 +17,7 @@
     "@types/sinon": "^17.0.4",
     "chai": "^3.5.0",
     "chai-as-promised": "^6.0.0",
-    "fetch-mock": "^5.11.0",
+    "fetch-mock": "^12.5.3",
     "mocha": "^3.4.1",
     "prettier": "^3.6.2",
     "proxyquire": "^2.1.3",
