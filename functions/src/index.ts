@@ -36,12 +36,20 @@ export const cat = onRequest(
       const templatePath = path.join(__dirname, '..', 'template.html');
       const htmlTemplate = await fs.promises.readFile(templatePath, 'utf8');
 
+      // Get up to 5 tags
+      const tags = cat.tags.slice(0, 5);
+      const tagsHtml = tags.map((tag: any) => `<a href="https://unsplash.com/s/photos/${encodeURIComponent(tag.title)}" class="tag">${tag.title}</a>`).join('');
+
       const html = htmlTemplate
         .replace('{{LINK_URL}}', cat.links.html)
         .replace('{{IMAGE_URL}}', cat.urls.full)
         .replace('{{USER_PROFILE_IMAGE}}', cat.user.profile_image.medium)
         .replace('{{USER_NAME}}', cat.user.name)
-        .replace('{{USER_USERNAME}}', cat.user.username);
+        .replace('{{USER_USERNAME}}', cat.user.username)
+        .replace('{{USER_PROFILE_URL}}', cat.user.links.html)
+        .replace('{{LIKES_COUNT}}', cat.likes.toLocaleString())
+        .replace('{{ALT_DESCRIPTION}}', cat.alt_description || 'Cat photo')
+        .replace('{{TAGS}}', tagsHtml);
 
       response.set('Cache-Control', 'public, max-age=1, s-maxage=1');
       response.status(200);

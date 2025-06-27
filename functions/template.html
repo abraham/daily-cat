@@ -39,8 +39,20 @@
         background-color: rgba(255, 255, 255, 0.95);
         padding: 15px 0;
         display: flex;
-        align-items: center;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .user-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
         gap: 12px;
+      }
+      .right-section {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
       }
       .user-profile img {
         width: 40px;
@@ -64,6 +76,39 @@
         font-size: 14px;
         color: #666;
         margin: 0;
+        text-decoration: none;
+      }
+      .user-username:hover {
+        color: #333;
+        text-decoration: underline;
+      }
+      .likes-count {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        color: #666;
+      }
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .tag {
+        background-color: #f0f0f0;
+        color: #666;
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 12px;
+        white-space: nowrap;
+        text-decoration: none;
+        display: inline-block;
+      }
+      .tag:hover {
+        background-color: #e0e0e0;
+        color: #333;
       }
       .photo-container {
         flex: 1;
@@ -87,15 +132,26 @@
           <h1>Daily Cat</h1>
         </div>
         <div class="user-profile">
-          <img src="{{USER_PROFILE_IMAGE}}" alt="User profile" />
-          <div class="user-info">
-            <div class="user-name">{{USER_NAME}}</div>
-            <div class="user-username">@{{USER_USERNAME}}</div>
+          <div class="user-row">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <img src="{{USER_PROFILE_IMAGE}}" alt="User profile" />
+              <div class="user-info">
+                <div class="user-name">{{USER_NAME}}</div>
+                <a href="{{USER_PROFILE_URL}}" class="user-username">@{{USER_USERNAME}}</a>
+              </div>
+            </div>
+            <div class="right-section">
+              <div class="likes-count">
+                <span>❤️</span>
+                <span>{{LIKES_COUNT}}</span>
+              </div>
+              <div class="tags">{{TAGS}}</div>
+            </div>
           </div>
         </div>
         <div class="photo-container">
           <a href="{{LINK_URL}}">
-            <img class="cat-image" src="{{IMAGE_URL}}" />
+            <img class="cat-image" src="{{IMAGE_URL}}" alt="{{ALT_DESCRIPTION}}" />
           </a>
         </div>
       </div>
