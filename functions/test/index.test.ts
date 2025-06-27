@@ -1,7 +1,4 @@
-import { expect } from 'chai';
-import * as sinon from 'sinon';
-
-const proxyquire = require('proxyquire');
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 // Mock API response for testing
 const mockApiResponse = {
@@ -14,53 +11,66 @@ const mockApiResponse = {
   },
 };
 
+// Mock the cat-api module
+vi.mock('../src/cat-api', () => ({
+  get: vi.fn(),
+}));
+
 describe('Cat Function', () => {
-  let catApiStub: any;
+  let catApiMock: any;
   let myFunctions: any;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Set up the API key environment variable for testing
     process.env.UNSPLASH_CLIENT_ID = 'test_client_id';
 
-    // Create stub for cat API
-    catApiStub = {
-      get: sinon.stub().resolves(mockApiResponse),
-    };
+    // Get the mocked cat-api
+    catApiMock = await import('../src/cat-api');
+    catApiMock.get.mockResolvedValue(mockApiResponse);
 
-    // Use proxyquire to inject mocked dependencies
-    myFunctions = proxyquire('../lib/index', {
-      './cat-api': catApiStub,
-    });
+    // Clear module cache and re-import to get fresh instance
+    vi.resetModules();
+    myFunctions = await import('../src/index');
   });
 
   afterEach(() => {
     delete process.env.UNSPLASH_CLIENT_ID;
+    vi.clearAllMocks();
   });
 
   describe('cat function', () => {
-    it('should handle GET requests', (done) => {
+    it('should handle GET requests', async () => {
       const req = { method: 'GET' } as any;
+      
+      let sendCalled = false;
       const res = {
         send: () => {
-          expect(catApiStub.get.calledOnce).to.be.true;
-          done();
+          sendCalled = true;
         },
         set: () => res,
         status: () => res,
       } as any;
 
-      myFunctions.cat(req, res);
+      await new Promise<void>((resolve) => {
+        res.send = () => {
+          sendCalled = true;
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
+
+      expect(catApiMock.get).toHaveBeenCalledOnce();
+      expect(sendCalled).toBe(true);
     });
 
-    it('should return 403 for non-GET requests', (done) => {
+    it('should return 403 for non-GET requests', async () => {
       const req = { method: 'POST' } as any;
       let statusCode: number = 0;
+      let message: string = '';
 
       const res = {
-        send: (message: string) => {
-          expect(statusCode).to.equal(403);
-          expect(message).to.equal('Forbidden!');
-          done();
+        send: (msg: string) => {
+          message = msg;
         },
         set: () => res,
         status: (code: number) => {
@@ -69,20 +79,33 @@ describe('Cat Function', () => {
         },
       } as any;
 
-      myFunctions.cat(req, res);
+      await new Promise<void>((resolve) => {
+        res.send = (msg: string) => {
+          message = msg;
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
+
+      expect(statusCode).toBe(403);
+      expect(message).toBe('Forbidden!');
     });
 
-    it('should return 500 when API key is not configured', (done) => {
+    it('should return 500 when API key is not configured', async () => {
+      // Reset the environment variable for this test
       delete process.env.UNSPLASH_CLIENT_ID;
+      
+      // Re-import the module without API key
+      vi.resetModules();
+      const myFunctionsNoKey = await import('../src/index');
 
       const req = { method: 'GET' } as any;
       let statusCode: number = 0;
+      let message: string = '';
 
       const res = {
-        send: (message: string) => {
-          expect(statusCode).to.equal(500);
-          expect(message).to.equal('API key not configured');
-          done();
+        send: (msg: string) => {
+          message = msg;
         },
         set: () => res,
         status: (code: number) => {
@@ -91,71 +114,109 @@ describe('Cat Function', () => {
         },
       } as any;
 
-      myFunctions.cat(req, res);
+      await new Promise<void>((resolve) => {
+        res.send = (msg: string) => {
+          message = msg;
+          resolve();
+        };
+        myFunctionsNoKey.cat(req, res);
+      });
+
+      expect(statusCode).toBe(500);
+      expect(message).toBe('API key not configured');
     });
 
-    it('should set caching headers', (done) => {
+    it('should set caching headers', async () => {
       const req = { method: 'GET' } as any;
+      let cacheKey: string = '';
+      let cacheValue: string = '';
+      
       const res = {
         send: () => {},
         set: (key: string, value: string) => {
-          expect(key).to.equal('Cache-Control');
-          expect(value).to.equal('public, max-age=1, s-maxage=1');
-          done();
+          cacheKey = key;
+          cacheValue = value;
         },
         status: () => res,
       } as any;
 
-      myFunctions.cat(req, res);
+      await new Promise<void>((resolve) => {
+        res.set = (key: string, value: string) => {
+          cacheKey = key;
+          cacheValue = value;
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
+
+      expect(cacheKey).toBe('Cache-Control');
+      expect(cacheValue).toBe('public, max-age=1, s-maxage=1');
     });
 
-    it('should render valid HTML', (done) => {
+    it('should render valid HTML', async () => {
       const req = { method: 'GET' } as any;
+      let html: string = '';
+      
       const res = {
-        send: (html: string) => {
-          expect(html).to.include('<!doctype html>');
-          expect(html).to.include('<head>');
-          expect(html).to.include('</head>');
-          expect(html).to.include('<body>');
-          expect(html).to.include('</body>');
-          expect(html).to.include('</html>');
-          expect(html).to.include('<title>Daily Cat</title>');
-          done();
+        send: (htmlContent: string) => {
+          html = htmlContent;
         },
         set: () => res,
         status: () => res,
       } as any;
 
-      myFunctions.cat(req, res);
+      await new Promise<void>((resolve) => {
+        res.send = (htmlContent: string) => {
+          html = htmlContent;
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
+
+      expect(html).toContain('<!doctype html>');
+      expect(html).toContain('<head>');
+      expect(html).toContain('</head>');
+      expect(html).toContain('<body>');
+      expect(html).toContain('</body>');
+      expect(html).toContain('</html>');
+      expect(html).toContain('<title>Daily Cat</title>');
     });
 
-    it('should include cat image and link in HTML', (done) => {
+    it('should include cat image and link in HTML', async () => {
       const req = { method: 'GET' } as any;
+      let html: string = '';
+      
       const res = {
-        send: (html: string) => {
-          expect(html).to.include(`<a href="${mockApiResponse.links.html}">`);
-          expect(html).to.include(`<img src="${mockApiResponse.urls.full}">`);
-          done();
+        send: (htmlContent: string) => {
+          html = htmlContent;
         },
         set: () => res,
         status: () => res,
       } as any;
 
-      myFunctions.cat(req, res);
+      await new Promise<void>((resolve) => {
+        res.send = (htmlContent: string) => {
+          html = htmlContent;
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
+
+      expect(html).toContain(`<a href="${mockApiResponse.links.html}">`);
+      expect(html).toContain(`<img src="${mockApiResponse.urls.full}">`);
     });
 
-    it('should handle API errors gracefully', (done) => {
-      // Replace stub with one that rejects
-      catApiStub.get.rejects(new Error('API Error'));
+    it('should handle API errors gracefully', async () => {
+      // Override the mock to reject for this test
+      catApiMock.get.mockRejectedValue(new Error('API Error'));
 
       const req = { method: 'GET' } as any;
       let statusCode: number = 0;
+      let message: string = '';
 
       const res = {
-        send: (message: string) => {
-          expect(statusCode).to.equal(500);
-          expect(message).to.equal('Error fetching cat image');
-          done();
+        send: (msg: string) => {
+          message = msg;
         },
         set: () => res,
         status: (code: number) => {
@@ -164,7 +225,16 @@ describe('Cat Function', () => {
         },
       } as any;
 
-      myFunctions.cat(req, res);
+      await new Promise<void>((resolve) => {
+        res.send = (msg: string) => {
+          message = msg;
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
+
+      expect(statusCode).toBe(500);
+      expect(message).toBe('Error fetching cat image');
     });
   });
 });
