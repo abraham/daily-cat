@@ -203,7 +203,7 @@ describe('Cat Function', () => {
       });
 
       expect(html).toContain(`<a href="${mockApiResponse.links.html}">`);
-      expect(html).toContain(`<img src="${mockApiResponse.urls.full}">`);
+      expect(html).toContain(`<img src="${mockApiResponse.urls.full}" />`);
     });
 
     it('should handle API errors gracefully', async () => {
