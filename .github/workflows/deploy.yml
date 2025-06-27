@@ -20,7 +20,9 @@ jobs:
           cache-dependency-path: functions/package-lock.json
 
       - name: Install dependencies
-        run: npm ci --prefix functions
+        run: |
+          npm ci
+          npm ci --prefix functions
 
       - name: Build
         run: npm run build --prefix functions
