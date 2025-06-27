@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Use Node.js 22
+      - name: Use Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -23,7 +23,7 @@ jobs:
         run: npm ci --prefix functions
 
       - name: Build
-        run: npm run buildi --prefix functions
+        run: npm run build --prefix functions
 
       - name: Deploy to Firebase
         run: npx firebase deploy --project daily-cat --token "$FIREBASE_TOKEN"
