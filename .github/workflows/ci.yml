@@ -2,8 +2,6 @@ name: CI
 
 on:
   push:
-  pull_request:
-    branches: [main, master]
 
 jobs:
   test-and-build:
@@ -11,7 +9,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.x, 24.x]
+        node-version: [22, 24]
 
     steps:
       - uses: actions/checkout@v4
@@ -29,19 +27,13 @@ jobs:
         run: npm ci
 
       - name: Install function dependencies
-        run: |
-          cd functions
-          npm ci
+        run: npm ci --prefix functions
 
       - name: Check formatting
         run: npm run format:check
 
       - name: Build
-        run: |
-          cd functions
-          npm run build
+        run: npm run build --prefix functions
 
       - name: Run tests
-        run: |
-          cd functions
-          npm test
+        run: npm test --prefix functions
