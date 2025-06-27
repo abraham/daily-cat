@@ -1,57 +1,38 @@
 // Unsplash API response types
 export interface UnsplashPhoto {
   id: string;
+  slug: string | null;
+  alternative_slugs: Record<string, string>;
   created_at: string;
   updated_at: string;
+  promoted_at: string | null;
   width: number;
   height: number;
   color: string;
-  slug: string | null;
-  downloads: number;
-  likes: number;
-  views: number;
-  liked_by_user: boolean;
-  exif: {
-    make?: string;
-    model?: string;
-    exposure_time?: string;
-    aperture?: string;
-    focal_length?: string;
-    iso?: number;
-  };
-  location: {
-    title?: string;
-    name?: string;
-    city?: string;
-    country?: string;
-    position?: {
-      latitude: number;
-      longitude: number;
-    };
-  };
-  current_user_collections: any[];
+  blur_hash: string;
+  description: string | null;
+  alt_description: string | null;
+  breadcrumbs: any[];
   urls: {
     raw: string;
     full: string;
     regular: string;
     small: string;
     thumb: string;
+    small_s3: string;
   };
-  categories: Array<{
-    id: number;
-    title: string;
-    photo_count: number;
-    links: {
-      self: string;
-      photos: string;
-    };
-  }>;
   links: {
     self: string;
     html: string;
     download: string;
     download_location: string;
   };
+  likes: number;
+  liked_by_user: boolean;
+  current_user_collections: any[];
+  sponsorship: any;
+  topic_submissions: Record<string, any>;
+  asset_type: string;
   user: {
     id: string;
     updated_at: string;
@@ -59,17 +40,10 @@ export interface UnsplashPhoto {
     name: string;
     first_name: string;
     last_name: string;
+    twitter_username: string | null;
     portfolio_url: string | null;
     bio: string;
     location: string | null;
-    total_likes: number;
-    total_photos: number;
-    total_collections: number;
-    profile_image: {
-      small: string;
-      medium: string;
-      large: string;
-    };
     links: {
       self: string;
       html: string;
@@ -79,7 +53,56 @@ export interface UnsplashPhoto {
       following: string;
       followers: string;
     };
+    profile_image: {
+      small: string;
+      medium: string;
+      large: string;
+    };
+    instagram_username: string | null;
+    total_collections: number;
+    total_likes: number;
+    total_photos: number;
+    total_promoted_photos: number;
+    total_illustrations: number;
+    total_promoted_illustrations: number;
+    accepted_tos: boolean;
+    for_hire: boolean;
+    social: {
+      instagram_username: string | null;
+      portfolio_url: string | null;
+      twitter_username: string | null;
+      paypal_email: string | null;
+    };
   };
+  exif: {
+    make: string | null;
+    model: string | null;
+    name: string | null;
+    exposure_time: string | null;
+    aperture: string | null;
+    focal_length: string | null;
+    iso: number | null;
+  };
+  location: {
+    name: string | null;
+    city: string | null;
+    country: string | null;
+    position: {
+      latitude: number | null;
+      longitude: number | null;
+    };
+  };
+  meta: {
+    index: boolean;
+  };
+  public_domain: boolean;
+  tags: Array<{
+    type: string;
+    title: string;
+  }>;
+  views: number;
+  downloads: number;
+  topics: any[];
 }
 
 export interface CatApiOptions {
