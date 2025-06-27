@@ -1,0 +1,9 @@
+# Dependencies
+node_modules/
+
+# Generated/build files
+functions/lib/
+functions/test/compiled.test.js
+
+# Package lock files (auto-generated)
+**/package-lock.json
