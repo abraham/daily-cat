@@ -254,8 +254,12 @@ describe('Cat Function', () => {
 
       expect(html).toContain(`<a href="${mockApiResponse.links.html}">`);
       expect(html).toContain('class="cat-image"');
-      expect(html).toContain(`src="${mockApiResponse.urls.full}"`);
-      expect(html).toContain(`alt="${mockApiResponse.alt_description}"`);
+      expect(html).toContain(
+        `src="${mockApiResponse.urls.full.replace(/&/g, '&amp;')}"`
+      );
+      expect(html).toContain(
+        `alt="${mockApiResponse.alt_description.replace(/'/g, '&#39;')}"`
+      );
     });
 
     it('should include user profile information in HTML', async () => {
@@ -279,7 +283,7 @@ describe('Cat Function', () => {
       });
 
       expect(html).toContain(
-        `src="${mockApiResponse.user.profile_image.medium}"`
+        `src="${mockApiResponse.user.profile_image.medium.replace(/&/g, '&amp;')}"`
       );
       expect(html).toContain('alt="User profile"');
       expect(html).toContain(mockApiResponse.user.name);
