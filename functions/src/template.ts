@@ -1,5 +1,4 @@
 import { html, TemplateResult } from 'lit-html';
-import { unsafeHTML } from 'lit-html/directives/unsafe-html.js';
 
 interface TemplateData {
   linkUrl: string;
@@ -10,10 +9,23 @@ interface TemplateData {
   userProfileUrl: string;
   likesCount: string;
   altDescription: string;
-  tags: string;
+  tags: Array<{ type: string; title: string }>;
   prevDateUrl: string;
   nextDateUrl: string;
   nextArrowClass: string;
+}
+
+function renderTags(tags: Array<{ type: string; title: string }>) {
+  return tags
+    .slice(0, 5)
+    .map(
+      (tag) =>
+        html`<a
+          href="https://unsplash.com/s/photos/${encodeURIComponent(tag.title)}"
+          class="tag"
+          >${tag.title}</a
+        >`
+    );
 }
 
 export function renderTemplate(data: TemplateData): TemplateResult {
@@ -499,7 +511,7 @@ export function renderTemplate(data: TemplateData): TemplateResult {
                     <span>❤️</span>
                     <span>${data.likesCount}</span>
                   </div>
-                  <div class="tags">${unsafeHTML(data.tags)}</div>
+                  <div class="tags">${renderTags(data.tags)}</div>
                 </div>
               </div>
             </div>

@@ -88,15 +88,6 @@ export const cat = onRequest(
         alt_description: cat.alt_description,
       });
 
-      // Get up to 5 tags
-      const tags = cat.tags.slice(0, 5);
-      const tagsHtml = tags
-        .map(
-          (tag: any) =>
-            `<a href="https://unsplash.com/s/photos/${encodeURIComponent(tag.title)}" class="tag">${tag.title}</a>`
-        )
-        .join('');
-
       // Calculate navigation dates
       const { prevDateUrl, nextDateUrl, nextArrowClass } =
         calculateNavigationUrls(requestedDate);
@@ -111,7 +102,7 @@ export const cat = onRequest(
         userProfileUrl: cat.user.links.html,
         likesCount: cat.likes.toLocaleString(),
         altDescription: cat.alt_description || 'Cat photo',
-        tags: tagsHtml,
+        tags: cat.tags,
         prevDateUrl,
         nextDateUrl,
         nextArrowClass,
