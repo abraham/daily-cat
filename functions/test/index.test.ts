@@ -455,8 +455,9 @@ describe('Cat Function', () => {
       expect(html).toContain('onload="this.classList.add(\'loaded\')"');
       
       // Check for blurhash rendering JavaScript
-      expect(html).toContain('blurhash.decode');
+      expect(html).toContain('window.blurhash');
       expect(html).toContain('createImageData');
+      expect(html).toContain('typeof window.blurhash !== \'undefined\'');
     });
 
     it('should handle API errors gracefully', async () => {

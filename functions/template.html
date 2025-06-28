@@ -497,15 +497,23 @@
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
         
-        try {
-          // Decode and render blurhash
-          const pixels = blurhash.decode(blurHash, canvasWidth, canvasHeight);
-          const imageData = ctx.createImageData(canvasWidth, canvasHeight);
-          imageData.data.set(pixels);
-          ctx.putImageData(imageData, 0, 0);
-        } catch (error) {
-          console.warn('Failed to render blurhash:', error);
-          // Fallback to solid color background
+        // Check if blurhash library is available
+        if (typeof window.blurhash !== 'undefined' && blurHash) {
+          try {
+            // Decode and render blurhash
+            const pixels = window.blurhash.decode(blurHash, canvasWidth, canvasHeight);
+            const imageData = ctx.createImageData(canvasWidth, canvasHeight);
+            imageData.data.set(pixels);
+            ctx.putImageData(imageData, 0, 0);
+          } catch (error) {
+            console.warn('Failed to render blurhash:', error);
+            // Fallback to solid color background
+            const fallbackColor = '#f5f5f5';
+            ctx.fillStyle = fallbackColor;
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+          }
+        } else {
+          // Fallback when blurhash library is not available
           const fallbackColor = '#f5f5f5';
           ctx.fillStyle = fallbackColor;
           ctx.fillRect(0, 0, canvasWidth, canvasHeight);
