@@ -44,7 +44,7 @@
     "singleProjectMode": true
   },
   "firestore": {
-    "database": "daily-cats",
+    "database": "(default)",
     "location": "us-central1",
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
