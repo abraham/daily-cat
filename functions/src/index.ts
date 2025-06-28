@@ -9,12 +9,12 @@
 
 import * as logger from 'firebase-functions/logger';
 import { onRequest } from 'firebase-functions/v2/https';
-import * as fs from 'fs';
-import { join } from 'path';
+import { render } from '@lit-labs/ssr';
 import * as catAPI from './cat-api';
 import * as storage from './storage';
 import { UnsplashPhoto } from './types';
 import { calculateNavigationUrls } from './navigation';
+import { renderTemplate } from './template';
 
 const API_KEY = process.env.UNSPLASH_CLIENT_ID;
 
@@ -88,9 +88,6 @@ export const cat = onRequest(
         alt_description: cat.alt_description,
       });
 
-      const templatePath = join(__dirname, '..', 'template.html');
-      const htmlTemplate = await fs.promises.readFile(templatePath, 'utf8');
-
       // Get up to 5 tags
       const tags = cat.tags.slice(0, 5);
       const tagsHtml = tags
@@ -104,19 +101,28 @@ export const cat = onRequest(
       const { prevDateUrl, nextDateUrl, nextArrowClass } =
         calculateNavigationUrls(requestedDate);
 
-      const html = htmlTemplate
-        .replace('{{LINK_URL}}', cat.links.html)
-        .replace('{{IMAGE_URL}}', cat.urls.full)
-        .replace('{{USER_PROFILE_IMAGE}}', cat.user.profile_image.medium)
-        .replace('{{USER_NAME}}', cat.user.name)
-        .replace('{{USER_USERNAME}}', cat.user.username)
-        .replace('{{USER_PROFILE_URL}}', cat.user.links.html)
-        .replace('{{LIKES_COUNT}}', cat.likes.toLocaleString())
-        .replace('{{ALT_DESCRIPTION}}', cat.alt_description || 'Cat photo')
-        .replace('{{TAGS}}', tagsHtml)
-        .replace('{{PREV_DATE_URL}}', prevDateUrl)
-        .replace('{{NEXT_DATE_URL}}', nextDateUrl)
-        .replace('{{NEXT_ARROW_CLASS}}', nextArrowClass);
+      // Render template using lit-html
+      const templateResult = renderTemplate({
+        linkUrl: cat.links.html,
+        imageUrl: cat.urls.full,
+        userProfileImage: cat.user.profile_image.medium,
+        userName: cat.user.name,
+        userUsername: cat.user.username,
+        userProfileUrl: cat.user.links.html,
+        likesCount: cat.likes.toLocaleString(),
+        altDescription: cat.alt_description || 'Cat photo',
+        tags: tagsHtml,
+        prevDateUrl,
+        nextDateUrl,
+        nextArrowClass,
+      });
+
+      // Convert lit-html template result to string
+      const htmlIterator = render(templateResult);
+      let html = '';
+      for (const chunk of htmlIterator) {
+        html += chunk;
+      }
 
       response.set('Cache-Control', 'public, max-age=1, s-maxage=1');
       response.status(200);
