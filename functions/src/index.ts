@@ -93,8 +93,13 @@ export const cat = onRequest(async (request, response) => {
         showNextArrow,
       });
     } else {
-      // No completed record found - show processing page
       logger.log('No completed record found for date:', requestedDate);
+
+      // No completed record found - create a new day record if none exists
+      if (!dayRecord) {
+        logger.log('Creating new day record for date:', requestedDate);
+        dayRecord = await storage.createNewDayRecord(requestedDate);
+      }
 
       // Render processing page template
       templateResult = renderProcessingPage({

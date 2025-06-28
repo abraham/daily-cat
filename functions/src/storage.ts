@@ -156,3 +156,25 @@ export async function getMostRecentPhoto(): Promise<DayRecord | null> {
     ...doc.data(),
   } as DayRecord;
 }
+
+/**
+ * Create a new day record with 'created' status
+ * @param id - ISO date string (YYYY-MM-DD)
+ * @returns Promise<NewDayRecord> - The created day record
+ */
+export async function createNewDayRecord(id: string): Promise<NewDayRecord> {
+  const now = new Date();
+  const newRecord: Omit<NewDayRecord, 'id'> = {
+    status: 'created',
+    photo: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await db.collection(COLLECTION_NAME).doc(id).set(newRecord);
+
+  return {
+    id,
+    ...newRecord,
+  };
+}

@@ -113,6 +113,59 @@ describe('Storage Functions', () => {
     });
   });
 
+  describe('createNewDayRecord', () => {
+    it('should create a new day record with created status and null photo', async () => {
+      const testDate = '2025-06-27';
+
+      const result = await storage.createNewDayRecord(testDate);
+
+      expect(mockFirestore.collection).toHaveBeenCalledWith('days');
+      expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
+      expect(mockDoc.set).toHaveBeenCalledWith({
+        status: 'created',
+        photo: null,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+      });
+
+      expect(result).toEqual({
+        id: testDate,
+        status: 'created',
+        photo: null,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+      });
+    });
+
+    it('should use the current timestamp for createdAt and updatedAt', async () => {
+      const testDate = '2025-06-27';
+      const beforeTime = new Date();
+
+      const result = await storage.createNewDayRecord(testDate);
+
+      const afterTime = new Date();
+      const callArgs = mockDoc.set.mock.calls[0][0];
+
+      expect(callArgs.createdAt).toBeInstanceOf(Date);
+      expect(callArgs.updatedAt).toBeInstanceOf(Date);
+      expect(callArgs.createdAt.getTime()).toBeGreaterThanOrEqual(
+        beforeTime.getTime()
+      );
+      expect(callArgs.createdAt.getTime()).toBeLessThanOrEqual(
+        afterTime.getTime()
+      );
+      expect(callArgs.updatedAt.getTime()).toBeGreaterThanOrEqual(
+        beforeTime.getTime()
+      );
+      expect(callArgs.updatedAt.getTime()).toBeLessThanOrEqual(
+        afterTime.getTime()
+      );
+
+      expect(result.createdAt).toBe(callArgs.createdAt);
+      expect(result.updatedAt).toBe(callArgs.updatedAt);
+    });
+  });
+
   describe('getPhotoForDate', () => {
     it('should return a CompletedDayRecord when document exists with completed status and photo', async () => {
       const testDate = '2025-06-27';

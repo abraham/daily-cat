@@ -44,6 +44,7 @@ vi.mock('firebase-admin/firestore', () => ({
 // Mock the storage module
 vi.mock('../src/storage', () => ({
   getPhotoForDate: vi.fn(),
+  createNewDayRecord: vi.fn(),
 }));
 
 // Mock the template module
@@ -78,6 +79,13 @@ describe('Cat Function', () => {
     templateMock = await import('../src/template');
 
     storageMock.getPhotoForDate.mockResolvedValue(null); // Default: no existing photo
+    storageMock.createNewDayRecord.mockResolvedValue({
+      id: 'test-date',
+      status: 'created',
+      photo: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
     templateMock.renderPhotoPage.mockReturnValue('mocked photo page html');
     templateMock.renderProcessingPage.mockReturnValue(
       'mocked processing page html'
@@ -635,6 +643,66 @@ describe('Cat Function', () => {
 
       expect(statusCode).toBe(404);
       expect(message).toBe('Invalid date.');
+    });
+
+    it('should create a new day record when none exists', async () => {
+      // Mock no existing record
+      storageMock.getPhotoForDate.mockResolvedValue(null);
+
+      const req = { method: 'GET', url: '/2025-06-27' } as any;
+
+      let sendCalled = false;
+      const res = {
+        send: () => {
+          sendCalled = true;
+        },
+        set: () => res,
+        status: () => res,
+      } as any;
+
+      await new Promise<void>((resolve) => {
+        res.send = () => {
+          sendCalled = true;
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
+
+      expect(sendCalled).toBe(true);
+      expect(storageMock.createNewDayRecord).toHaveBeenCalledWith('2025-06-27');
+      expect(templateMock.renderProcessingPage).toHaveBeenCalledOnce();
+    });
+
+    it('should not create a new day record when one already exists', async () => {
+      // Mock existing processing record
+      const processingRecord = {
+        status: 'processing',
+        photo: null,
+      };
+      storageMock.getPhotoForDate.mockResolvedValue(processingRecord);
+
+      const req = { method: 'GET', url: '/2025-06-27' } as any;
+
+      let sendCalled = false;
+      const res = {
+        send: () => {
+          sendCalled = true;
+        },
+        set: () => res,
+        status: () => res,
+      } as any;
+
+      await new Promise<void>((resolve) => {
+        res.send = () => {
+          sendCalled = true;
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
+
+      expect(sendCalled).toBe(true);
+      expect(storageMock.createNewDayRecord).not.toHaveBeenCalled();
+      expect(templateMock.renderProcessingPage).toHaveBeenCalledOnce();
     });
   });
 });
