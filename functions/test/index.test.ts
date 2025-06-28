@@ -791,16 +791,16 @@ describe('Cat Function', () => {
 
       // Should contain the nav-arrows-left container
       expect(htmlResponse).toContain('class="nav-arrows-left"');
-      
+
       // Both arrows should be present within the grouped container
       expect(htmlResponse).toContain('nav-arrow left');
       expect(htmlResponse).toContain('nav-arrow right');
-      
+
       // Verify the structure: nav-arrows-left should contain both arrow elements
       const navArrowsLeftIndex = htmlResponse.indexOf('nav-arrows-left');
       const leftArrowIndex = htmlResponse.indexOf('nav-arrow left');
       const rightArrowIndex = htmlResponse.indexOf('nav-arrow right');
-      
+
       expect(navArrowsLeftIndex).toBeGreaterThan(-1);
       expect(leftArrowIndex).toBeGreaterThan(navArrowsLeftIndex);
       expect(rightArrowIndex).toBeGreaterThan(leftArrowIndex);
