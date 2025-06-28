@@ -75,7 +75,6 @@ describe('Storage Functions', () => {
       expect(mockFirestore.collection).toHaveBeenCalledWith('days');
       expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
       expect(mockDoc.set).toHaveBeenCalledWith({
-        date: testDate,
         photo: mockPhoto,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
@@ -177,14 +176,13 @@ describe('Storage Functions', () => {
   });
 
   describe('getPhotosForDateRange', () => {
-    it('should return photos within date range ordered by date', async () => {
+    it('should return photos within date range ordered by createdAt', async () => {
       const startDate = '2025-06-25';
       const endDate = '2025-06-27';
       const mockDocs = [
         {
           id: '2025-06-25',
           data: () => ({
-            date: '2025-06-25',
             photo: mockPhoto,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -193,7 +191,6 @@ describe('Storage Functions', () => {
         {
           id: '2025-06-27',
           data: () => ({
-            date: '2025-06-27',
             photo: mockPhoto,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -208,12 +205,16 @@ describe('Storage Functions', () => {
 
       expect(mockFirestore.collection).toHaveBeenCalledWith('days');
       expect(mockCollection.where).toHaveBeenCalledWith(
-        'date',
+        '__name__',
         '>=',
         startDate
       );
-      expect(mockCollection.where).toHaveBeenCalledWith('date', '<=', endDate);
-      expect(mockCollection.orderBy).toHaveBeenCalledWith('date', 'asc');
+      expect(mockCollection.where).toHaveBeenCalledWith(
+        '__name__',
+        '<=',
+        endDate
+      );
+      expect(mockCollection.orderBy).toHaveBeenCalledWith('__name__', 'asc');
       expect(result).toHaveLength(2);
       expect(result[0].id).toBe('2025-06-25');
       expect(result[1].id).toBe('2025-06-27');
@@ -299,7 +300,7 @@ describe('Storage Functions', () => {
       const result = await storage.getMostRecentPhoto();
 
       expect(mockFirestore.collection).toHaveBeenCalledWith('days');
-      expect(mockCollection.orderBy).toHaveBeenCalledWith('date', 'desc');
+      expect(mockCollection.orderBy).toHaveBeenCalledWith('__name__', 'desc');
       expect(mockCollection.limit).toHaveBeenCalledWith(1);
       expect(result).toEqual({
         id: '2025-06-27',
@@ -317,7 +318,7 @@ describe('Storage Functions', () => {
       const result = await storage.getMostRecentPhoto();
 
       expect(mockFirestore.collection).toHaveBeenCalledWith('days');
-      expect(mockCollection.orderBy).toHaveBeenCalledWith('date', 'desc');
+      expect(mockCollection.orderBy).toHaveBeenCalledWith('__name__', 'desc');
       expect(mockCollection.limit).toHaveBeenCalledWith(1);
       expect(result).toBeNull();
     });
