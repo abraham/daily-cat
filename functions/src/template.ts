@@ -193,20 +193,28 @@ export function renderTemplate(data: TemplateData): TemplateResult {
           }
           .nav-arrow:active {
             background-color: #e0e0e0;
-            transform: translateY(-50%) scale(0.95);
+            transform: scale(0.95);
+          }
+          .nav-arrows-left {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 8px;
+            align-items: center;
           }
           .nav-arrow.left {
-            left: 20px;
+            position: static;
+            transform: none;
           }
           .nav-arrow.right {
-            right: 20px;
+            position: static;
+            transform: none;
           }
           @media (max-width: 768px) {
-            .nav-arrow.left {
+            .nav-arrows-left {
               left: 10px;
-            }
-            .nav-arrow.right {
-              right: 10px;
             }
           }
           .user-profile {
@@ -469,11 +477,8 @@ export function renderTemplate(data: TemplateData): TemplateResult {
                 padding-left: max(15px, env(safe-area-inset-left));
                 padding-right: max(15px, env(safe-area-inset-right));
               }
-              .nav-arrow.left {
+              .nav-arrows-left {
                 left: max(10px, env(safe-area-inset-left));
-              }
-              .nav-arrow.right {
-                right: max(10px, env(safe-area-inset-right));
               }
             }
           }
@@ -484,14 +489,16 @@ export function renderTemplate(data: TemplateData): TemplateResult {
           <div class="left-column"></div>
           <div class="center-column">
             <div class="header">
-              <a
-                href="${data.prevDateUrl}"
-                class="nav-arrow left"
-                title="Previous"
-                >←</a
-              >
+              <div class="nav-arrows-left">
+                <a
+                  href="${data.prevDateUrl}"
+                  class="nav-arrow left"
+                  title="Previous"
+                  >←</a
+                >
+                ${renderNextArrow(data.showNextArrow, data.nextDateUrl)}
+              </div>
               <h1><a href="/" class="header-title">Daily Cat</a></h1>
-              ${renderNextArrow(data.showNextArrow, data.nextDateUrl)}
             </div>
             <div class="user-profile">
               <div class="user-row">
