@@ -12,7 +12,7 @@ interface TemplateData {
   tags: Array<{ type: string; title: string }>;
   prevDateUrl: string;
   nextDateUrl: string;
-  nextArrowClass: string;
+  showNextArrow: boolean;
 }
 
 function renderTags(tags: Array<{ type: string; title: string }>) {
@@ -26,6 +26,12 @@ function renderTags(tags: Array<{ type: string; title: string }>) {
           >${tag.title}</a
         >`
     );
+}
+
+function renderNextArrow(showNextArrow: boolean, nextDateUrl: string) {
+  return showNextArrow
+    ? html`<a href="${nextDateUrl}" class="nav-arrow right" title="Next">→</a>`
+    : '';
 }
 
 export function renderTemplate(data: TemplateData): TemplateResult {
@@ -202,9 +208,6 @@ export function renderTemplate(data: TemplateData): TemplateResult {
             .nav-arrow.right {
               right: 10px;
             }
-          }
-          .nav-arrow.hidden {
-            display: none;
           }
           .user-profile {
             background-color: rgba(255, 255, 255, 0.95);
@@ -488,12 +491,7 @@ export function renderTemplate(data: TemplateData): TemplateResult {
                 >←</a
               >
               <h1><a href="/" class="header-title">Daily Cat</a></h1>
-              <a
-                href="${data.nextDateUrl}"
-                class="nav-arrow right ${data.nextArrowClass}"
-                title="Next"
-                >→</a
-              >
+              ${renderNextArrow(data.showNextArrow, data.nextDateUrl)}
             </div>
             <div class="user-profile">
               <div class="user-row">

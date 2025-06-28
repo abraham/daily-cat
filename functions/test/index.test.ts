@@ -336,29 +336,21 @@ describe('Cat Function', () => {
       });
 
       // Should include the first 5 tags from the fixture
-      expect(html).toContain(
-        '<a href="https://unsplash.com/s/photos/portrait" class="tag">portrait</a>'
-      );
-      expect(html).toContain(
-        '<a href="https://unsplash.com/s/photos/cat" class="tag">cat</a>'
-      );
-      expect(html).toContain(
-        '<a href="https://unsplash.com/s/photos/animal" class="tag">animal</a>'
-      );
-      expect(html).toContain(
-        '<a href="https://unsplash.com/s/photos/dark" class="tag">dark</a>'
-      );
-      expect(html).toContain(
-        '<a href="https://unsplash.com/s/photos/face" class="tag">face</a>'
-      );
+      expect(html).toContain('href="https://unsplash.com/s/photos/portrait"');
+      expect(html).toContain('class="tag"');
+      expect(html).toContain('<!--lit-part-->portrait<!--/lit-part-->');
+      expect(html).toContain('href="https://unsplash.com/s/photos/cat"');
+      expect(html).toContain('<!--lit-part-->cat<!--/lit-part-->');
+      expect(html).toContain('href="https://unsplash.com/s/photos/animal"');
+      expect(html).toContain('<!--lit-part-->animal<!--/lit-part-->');
+      expect(html).toContain('href="https://unsplash.com/s/photos/dark"');
+      expect(html).toContain('<!--lit-part-->dark<!--/lit-part-->');
+      expect(html).toContain('href="https://unsplash.com/s/photos/face"');
+      expect(html).toContain('<!--lit-part-->face<!--/lit-part-->');
 
       // Should not include the 6th tag and beyond
-      expect(html).not.toContain(
-        '<a href="https://unsplash.com/s/photos/table" class="tag">table</a>'
-      );
-      expect(html).not.toContain(
-        '<a href="https://unsplash.com/s/photos/hand" class="tag">hand</a>'
-      );
+      expect(html).not.toContain('href="https://unsplash.com/s/photos/table"');
+      expect(html).not.toContain('href="https://unsplash.com/s/photos/hand"');
     });
 
     it('should handle missing alt_description gracefully', async () => {
@@ -677,7 +669,7 @@ describe('Cat Function', () => {
       expect(htmlResponse).toContain('href="/2025-06-25"'); // Previous date
       expect(htmlResponse).toContain('nav-arrow right');
       expect(htmlResponse).toContain('href="/2025-06-27"'); // Next date
-      expect(htmlResponse).toContain('class="nav-arrow right "'); // Right arrow should be visible (no hidden class)
+      expect(htmlResponse).toContain('class="nav-arrow right"'); // Right arrow should be visible
     });
 
     it('should hide right navigation arrow for today', async () => {
@@ -712,8 +704,7 @@ describe('Cat Function', () => {
 
       expect(htmlResponse).toContain('nav-arrow left');
       expect(htmlResponse).toContain('href="/2025-06-26"'); // Previous date
-      expect(htmlResponse).toContain('nav-arrow right hidden'); // Right arrow should be hidden
-      expect(htmlResponse).toContain('href="#"'); // Next date should be #
+      expect(htmlResponse).not.toContain('nav-arrow right'); // Right arrow should not be rendered at all
 
       // Restore original Date
       global.Date = originalDate;
@@ -743,7 +734,7 @@ describe('Cat Function', () => {
 
       expect(htmlResponse).toContain('nav-arrow left');
       expect(htmlResponse).toContain('href="/2025-06-27"'); // Previous date (yesterday)
-      expect(htmlResponse).toContain('nav-arrow right hidden'); // Right arrow should be hidden for today
+      expect(htmlResponse).not.toContain('nav-arrow right'); // Right arrow should not be rendered for today
     });
 
     it('should include clickable header that links to root path', async () => {

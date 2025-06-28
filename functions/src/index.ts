@@ -89,7 +89,7 @@ export const cat = onRequest(
       });
 
       // Calculate navigation dates
-      const { prevDateUrl, nextDateUrl, nextArrowClass } =
+      const { prevDateUrl, nextDateUrl, showNextArrow } =
         calculateNavigationUrls(requestedDate);
 
       // Render template using lit-html
@@ -105,7 +105,7 @@ export const cat = onRequest(
         tags: cat.tags,
         prevDateUrl,
         nextDateUrl,
-        nextArrowClass,
+        showNextArrow,
       });
 
       // Convert lit-html template result to string

@@ -5,7 +5,7 @@
 export interface NavigationUrls {
   prevDateUrl: string;
   nextDateUrl: string;
-  nextArrowClass: string;
+  showNextArrow: boolean;
 }
 
 /**
@@ -26,18 +26,18 @@ export function calculateNavigationUrls(requestedDate: string): NavigationUrls {
 
   // Next date (only if requested date is before today)
   let nextDateUrl = '#';
-  let nextArrowClass = 'hidden';
+  let showNextArrow = false;
   if (requestedDate < currentDateString) {
     const nextDateObj = new Date(requestedDateObj);
     nextDateObj.setUTCDate(nextDateObj.getUTCDate() + 1);
     const nextDateString = nextDateObj.toISOString().split('T')[0];
     nextDateUrl = `/${nextDateString}`;
-    nextArrowClass = '';
+    showNextArrow = true;
   }
 
   return {
     prevDateUrl,
     nextDateUrl,
-    nextArrowClass,
+    showNextArrow,
   };
 }
