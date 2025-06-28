@@ -673,7 +673,7 @@ describe('Cat Function', () => {
       expect(htmlResponse).toContain('href="/2025-06-25"'); // Previous date
       expect(htmlResponse).toContain('nav-arrow right');
       expect(htmlResponse).toContain('href="/2025-06-27"'); // Next date
-      expect(htmlResponse).toContain('nav-arrow right " title="Next">'); // Right arrow should be visible (no hidden class)
+      expect(htmlResponse).toContain('class="nav-arrow right "'); // Right arrow should be visible (no hidden class)
     });
 
     it('should hide right navigation arrow for today', async () => {

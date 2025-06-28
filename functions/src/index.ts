@@ -14,6 +14,7 @@ import { join } from 'path';
 import * as catAPI from './cat-api';
 import * as storage from './storage';
 import { UnsplashPhoto } from './types';
+import { calculateNavigationUrls } from './navigation';
 
 const API_KEY = process.env.UNSPLASH_CLIENT_ID;
 
@@ -100,26 +101,8 @@ export const cat = onRequest(
         .join('');
 
       // Calculate navigation dates
-      const requestedDateObj = new Date(requestedDate + 'T00:00:00.000Z');
-      const currentDateObj = new Date();
-      const currentDateString = currentDateObj.toISOString().split('T')[0];
-
-      // Previous date (always available, goes one day back)
-      const prevDateObj = new Date(requestedDateObj);
-      prevDateObj.setUTCDate(prevDateObj.getUTCDate() - 1);
-      const prevDateString = prevDateObj.toISOString().split('T')[0];
-      const prevDateUrl = `/${prevDateString}`;
-
-      // Next date (only if requested date is before today)
-      let nextDateUrl = '#';
-      let nextArrowClass = 'hidden';
-      if (requestedDate < currentDateString) {
-        const nextDateObj = new Date(requestedDateObj);
-        nextDateObj.setUTCDate(nextDateObj.getUTCDate() + 1);
-        const nextDateString = nextDateObj.toISOString().split('T')[0];
-        nextDateUrl = `/${nextDateString}`;
-        nextArrowClass = '';
-      }
+      const { prevDateUrl, nextDateUrl, nextArrowClass } =
+        calculateNavigationUrls(requestedDate);
 
       const html = htmlTemplate
         .replace('{{LINK_URL}}', cat.links.html)
