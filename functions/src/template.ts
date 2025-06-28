@@ -101,21 +101,21 @@ function renderPhoto(data: TemplateData): TemplateResult {
 function renderFooter(): TemplateResult {
   return html`
     <div class="footer">
-      <a href="https://abrah.am" target="_blank" rel="noopener noreferrer"
-        >abrah.am</a
-      >
-      <span class="separator">•</span>
       <a
         href="https://github.com/abraham/daily-cat"
         target="_blank"
         rel="noopener noreferrer"
-        >Source</a
+        >Made</a
       >
-      <span class="separator">•</span>
+      by
+      <a href="https://abrah.am" target="_blank" rel="noopener noreferrer"
+        >abrah.am</a
+      >
+      with
       <a href="https://unsplash.com/" target="_blank" rel="noopener noreferrer"
         >Unsplash</a
       >
-      <span class="separator">•</span>
+      and
       <a href="https://undraw.co/" target="_blank" rel="noopener noreferrer"
         >unDraw</a
       >
