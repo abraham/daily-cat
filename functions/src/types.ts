@@ -126,3 +126,10 @@ export type UnsplashRandom = UnsplashRandomPhoto[];
 export interface CatApiOptions {
   clientId: string;
 }
+
+export interface DayRecord {
+  id: string; // ISO date string (YYYY-MM-DD)
+  photo: UnsplashPhoto;
+  createdAt: Date;
+  updatedAt: Date;
+}

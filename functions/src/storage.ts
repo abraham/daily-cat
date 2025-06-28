@@ -5,7 +5,7 @@ import {
   DocumentData,
   QueryDocumentSnapshot,
 } from 'firebase-admin/firestore';
-import { UnsplashPhoto } from './types';
+import { UnsplashPhoto, DayRecord } from './types';
 
 // Initialize Firebase Admin if not already initialized
 let app: App;
@@ -17,13 +17,6 @@ if (getApps().length === 0) {
 
 const db: Firestore = getFirestore(app);
 const COLLECTION_NAME = 'days';
-
-export interface DayRecord {
-  id: string; // ISO date string (YYYY-MM-DD)
-  photo: UnsplashPhoto;
-  createdAt: Date;
-  updatedAt: Date;
-}
 
 /**
  * Save an UnsplashPhoto to the 'days' collection for a specific date
