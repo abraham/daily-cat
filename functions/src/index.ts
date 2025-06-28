@@ -78,7 +78,7 @@ export const cat = onRequest(
         logger.log('Using existing cat photo for date:', requestedDate);
       } else {
         // Fetch new photo from API and save it for any date (past or present)
-        cat = await catAPI.get({ clientId: API_KEY });
+        cat = (await catAPI.list({ clientId: API_KEY }))[0];
         await storage.savePhotoForDate(requestedDate, cat);
         logger.log('Fetched and saved new cat photo for date:', requestedDate);
       }

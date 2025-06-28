@@ -569,7 +569,7 @@ export function renderTemplate(data: TemplateData): TemplateResult {
                     <span>❤️</span>
                     <span>${data.likesCount}</span>
                   </div>
-                  <div class="tags">${renderTags(data.tags)}</div>
+                  <div class="tags">${renderTags(data.tags || [])}</div>
                 </div>
               </div>
             </div>
