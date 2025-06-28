@@ -37,7 +37,135 @@ function renderNextArrow(showNextArrow: boolean, nextDateUrl: string) {
     : '';
 }
 
-export function renderTemplate(data: TemplateData): TemplateResult {
+function renderHeader(data: TemplateData): TemplateResult {
+  return html`
+    <div class="header">
+      <div class="nav-arrows-left">
+        <a href="${data.prevDateUrl}" class="nav-arrow left" title="Previous"
+          >${backIcon()}</a
+        >
+        ${renderNextArrow(data.showNextArrow, data.nextDateUrl)}
+      </div>
+      <h1><a href="/" class="header-title">Daily Cat</a></h1>
+      <button
+        id="share-button"
+        class="share-button hidden"
+        title="Share this page"
+        type="button"
+      >
+        ${shareIcon()}
+      </button>
+    </div>
+  `;
+}
+
+function renderUserProfile(data: TemplateData): TemplateResult {
+  return html`
+    <div class="user-profile">
+      <div class="user-row">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <img src="${data.userProfileImage}" alt="User profile" />
+          <div class="user-info">
+            <div class="user-name">${data.userName}</div>
+            <a href="${data.userProfileUrl}" class="user-username"
+              >@${data.userUsername}</a
+            >
+          </div>
+        </div>
+        <div class="right-section">
+          <div class="likes-count">
+            <span>❤️</span>
+            <span>${data.likesCount}</span>
+          </div>
+          <div class="tags">${renderTags(data.tags || [])}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderPhoto(data: TemplateData): TemplateResult {
+  return html`
+    <div class="photo-container">
+      <a href="${data.linkUrl}">
+        <img
+          class="cat-image"
+          src="${data.imageUrl}"
+          alt="${data.altDescription}"
+        />
+      </a>
+    </div>
+  `;
+}
+
+function renderFooter(): TemplateResult {
+  return html`
+    <div class="footer">
+      <a href="https://abrah.am" target="_blank" rel="noopener noreferrer"
+        >abrah.am</a
+      >
+      <span class="separator">•</span>
+      <a
+        href="https://github.com/abraham/daily-cat"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Source</a
+      >
+      <span class="separator">•</span>
+      <a href="https://unsplash.com/" target="_blank" rel="noopener noreferrer"
+        >Unsplash</a
+      >
+      <span class="separator">•</span>
+      <a href="https://undraw.co/" target="_blank" rel="noopener noreferrer"
+        >unDraw</a
+      >
+    </div>
+  `;
+}
+
+function renderBody(
+  data: TemplateData,
+  children: TemplateResult
+): TemplateResult {
+  return html`
+    <body>
+      <div class="container">
+        <div class="left-column"></div>
+        <div class="center-column">
+          ${renderHeader(data)} ${children} ${renderFooter()}
+        </div>
+        <div class="right-column"></div>
+      </div>
+      <script>
+        // Check if Web Share API is supported and show share button
+        if (navigator.share) {
+          const shareButton = document.getElementById('share-button');
+          if (shareButton) {
+            shareButton.classList.remove('hidden');
+
+            shareButton.addEventListener('click', async function () {
+              try {
+                await navigator.share({
+                  title: 'Daily Cat',
+                  text: 'Check out this adorable cat photo from Daily Cat!',
+                  url: window.location.href,
+                });
+              } catch (error) {
+                // User cancelled or error occurred
+                console.log('Error sharing:', error);
+              }
+            });
+          }
+        }
+      </script>
+    </body>
+  `;
+}
+
+function renderPage(
+  data: TemplateData,
+  children: TemplateResult
+): TemplateResult {
   return html`
     <!doctype html>
     <html>
@@ -529,114 +657,15 @@ export function renderTemplate(data: TemplateData): TemplateResult {
           }
         </style>
       </head>
-      <body>
-        <div class="container">
-          <div class="left-column"></div>
-          <div class="center-column">
-            <div class="header">
-              <div class="nav-arrows-left">
-                <a
-                  href="${data.prevDateUrl}"
-                  class="nav-arrow left"
-                  title="Previous"
-                  >${backIcon()}</a
-                >
-                ${renderNextArrow(data.showNextArrow, data.nextDateUrl)}
-              </div>
-              <h1><a href="/" class="header-title">Daily Cat</a></h1>
-              <button
-                id="share-button"
-                class="share-button hidden"
-                title="Share this page"
-                type="button"
-              >
-                ${shareIcon()}
-              </button>
-            </div>
-            <div class="user-profile">
-              <div class="user-row">
-                <div style="display: flex; align-items: center; gap: 12px">
-                  <img src="${data.userProfileImage}" alt="User profile" />
-                  <div class="user-info">
-                    <div class="user-name">${data.userName}</div>
-                    <a href="${data.userProfileUrl}" class="user-username"
-                      >@${data.userUsername}</a
-                    >
-                  </div>
-                </div>
-                <div class="right-section">
-                  <div class="likes-count">
-                    <span>❤️</span>
-                    <span>${data.likesCount}</span>
-                  </div>
-                  <div class="tags">${renderTags(data.tags)}</div>
-                </div>
-              </div>
-            </div>
-            <div class="photo-container">
-              <a href="${data.linkUrl}">
-                <img
-                  class="cat-image"
-                  src="${data.imageUrl}"
-                  alt="${data.altDescription}"
-                />
-              </a>
-            </div>
-            <div class="footer">
-              <a
-                href="https://abrah.am"
-                target="_blank"
-                rel="noopener noreferrer"
-                >abrah.am</a
-              >
-              <span class="separator">•</span>
-              <a
-                href="https://github.com/abraham/daily-cat"
-                target="_blank"
-                rel="noopener noreferrer"
-                >Source</a
-              >
-              <span class="separator">•</span>
-              <a
-                href="https://unsplash.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                >Unsplash</a
-              >
-              <span class="separator">•</span>
-              <a
-                href="https://undraw.co/"
-                target="_blank"
-                rel="noopener noreferrer"
-                >unDraw</a
-              >
-            </div>
-          </div>
-          <div class="right-column"></div>
-        </div>
-        <script>
-          // Check if Web Share API is supported and show share button
-          if (navigator.share) {
-            const shareButton = document.getElementById('share-button');
-            if (shareButton) {
-              shareButton.classList.remove('hidden');
-
-              shareButton.addEventListener('click', async function () {
-                try {
-                  await navigator.share({
-                    title: 'Daily Cat',
-                    text: 'Check out this adorable cat photo from Daily Cat!',
-                    url: window.location.href,
-                  });
-                } catch (error) {
-                  // User cancelled or error occurred
-                  console.log('Error sharing:', error);
-                }
-              });
-            }
-          }
-        </script>
-      </body>
+      ${renderBody(data, children)}
     </html>
   `;
+}
+
+function renderPhotoPageContent(data: TemplateData): TemplateResult {
+  return html`${renderUserProfile(data)} ${renderPhoto(data)}`;
+}
+
+export function renderPhotoPage(data: TemplateData): TemplateResult {
+  return renderPage(data, renderPhotoPageContent(data));
 }

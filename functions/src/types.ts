@@ -1,5 +1,7 @@
 // Unsplash API response types
-export interface UnsplashPhoto {
+
+// Base photo interface for search results (subset of full photo data)
+export interface UnsplashSearchPhoto {
   id: string;
   slug: string | null;
   alternative_slugs: Record<string, string>;
@@ -74,6 +76,10 @@ export interface UnsplashPhoto {
       paypal_email: string | null;
     };
   };
+}
+
+// Random photo interface (has some additional fields but not all)
+export interface UnsplashRandomPhoto extends UnsplashSearchPhoto {
   exif: {
     make: string | null;
     model: string | null;
@@ -92,6 +98,12 @@ export interface UnsplashPhoto {
       longitude: number | null;
     };
   };
+  views: number;
+  downloads: number;
+}
+
+// Full photo interface with all details (for individual photo endpoint)
+export interface UnsplashPhoto extends UnsplashRandomPhoto {
   meta: {
     index: boolean;
   };
@@ -100,11 +112,34 @@ export interface UnsplashPhoto {
     type: string;
     title: string;
   }>;
-  views: number;
-  downloads: number;
   topics: any[];
 }
 
+export interface UnsplashSearch {
+  total: number;
+  total_pages: number;
+  results: UnsplashSearchPhoto[];
+}
+
+export type UnsplashRandom = UnsplashRandomPhoto[];
+
 export interface CatApiOptions {
   clientId: string;
+}
+
+export interface DayRecord {
+  id: string; // ISO date string (YYYY-MM-DD)
+  photo: UnsplashPhoto | null;
+  status: 'created' | 'processing' | 'completed';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface NewDayRecord extends DayRecord {
+  photo: null;
+  status: 'created';
+}
+export interface CompletedDayRecord extends DayRecord {
+  photo: UnsplashPhoto;
+  status: 'completed';
 }

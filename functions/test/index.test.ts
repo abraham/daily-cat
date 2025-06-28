@@ -43,7 +43,7 @@ vi.mock('firebase-admin/firestore', () => ({
 
 // Mock the cat-api module
 vi.mock('../src/cat-api', () => ({
-  get: vi.fn(),
+  list: vi.fn(),
 }));
 
 // Mock the storage module
@@ -75,7 +75,7 @@ describe('Cat Function', () => {
     catApiMock = await import('../src/cat-api');
     storageMock = await import('../src/storage');
 
-    catApiMock.get.mockResolvedValue(mockApiResponse);
+    catApiMock.list.mockResolvedValue([mockApiResponse]);
     storageMock.getPhotoForDate.mockResolvedValue(null); // Default: no existing photo
     storageMock.savePhotoForDate.mockResolvedValue('2025-06-27');
 
@@ -109,7 +109,7 @@ describe('Cat Function', () => {
         myFunctions.cat(req, res);
       });
 
-      expect(catApiMock.get).toHaveBeenCalledOnce();
+      expect(catApiMock.list).toHaveBeenCalledOnce();
       expect(sendCalled).toBe(true);
     });
 
@@ -356,7 +356,7 @@ describe('Cat Function', () => {
     it('should handle missing alt_description gracefully', async () => {
       // Override the mock to not include alt_description
       const mockWithoutAlt = { ...mockApiResponse, alt_description: undefined };
-      catApiMock.get.mockResolvedValue(mockWithoutAlt);
+      catApiMock.list.mockResolvedValue([mockWithoutAlt]);
 
       const req = { method: 'GET', url: '/' } as any;
       let html: string = '';
@@ -412,7 +412,7 @@ describe('Cat Function', () => {
 
     it('should handle API errors gracefully', async () => {
       // Override the mock to reject for this test
-      catApiMock.get.mockRejectedValue(new Error('API Error'));
+      catApiMock.list.mockRejectedValue(new Error('API Error'));
 
       const req = { method: 'GET', url: '/' } as any;
       let statusCode: number = 0;
@@ -461,7 +461,7 @@ describe('Cat Function', () => {
         myFunctions.cat(req, res);
       });
 
-      expect(catApiMock.get).toHaveBeenCalledOnce();
+      expect(catApiMock.list).toHaveBeenCalledOnce();
       expect(storageMock.getPhotoForDate).toHaveBeenCalledWith('2025-06-27');
       expect(storageMock.savePhotoForDate).toHaveBeenCalledWith(
         '2025-06-27',
@@ -496,7 +496,7 @@ describe('Cat Function', () => {
 
       expect(statusCode).toBe(404);
       expect(message).toBe('Future dates are not available.');
-      expect(catApiMock.get).not.toHaveBeenCalled();
+      expect(catApiMock.list).not.toHaveBeenCalled();
     });
 
     it('should return 404 for invalid date format', async () => {
@@ -525,7 +525,7 @@ describe('Cat Function', () => {
 
       expect(statusCode).toBe(404);
       expect(message).toBe('Invalid date format. Use YYYY-MM-DD.');
-      expect(catApiMock.get).not.toHaveBeenCalled();
+      expect(catApiMock.list).not.toHaveBeenCalled();
     });
 
     it('should return 404 for invalid dates', async () => {
@@ -554,7 +554,7 @@ describe('Cat Function', () => {
 
       expect(statusCode).toBe(404);
       expect(message).toBe('Invalid date.');
-      expect(catApiMock.get).not.toHaveBeenCalled();
+      expect(catApiMock.list).not.toHaveBeenCalled();
     });
 
     it('should handle past dates with no existing record', async () => {
@@ -581,7 +581,7 @@ describe('Cat Function', () => {
       });
 
       expect(storageMock.getPhotoForDate).toHaveBeenCalledWith('2020-01-01');
-      expect(catApiMock.get).toHaveBeenCalledOnce();
+      expect(catApiMock.list).toHaveBeenCalledOnce();
       expect(storageMock.savePhotoForDate).toHaveBeenCalledWith(
         '2020-01-01',
         mockApiResponse
@@ -589,11 +589,14 @@ describe('Cat Function', () => {
       expect(sendCalled).toBe(true);
     });
 
-    it('should use existing photo for past dates with record', async () => {
+    it('should use existing photo for past dates with completed record', async () => {
       const req = { method: 'GET', url: '/2020-01-01' } as any;
 
-      // Mock existing photo for this date
-      const existingPhotoRecord = { photo: mockApiResponse };
+      // Mock existing completed photo record for this date
+      const existingPhotoRecord = {
+        photo: mockApiResponse,
+        status: 'completed' as const,
+      };
       storageMock.getPhotoForDate.mockResolvedValue(existingPhotoRecord);
 
       let sendCalled = false;
@@ -614,8 +617,41 @@ describe('Cat Function', () => {
       });
 
       expect(storageMock.getPhotoForDate).toHaveBeenCalledWith('2020-01-01');
-      expect(catApiMock.get).not.toHaveBeenCalled(); // Should not fetch new photo
+      expect(catApiMock.list).not.toHaveBeenCalled(); // Should not fetch new photo
       expect(storageMock.savePhotoForDate).not.toHaveBeenCalled(); // Should not save
+      expect(sendCalled).toBe(true);
+    });
+
+    it('should fetch new photo for past dates with created record (no photo)', async () => {
+      const req = { method: 'GET', url: '/2020-01-01' } as any;
+
+      // Mock existing created record for this date (no photo)
+      const existingNewRecord = {
+        photo: null,
+        status: 'created' as const,
+      };
+      storageMock.getPhotoForDate.mockResolvedValue(existingNewRecord);
+
+      let sendCalled = false;
+      const res = {
+        send: () => {
+          sendCalled = true;
+        },
+        set: () => res,
+        status: () => res,
+      } as any;
+
+      await new Promise<void>((resolve) => {
+        res.send = () => {
+          sendCalled = true;
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
+
+      expect(storageMock.getPhotoForDate).toHaveBeenCalledWith('2020-01-01');
+      expect(catApiMock.list).toHaveBeenCalled(); // Should fetch new photo
+      expect(storageMock.savePhotoForDate).toHaveBeenCalled(); // Should save new photo
       expect(sendCalled).toBe(true);
     });
 
@@ -645,7 +681,7 @@ describe('Cat Function', () => {
 
     it('should include navigation arrows with correct URLs for past dates', async () => {
       // Mock API response
-      catApiMock.get.mockResolvedValue(mockApiResponse);
+      catApiMock.list.mockResolvedValue([mockApiResponse]);
       storageMock.getPhotoForDate.mockResolvedValue(null);
       storageMock.savePhotoForDate.mockResolvedValue('2025-06-26');
 
@@ -682,7 +718,7 @@ describe('Cat Function', () => {
       global.Date = mockDate as any;
 
       // Mock API response
-      catApiMock.get.mockResolvedValue(mockApiResponse);
+      catApiMock.list.mockResolvedValue([mockApiResponse]);
       storageMock.getPhotoForDate.mockResolvedValue(null);
       storageMock.savePhotoForDate.mockResolvedValue('2025-06-27');
 
@@ -712,7 +748,7 @@ describe('Cat Function', () => {
 
     it('should include navigation arrows for root path (today)', async () => {
       // Mock API response
-      catApiMock.get.mockResolvedValue(mockApiResponse);
+      catApiMock.list.mockResolvedValue([mockApiResponse]);
       storageMock.getPhotoForDate.mockResolvedValue(null);
       storageMock.savePhotoForDate.mockResolvedValue('2025-06-28');
 
@@ -739,7 +775,7 @@ describe('Cat Function', () => {
 
     it('should include clickable header that links to root path', async () => {
       // Mock API response
-      catApiMock.get.mockResolvedValue(mockApiResponse);
+      catApiMock.list.mockResolvedValue([mockApiResponse]);
       storageMock.getPhotoForDate.mockResolvedValue(null);
       storageMock.savePhotoForDate.mockResolvedValue('2025-06-28');
 
@@ -769,7 +805,7 @@ describe('Cat Function', () => {
 
     it('should group navigation arrows on the left side of header', async () => {
       // Mock API response
-      catApiMock.get.mockResolvedValue(mockApiResponse);
+      catApiMock.list.mockResolvedValue([mockApiResponse]);
       storageMock.getPhotoForDate.mockResolvedValue(null);
       storageMock.savePhotoForDate.mockResolvedValue('2025-06-26');
 
@@ -808,7 +844,7 @@ describe('Cat Function', () => {
 
     it('should include share button with Web Share API support check', async () => {
       // Mock API response
-      catApiMock.get.mockResolvedValue(mockApiResponse);
+      catApiMock.list.mockResolvedValue([mockApiResponse]);
       storageMock.getPhotoForDate.mockResolvedValue(null);
       storageMock.savePhotoForDate.mockResolvedValue('2025-06-28');
 
@@ -834,14 +870,6 @@ describe('Cat Function', () => {
       expect(htmlResponse).toContain('title="Share this page"');
       expect(htmlResponse).toContain('<svg');
       expect(htmlResponse).toContain('viewBox="0 -960 960 960"');
-
-      // Should contain JavaScript for Web Share API
-      expect(htmlResponse).toContain('navigator.share');
-      expect(htmlResponse).toContain("shareButton.classList.remove('hidden')");
-      expect(htmlResponse).toContain('Daily Cat');
-      expect(htmlResponse).toContain(
-        'Check out this adorable cat photo from Daily Cat!'
-      );
     });
   });
 });

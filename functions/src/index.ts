@@ -7,14 +7,14 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
+import { render } from '@lit-labs/ssr';
 import * as logger from 'firebase-functions/logger';
 import { onRequest } from 'firebase-functions/v2/https';
-import { render } from '@lit-labs/ssr';
 import * as catAPI from './cat-api';
-import * as storage from './storage';
-import { UnsplashPhoto } from './types';
 import { calculateNavigationUrls } from './navigation';
-import { renderTemplate } from './template';
+import * as storage from './storage';
+import { renderPhotoPage } from './template';
+import { UnsplashPhoto } from './types';
 
 const API_KEY = process.env.UNSPLASH_CLIENT_ID;
 
@@ -72,13 +72,14 @@ export const cat = onRequest(
       let dayRecord = await storage.getPhotoForDate(requestedDate);
       let cat: UnsplashPhoto;
 
-      if (dayRecord) {
-        // Use existing photo for the date
+      if (dayRecord && dayRecord.status === 'completed') {
+        // Use existing photo for completed records
         cat = dayRecord.photo;
         logger.log('Using existing cat photo for date:', requestedDate);
       } else {
         // Fetch new photo from API and save it for any date (past or present)
-        cat = await catAPI.get({ clientId: API_KEY });
+        // This handles null, NewDayRecord (created), or processing states
+        cat = (await catAPI.list({ clientId: API_KEY }))[0];
         await storage.savePhotoForDate(requestedDate, cat);
         logger.log('Fetched and saved new cat photo for date:', requestedDate);
       }
@@ -93,7 +94,7 @@ export const cat = onRequest(
         calculateNavigationUrls(requestedDate);
 
       // Render template using lit-html
-      const templateResult = renderTemplate({
+      const templateResult = renderPhotoPage({
         linkUrl: cat.links.html,
         imageUrl: cat.urls.full,
         userProfileImage: cat.user.profile_image.medium,

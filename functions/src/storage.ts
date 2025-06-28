@@ -5,7 +5,12 @@ import {
   DocumentData,
   QueryDocumentSnapshot,
 } from 'firebase-admin/firestore';
-import { UnsplashPhoto } from './types';
+import {
+  UnsplashPhoto,
+  DayRecord,
+  NewDayRecord,
+  CompletedDayRecord,
+} from './types';
 
 // Initialize Firebase Admin if not already initialized
 let app: App;
@@ -18,66 +23,71 @@ if (getApps().length === 0) {
 const db: Firestore = getFirestore(app);
 const COLLECTION_NAME = 'days';
 
-export interface DayRecord {
-  id: string; // ISO date string (YYYY-MM-DD) - same as date, used as document ID
-  date: string; // ISO date string (YYYY-MM-DD)
-  photo: UnsplashPhoto;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
 /**
  * Save an UnsplashPhoto to the 'days' collection for a specific date
- * @param date - ISO date string (YYYY-MM-DD)
+ * @param id - ISO date string (YYYY-MM-DD)
  * @param photo - UnsplashPhoto object to store
  * @returns Promise<string> - Document ID of the saved record (same as date)
  */
 export async function savePhotoForDate(
-  date: string,
+  id: string,
   photo: UnsplashPhoto
 ): Promise<string> {
   const now = new Date();
   const dayRecord: Omit<DayRecord, 'id'> = {
-    date,
+    status: 'completed',
     photo,
     createdAt: now,
     updatedAt: now,
   };
 
-  await db.collection(COLLECTION_NAME).doc(date).set(dayRecord);
-  return date;
+  await db.collection(COLLECTION_NAME).doc(id).set(dayRecord);
+  return id;
 }
 
 /**
  * Get the UnsplashPhoto for a specific date
- * @param date - ISO date string (YYYY-MM-DD)
- * @returns Promise<DayRecord | null> - The day record or null if not found
+ * @param id - ISO date string (YYYY-MM-DD)
+ * @returns Promise<NewDayRecord | CompletedDayRecord | null> - The day record or null if not found
  */
-export async function getPhotoForDate(date: string): Promise<DayRecord | null> {
-  const doc = await db.collection(COLLECTION_NAME).doc(date).get();
+export async function getPhotoForDate(
+  id: string
+): Promise<NewDayRecord | CompletedDayRecord | null> {
+  const doc = await db.collection(COLLECTION_NAME).doc(id).get();
 
   if (!doc.exists) {
     return null;
   }
 
-  return {
+  const data = {
     id: doc.id,
     ...doc.data(),
   } as DayRecord;
+
+  // Return the appropriate type based on status
+  if (data.status === 'completed' && data.photo) {
+    return data as CompletedDayRecord;
+  } else if (data.status === 'created' && data.photo === null) {
+    return data as NewDayRecord;
+  } else {
+    // For 'processing' status or inconsistent data, return null
+    // This ensures type safety by not returning ambiguous states
+    return null;
+  }
 }
 
 /**
  * Update an existing day record with a new photo
- * @param date - ISO date string (YYYY-MM-DD) - used as document ID
+ * @param id - ISO date string (YYYY-MM-DD) - used as document ID
  * @param photo - New UnsplashPhoto object
  * @returns Promise<void>
  */
 export async function updatePhotoForDay(
-  date: string,
+  id: string,
   photo: UnsplashPhoto
 ): Promise<void> {
   const now = new Date();
-  await db.collection(COLLECTION_NAME).doc(date).update({
+  await db.collection(COLLECTION_NAME).doc(id).update({
     photo,
     updatedAt: now,
   });
@@ -95,9 +105,9 @@ export async function getPhotosForDateRange(
 ): Promise<DayRecord[]> {
   const snapshot = await db
     .collection(COLLECTION_NAME)
-    .where('date', '>=', startDate)
-    .where('date', '<=', endDate)
-    .orderBy('date', 'asc')
+    .where('__name__', '>=', startDate)
+    .where('__name__', '<=', endDate)
+    .orderBy('__name__', 'asc')
     .get();
 
   return snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
@@ -108,20 +118,20 @@ export async function getPhotosForDateRange(
 
 /**
  * Delete a day record
- * @param date - ISO date string (YYYY-MM-DD) - used as document ID
+ * @param id - ISO date string (YYYY-MM-DD) - used as document ID
  * @returns Promise<void>
  */
-export async function deleteDayRecord(date: string): Promise<void> {
-  await db.collection(COLLECTION_NAME).doc(date).delete();
+export async function deleteDayRecord(id: string): Promise<void> {
+  await db.collection(COLLECTION_NAME).doc(id).delete();
 }
 
 /**
  * Check if a photo exists for a specific date
- * @param date - ISO date string (YYYY-MM-DD)
+ * @param id - ISO date string (YYYY-MM-DD)
  * @returns Promise<boolean> - True if a photo exists for the date
  */
-export async function hasPhotoForDate(date: string): Promise<boolean> {
-  const doc = await db.collection(COLLECTION_NAME).doc(date).get();
+export async function hasPhotoForDate(id: string): Promise<boolean> {
+  const doc = await db.collection(COLLECTION_NAME).doc(id).get();
   return doc.exists;
 }
 
@@ -132,7 +142,7 @@ export async function hasPhotoForDate(date: string): Promise<boolean> {
 export async function getMostRecentPhoto(): Promise<DayRecord | null> {
   const snapshot = await db
     .collection(COLLECTION_NAME)
-    .orderBy('date', 'desc')
+    .orderBy('__name__', 'desc')
     .limit(1)
     .get();
 
