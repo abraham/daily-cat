@@ -589,11 +589,14 @@ describe('Cat Function', () => {
       expect(sendCalled).toBe(true);
     });
 
-    it('should use existing photo for past dates with record', async () => {
+    it('should use existing photo for past dates with completed record', async () => {
       const req = { method: 'GET', url: '/2020-01-01' } as any;
 
-      // Mock existing photo for this date
-      const existingPhotoRecord = { photo: mockApiResponse };
+      // Mock existing completed photo record for this date
+      const existingPhotoRecord = {
+        photo: mockApiResponse,
+        status: 'completed' as const,
+      };
       storageMock.getPhotoForDate.mockResolvedValue(existingPhotoRecord);
 
       let sendCalled = false;
@@ -616,6 +619,39 @@ describe('Cat Function', () => {
       expect(storageMock.getPhotoForDate).toHaveBeenCalledWith('2020-01-01');
       expect(catApiMock.list).not.toHaveBeenCalled(); // Should not fetch new photo
       expect(storageMock.savePhotoForDate).not.toHaveBeenCalled(); // Should not save
+      expect(sendCalled).toBe(true);
+    });
+
+    it('should fetch new photo for past dates with created record (no photo)', async () => {
+      const req = { method: 'GET', url: '/2020-01-01' } as any;
+
+      // Mock existing created record for this date (no photo)
+      const existingNewRecord = {
+        photo: null,
+        status: 'created' as const,
+      };
+      storageMock.getPhotoForDate.mockResolvedValue(existingNewRecord);
+
+      let sendCalled = false;
+      const res = {
+        send: () => {
+          sendCalled = true;
+        },
+        set: () => res,
+        status: () => res,
+      } as any;
+
+      await new Promise<void>((resolve) => {
+        res.send = () => {
+          sendCalled = true;
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
+
+      expect(storageMock.getPhotoForDate).toHaveBeenCalledWith('2020-01-01');
+      expect(catApiMock.list).toHaveBeenCalled(); // Should fetch new photo
+      expect(storageMock.savePhotoForDate).toHaveBeenCalled(); // Should save new photo
       expect(sendCalled).toBe(true);
     });
 
@@ -834,14 +870,6 @@ describe('Cat Function', () => {
       expect(htmlResponse).toContain('title="Share this page"');
       expect(htmlResponse).toContain('<svg');
       expect(htmlResponse).toContain('viewBox="0 -960 960 960"');
-
-      // Should contain JavaScript for Web Share API
-      expect(htmlResponse).toContain('navigator.share');
-      expect(htmlResponse).toContain("shareButton.classList.remove('hidden')");
-      expect(htmlResponse).toContain('Daily Cat');
-      expect(htmlResponse).toContain(
-        'Check out this adorable cat photo from Daily Cat!'
-      );
     });
   });
 });

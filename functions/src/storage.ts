@@ -5,7 +5,12 @@ import {
   DocumentData,
   QueryDocumentSnapshot,
 } from 'firebase-admin/firestore';
-import { UnsplashPhoto, DayRecord } from './types';
+import {
+  UnsplashPhoto,
+  DayRecord,
+  NewDayRecord,
+  CompletedDayRecord,
+} from './types';
 
 // Initialize Firebase Admin if not already initialized
 let app: App;
@@ -43,19 +48,32 @@ export async function savePhotoForDate(
 /**
  * Get the UnsplashPhoto for a specific date
  * @param id - ISO date string (YYYY-MM-DD)
- * @returns Promise<DayRecord | null> - The day record or null if not found
+ * @returns Promise<NewDayRecord | CompletedDayRecord | null> - The day record or null if not found
  */
-export async function getPhotoForDate(id: string): Promise<DayRecord | null> {
+export async function getPhotoForDate(
+  id: string
+): Promise<NewDayRecord | CompletedDayRecord | null> {
   const doc = await db.collection(COLLECTION_NAME).doc(id).get();
 
   if (!doc.exists) {
     return null;
   }
 
-  return {
+  const data = {
     id: doc.id,
     ...doc.data(),
   } as DayRecord;
+
+  // Return the appropriate type based on status
+  if (data.status === 'completed' && data.photo) {
+    return data as CompletedDayRecord;
+  } else if (data.status === 'created' && data.photo === null) {
+    return data as NewDayRecord;
+  } else {
+    // For 'processing' status or inconsistent data, return null
+    // This ensures type safety by not returning ambiguous states
+    return null;
+  }
 }
 
 /**

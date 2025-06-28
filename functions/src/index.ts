@@ -72,12 +72,13 @@ export const cat = onRequest(
       let dayRecord = await storage.getPhotoForDate(requestedDate);
       let cat: UnsplashPhoto;
 
-      if (dayRecord) {
-        // Use existing photo for the date
+      if (dayRecord && dayRecord.status === 'completed') {
+        // Use existing photo for completed records
         cat = dayRecord.photo;
         logger.log('Using existing cat photo for date:', requestedDate);
       } else {
         // Fetch new photo from API and save it for any date (past or present)
+        // This handles null, NewDayRecord (created), or processing states
         cat = (await catAPI.list({ clientId: API_KEY }))[0];
         await storage.savePhotoForDate(requestedDate, cat);
         logger.log('Fetched and saved new cat photo for date:', requestedDate);

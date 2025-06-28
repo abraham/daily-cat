@@ -1,8 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { UnsplashPhoto } from '../src/types';
-import { DayRecord } from '../src/storage';
+import {
+  UnsplashPhoto,
+  DayRecord,
+  NewDayRecord,
+  CompletedDayRecord,
+} from '../src/types';
 
 // Load the photo fixture for testing
 const photoFixturePath = path.join(__dirname, 'fixtures', 'photo.json');
@@ -67,7 +71,7 @@ describe('Storage Functions', () => {
   });
 
   describe('savePhotoForDate', () => {
-    it('should save a photo for a specific date', async () => {
+    it('should save a photo for a specific date with completed status', async () => {
       const testDate = '2025-06-27';
 
       const result = await storage.savePhotoForDate(testDate, mockPhoto);
@@ -75,6 +79,7 @@ describe('Storage Functions', () => {
       expect(mockFirestore.collection).toHaveBeenCalledWith('days');
       expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
       expect(mockDoc.set).toHaveBeenCalledWith({
+        status: 'completed',
         photo: mockPhoto,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
@@ -109,11 +114,11 @@ describe('Storage Functions', () => {
   });
 
   describe('getPhotoForDate', () => {
-    it('should return a day record when document exists', async () => {
+    it('should return a CompletedDayRecord when document exists with completed status and photo', async () => {
       const testDate = '2025-06-27';
       const mockData = {
-        date: testDate,
         photo: mockPhoto,
+        status: 'completed' as const,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -132,6 +137,57 @@ describe('Storage Functions', () => {
         id: testDate,
         ...mockData,
       });
+      expect(result?.status).toBe('completed');
+      expect(result?.photo).toBe(mockPhoto);
+    });
+
+    it('should return a NewDayRecord when document exists with created status and null photo', async () => {
+      const testDate = '2025-06-27';
+      const mockData = {
+        photo: null,
+        status: 'created' as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockDoc.exists = true;
+      mockDoc.id = testDate;
+      mockDoc.data.mockReturnValue(mockData);
+      mockDoc.get.mockResolvedValue(mockDoc);
+
+      const result = await storage.getPhotoForDate(testDate);
+
+      expect(mockFirestore.collection).toHaveBeenCalledWith('days');
+      expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
+      expect(mockDoc.get).toHaveBeenCalled();
+      expect(result).toEqual({
+        id: testDate,
+        ...mockData,
+      });
+      expect(result?.status).toBe('created');
+      expect(result?.photo).toBeNull();
+    });
+
+    it('should return null when document has processing status', async () => {
+      const testDate = '2025-06-27';
+      const mockData = {
+        photo: null,
+        status: 'processing' as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockDoc.exists = true;
+      mockDoc.id = testDate;
+      mockDoc.data.mockReturnValue(mockData);
+      mockDoc.get.mockResolvedValue(mockDoc);
+
+      const result = await storage.getPhotoForDate(testDate);
+
+      expect(mockFirestore.collection).toHaveBeenCalledWith('days');
+      expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
+      expect(mockDoc.get).toHaveBeenCalled();
+      expect(result).toBeNull();
     });
 
     it('should return null when document does not exist', async () => {
