@@ -7,18 +7,18 @@ export default defineConfig({
       entry: resolve(__dirname, 'src/index.ts'),
       name: 'DailyCat',
       fileName: 'index',
-      formats: ['umd']
+      formats: ['umd'],
     },
     outDir: 'public',
     rollupOptions: {
       output: {
-        entryFileNames: 'index.js'
-      }
-    }
+        entryFileNames: 'index.js',
+      },
+    },
   },
   publicDir: 'assets',
   root: '.',
   server: {
-    port: 3000
-  }
+    port: 3000,
+  },
 });

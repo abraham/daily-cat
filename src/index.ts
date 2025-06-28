@@ -1,1 +1,1 @@
-console.log("Daily Cat app initialized");
+console.log('Daily Cat app initialized');
