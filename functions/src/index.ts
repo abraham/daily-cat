@@ -14,6 +14,7 @@ import { join } from 'path';
 import * as catAPI from './cat-api';
 import * as storage from './storage';
 import { UnsplashPhoto } from './types';
+import { calculateNavigationUrls } from './navigation';
 
 const API_KEY = process.env.UNSPLASH_CLIENT_ID;
 
@@ -99,6 +100,10 @@ export const cat = onRequest(
         )
         .join('');
 
+      // Calculate navigation dates
+      const { prevDateUrl, nextDateUrl, nextArrowClass } =
+        calculateNavigationUrls(requestedDate);
+
       const html = htmlTemplate
         .replace('{{LINK_URL}}', cat.links.html)
         .replace('{{IMAGE_URL}}', cat.urls.full)
@@ -108,7 +113,10 @@ export const cat = onRequest(
         .replace('{{USER_PROFILE_URL}}', cat.user.links.html)
         .replace('{{LIKES_COUNT}}', cat.likes.toLocaleString())
         .replace('{{ALT_DESCRIPTION}}', cat.alt_description || 'Cat photo')
-        .replace('{{TAGS}}', tagsHtml);
+        .replace('{{TAGS}}', tagsHtml)
+        .replace('{{PREV_DATE_URL}}', prevDateUrl)
+        .replace('{{NEXT_DATE_URL}}', nextDateUrl)
+        .replace('{{NEXT_ARROW_CLASS}}', nextArrowClass);
 
       response.set('Cache-Control', 'public, max-age=1, s-maxage=1');
       response.status(200);
