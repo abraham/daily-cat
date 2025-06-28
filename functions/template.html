@@ -365,6 +365,44 @@
         }
       }
 
+      /* Footer styles */
+      .footer {
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 10px 5px;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        font-size: 14px;
+        color: #666;
+      }
+
+      .footer a {
+        color: #007acc;
+        text-decoration: none;
+        transition: color 0.2s ease;
+        margin: 0 4px;
+      }
+
+      .footer a:hover {
+        color: #005599;
+        text-decoration: underline;
+      }
+
+      .footer a:not(:last-child)::after {
+        content: '•';
+        color: #ccc;
+        margin-left: 8px;
+        font-size: 12px;
+      }
+
+      @media (max-width: 768px) {
+        .footer {
+          padding: 10px 5px;
+          font-size: 13px;
+        }
+      }
+
       /* Handle safe areas for devices with notches */
       @supports (padding: max(0px)) {
         .header {
@@ -375,6 +413,11 @@
         .user-profile {
           padding-left: max(20px, env(safe-area-inset-left));
           padding-right: max(20px, env(safe-area-inset-right));
+        }
+        .footer {
+          padding-left: max(20px, env(safe-area-inset-left));
+          padding-right: max(20px, env(safe-area-inset-right));
+          padding-bottom: max(15px, env(safe-area-inset-bottom));
         }
         @media (max-width: 768px) {
           .header {
@@ -440,6 +483,26 @@
               alt="{{ALT_DESCRIPTION}}"
             />
           </a>
+        </div>
+        <div class="footer">
+          <a href="https://abrah.am" target="_blank" rel="noopener noreferrer"
+            >abrah.am</a
+          >
+          <a
+            href="https://github.com/abraham/daily-cat"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Source</a
+          >
+          <a
+            href="https://unsplash.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Unsplash</a
+          >
+          <a href="https://undraw.co/" target="_blank" rel="noopener noreferrer"
+            >unDraw</a
+          >
         </div>
       </div>
       <div class="right-column"></div>
