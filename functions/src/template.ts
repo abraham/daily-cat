@@ -736,7 +736,34 @@ function renderLoadingAnimation(): TemplateResult {
 }
 
 function renderProcessingPageContent(): TemplateResult {
-  return renderLoadingAnimation();
+  return html`
+    ${renderLoadingAnimation()}
+    <script>
+      (function () {
+        // Get current URL and parse attempt parameter
+        const url = new URL(window.location.href);
+        const currentAttempt = parseInt(url.searchParams.get('attempt') || '0');
+
+        // Only refresh if we haven't exceeded max attempts (10)
+        if (currentAttempt < 10) {
+          setTimeout(function () {
+            // Increment attempt and add to URL
+            url.searchParams.set('attempt', (currentAttempt + 1).toString());
+            window.location.href = url.toString();
+          }, 2000); // 2 seconds delay
+        } else {
+          // After 10 attempts, show a message that processing is taking longer
+          setTimeout(function () {
+            const loadingText = document.querySelector('.loading-text');
+            if (loadingText) {
+              loadingText.innerHTML =
+                'Processing is taking longer than expected. You can manually refresh this page or try again later.';
+            }
+          }, 500);
+        }
+      })();
+    </script>
+  `;
 }
 
 export function renderProcessingPage(data: TemplateData): TemplateResult {
