@@ -41,26 +41,28 @@ vi.mock('firebase-admin/firestore', () => ({
   getFirestore: vi.fn(() => mockFirestore),
 }));
 
-// Mock the cat-api module
-vi.mock('../src/cat-api', () => ({
-  list: vi.fn(),
-}));
-
 // Mock the storage module
 vi.mock('../src/storage', () => ({
   getPhotoForDate: vi.fn(),
-  savePhotoForDate: vi.fn(),
+}));
+
+// Mock the template module
+vi.mock('../src/template', () => ({
+  renderPhotoPage: vi.fn(),
+  renderProcessingPage: vi.fn(),
+}));
+
+// Mock lit-html SSR
+vi.mock('@lit-labs/ssr', () => ({
+  render: vi.fn().mockReturnValue(['mocked html']),
 }));
 
 describe('Cat Function', () => {
-  let catApiMock: any;
   let storageMock: any;
+  let templateMock: any;
   let myFunctions: any;
 
   beforeEach(async () => {
-    // Set up the API key environment variable for testing
-    process.env.UNSPLASH_CLIENT_ID = 'test_client_id';
-
     // Reset all mocks
     vi.clearAllMocks();
 
@@ -72,33 +74,45 @@ describe('Cat Function', () => {
     vi.resetModules();
 
     // Get the mocked modules after reset
-    catApiMock = await import('../src/cat-api');
     storageMock = await import('../src/storage');
+    templateMock = await import('../src/template');
 
-    catApiMock.list.mockResolvedValue([mockApiResponse]);
     storageMock.getPhotoForDate.mockResolvedValue(null); // Default: no existing photo
-    storageMock.savePhotoForDate.mockResolvedValue('2025-06-27');
+    templateMock.renderPhotoPage.mockReturnValue('mocked photo page html');
+    templateMock.renderProcessingPage.mockReturnValue(
+      'mocked processing page html'
+    );
 
     // Import the functions after mocks are set up
     myFunctions = await import('../src/index');
   });
 
   afterEach(() => {
-    delete process.env.UNSPLASH_CLIENT_ID;
     vi.clearAllMocks();
   });
 
   describe('cat function', () => {
-    it('should handle GET requests for root path', async () => {
+    it('should handle GET requests for root path with completed record', async () => {
+      // Mock a completed record
+      const completedRecord = {
+        status: 'completed',
+        photo: mockApiResponse,
+      };
+      storageMock.getPhotoForDate.mockResolvedValue(completedRecord);
+
       const req = { method: 'GET', url: '/' } as any;
 
       let sendCalled = false;
+      let statusCode = 0;
       const res = {
         send: () => {
           sendCalled = true;
         },
         set: () => res,
-        status: () => res,
+        status: (code: number) => {
+          statusCode = code;
+          return res;
+        },
       } as any;
 
       await new Promise<void>((resolve) => {
@@ -109,11 +123,126 @@ describe('Cat Function', () => {
         myFunctions.cat(req, res);
       });
 
-      expect(catApiMock.list).toHaveBeenCalledOnce();
       expect(sendCalled).toBe(true);
+      expect(statusCode).toBe(200);
+      expect(templateMock.renderPhotoPage).toHaveBeenCalledOnce();
+      expect(templateMock.renderProcessingPage).not.toHaveBeenCalled();
+      expect(storageMock.getPhotoForDate).toHaveBeenCalledWith(
+        expect.any(String)
+      );
     });
 
-    it('should return 403 for non-GET requests', async () => {
+    it('should handle GET requests for root path with no completed record', async () => {
+      // Mock no record found
+      storageMock.getPhotoForDate.mockResolvedValue(null);
+
+      const req = { method: 'GET', url: '/' } as any;
+
+      let sendCalled = false;
+      let statusCode = 0;
+      const res = {
+        send: () => {
+          sendCalled = true;
+        },
+        set: () => res,
+        status: (code: number) => {
+          statusCode = code;
+          return res;
+        },
+      } as any;
+
+      await new Promise<void>((resolve) => {
+        res.send = () => {
+          sendCalled = true;
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
+
+      expect(sendCalled).toBe(true);
+      expect(statusCode).toBe(200);
+      expect(templateMock.renderProcessingPage).toHaveBeenCalledOnce();
+      expect(templateMock.renderPhotoPage).not.toHaveBeenCalled();
+      expect(storageMock.getPhotoForDate).toHaveBeenCalledWith(
+        expect.any(String)
+      );
+    });
+
+    it('should handle GET requests for specific date with completed record', async () => {
+      const completedRecord = {
+        status: 'completed',
+        photo: mockApiResponse,
+      };
+      storageMock.getPhotoForDate.mockResolvedValue(completedRecord);
+
+      const req = { method: 'GET', url: '/2025-06-27' } as any;
+
+      let sendCalled = false;
+      let statusCode = 0;
+      const res = {
+        send: () => {
+          sendCalled = true;
+        },
+        set: () => res,
+        status: (code: number) => {
+          statusCode = code;
+          return res;
+        },
+      } as any;
+
+      await new Promise<void>((resolve) => {
+        res.send = () => {
+          sendCalled = true;
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
+
+      expect(sendCalled).toBe(true);
+      expect(statusCode).toBe(200);
+      expect(templateMock.renderPhotoPage).toHaveBeenCalledOnce();
+      expect(templateMock.renderProcessingPage).not.toHaveBeenCalled();
+      expect(storageMock.getPhotoForDate).toHaveBeenCalledWith('2025-06-27');
+    });
+
+    it('should handle GET requests for specific date with processing record', async () => {
+      const processingRecord = {
+        status: 'processing',
+        photo: null,
+      };
+      storageMock.getPhotoForDate.mockResolvedValue(processingRecord);
+
+      const req = { method: 'GET', url: '/2025-06-27' } as any;
+
+      let sendCalled = false;
+      let statusCode = 0;
+      const res = {
+        send: () => {
+          sendCalled = true;
+        },
+        set: () => res,
+        status: (code: number) => {
+          statusCode = code;
+          return res;
+        },
+      } as any;
+
+      await new Promise<void>((resolve) => {
+        res.send = () => {
+          sendCalled = true;
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
+
+      expect(sendCalled).toBe(true);
+      expect(statusCode).toBe(200);
+      expect(templateMock.renderProcessingPage).toHaveBeenCalledOnce();
+      expect(templateMock.renderPhotoPage).not.toHaveBeenCalled();
+      expect(storageMock.getPhotoForDate).toHaveBeenCalledWith('2025-06-27');
+    });
+
+    it('should reject non-GET requests', async () => {
       const req = { method: 'POST', url: '/' } as any;
       let statusCode: number = 0;
       let message: string = '';
@@ -122,7 +251,6 @@ describe('Cat Function', () => {
         send: (msg: string) => {
           message = msg;
         },
-        set: () => res,
         status: (code: number) => {
           statusCode = code;
           return res;
@@ -141,42 +269,13 @@ describe('Cat Function', () => {
       expect(message).toBe('Forbidden!');
     });
 
-    it('should return 500 when API key is not configured', async () => {
-      // Reset the environment variable for this test
-      delete process.env.UNSPLASH_CLIENT_ID;
+    it('should set caching headers for completed records', async () => {
+      const completedRecord = {
+        status: 'completed',
+        photo: mockApiResponse,
+      };
+      storageMock.getPhotoForDate.mockResolvedValue(completedRecord);
 
-      // Re-import the module without API key
-      vi.resetModules();
-      const myFunctionsNoKey = await import('../src/index');
-
-      const req = { method: 'GET', url: '/' } as any;
-      let statusCode: number = 0;
-      let message: string = '';
-
-      const res = {
-        send: (msg: string) => {
-          message = msg;
-        },
-        set: () => res,
-        status: (code: number) => {
-          statusCode = code;
-          return res;
-        },
-      } as any;
-
-      await new Promise<void>((resolve) => {
-        res.send = (msg: string) => {
-          message = msg;
-          resolve();
-        };
-        myFunctionsNoKey.cat(req, res);
-      });
-
-      expect(statusCode).toBe(500);
-      expect(message).toBe('API key not configured');
-    });
-
-    it('should set caching headers', async () => {
       const req = { method: 'GET', url: '/' } as any;
       let cacheKey: string = '';
       let cacheValue: string = '';
@@ -203,216 +302,37 @@ describe('Cat Function', () => {
       expect(cacheValue).toBe('public, max-age=1, s-maxage=1');
     });
 
-    it('should render valid HTML', async () => {
+    it('should set caching headers for processing pages', async () => {
+      storageMock.getPhotoForDate.mockResolvedValue(null);
+
       const req = { method: 'GET', url: '/' } as any;
-      let html: string = '';
+      let cacheKey: string = '';
+      let cacheValue: string = '';
 
       const res = {
-        send: (htmlContent: string) => {
-          html = htmlContent;
+        send: () => {},
+        set: (key: string, value: string) => {
+          cacheKey = key;
+          cacheValue = value;
         },
-        set: () => res,
         status: () => res,
       } as any;
 
       await new Promise<void>((resolve) => {
-        res.send = (htmlContent: string) => {
-          html = htmlContent;
+        res.set = (key: string, value: string) => {
+          cacheKey = key;
+          cacheValue = value;
           resolve();
         };
         myFunctions.cat(req, res);
       });
 
-      expect(html).toContain('<!doctype html>');
-      expect(html).toContain('<head>');
-      expect(html).toContain('</head>');
-      expect(html).toContain('<body>');
-      expect(html).toContain('</body>');
-      expect(html).toContain('</html>');
-      expect(html).toContain('<title>Daily Cat</title>');
+      expect(cacheKey).toBe('Cache-Control');
+      expect(cacheValue).toBe('public, max-age=1, s-maxage=1');
     });
 
-    it('should include cat image and link in HTML', async () => {
-      const req = { method: 'GET', url: '/' } as any;
-      let html: string = '';
-
-      const res = {
-        send: (htmlContent: string) => {
-          html = htmlContent;
-        },
-        set: () => res,
-        status: () => res,
-      } as any;
-
-      await new Promise<void>((resolve) => {
-        res.send = (htmlContent: string) => {
-          html = htmlContent;
-          resolve();
-        };
-        myFunctions.cat(req, res);
-      });
-
-      expect(html).toContain(`<a href="${mockApiResponse.links.html}">`);
-      expect(html).toContain('class="cat-image"');
-      expect(html).toContain(
-        `src="${mockApiResponse.urls.full.replace(/&/g, '&amp;')}"`
-      );
-      expect(html).toContain(
-        `alt="${mockApiResponse.alt_description.replace(/'/g, '&#39;')}"`
-      );
-    });
-
-    it('should include user profile information in HTML', async () => {
-      const req = { method: 'GET', url: '/' } as any;
-      let html: string = '';
-
-      const res = {
-        send: (htmlContent: string) => {
-          html = htmlContent;
-        },
-        set: () => res,
-        status: () => res,
-      } as any;
-
-      await new Promise<void>((resolve) => {
-        res.send = (htmlContent: string) => {
-          html = htmlContent;
-          resolve();
-        };
-        myFunctions.cat(req, res);
-      });
-
-      expect(html).toContain(
-        `src="${mockApiResponse.user.profile_image.medium.replace(/&/g, '&amp;')}"`
-      );
-      expect(html).toContain('alt="User profile"');
-      expect(html).toContain(mockApiResponse.user.name);
-      expect(html).toContain(`href="${mockApiResponse.user.links.html}"`);
-      expect(html).toContain('class="user-username"');
-      expect(html).toContain(`@${mockApiResponse.user.username}`);
-    });
-
-    it('should include likes count with heart emoji', async () => {
-      const req = { method: 'GET', url: '/' } as any;
-      let html: string = '';
-
-      const res = {
-        send: (htmlContent: string) => {
-          html = htmlContent;
-        },
-        set: () => res,
-        status: () => res,
-      } as any;
-
-      await new Promise<void>((resolve) => {
-        res.send = (htmlContent: string) => {
-          html = htmlContent;
-          resolve();
-        };
-        myFunctions.cat(req, res);
-      });
-
-      expect(html).toContain('❤️');
-      expect(html).toContain('589'); // The actual likes count from fixture
-    });
-    it('should include up to 5 tags with links', async () => {
-      const req = { method: 'GET', url: '/' } as any;
-      let html: string = '';
-
-      const res = {
-        send: (htmlContent: string) => {
-          html = htmlContent;
-        },
-        set: () => res,
-        status: () => res,
-      } as any;
-
-      await new Promise<void>((resolve) => {
-        res.send = (htmlContent: string) => {
-          html = htmlContent;
-          resolve();
-        };
-        myFunctions.cat(req, res);
-      });
-
-      // Should include the first 5 tags from the fixture
-      expect(html).toContain('href="https://unsplash.com/s/photos/portrait"');
-      expect(html).toContain('class="tag"');
-      expect(html).toContain('<!--lit-part-->portrait<!--/lit-part-->');
-      expect(html).toContain('href="https://unsplash.com/s/photos/cat"');
-      expect(html).toContain('<!--lit-part-->cat<!--/lit-part-->');
-      expect(html).toContain('href="https://unsplash.com/s/photos/animal"');
-      expect(html).toContain('<!--lit-part-->animal<!--/lit-part-->');
-      expect(html).toContain('href="https://unsplash.com/s/photos/dark"');
-      expect(html).toContain('<!--lit-part-->dark<!--/lit-part-->');
-      expect(html).toContain('href="https://unsplash.com/s/photos/face"');
-      expect(html).toContain('<!--lit-part-->face<!--/lit-part-->');
-
-      // Should not include the 6th tag and beyond
-      expect(html).not.toContain('href="https://unsplash.com/s/photos/table"');
-      expect(html).not.toContain('href="https://unsplash.com/s/photos/hand"');
-    });
-
-    it('should handle missing alt_description gracefully', async () => {
-      // Override the mock to not include alt_description
-      const mockWithoutAlt = { ...mockApiResponse, alt_description: undefined };
-      catApiMock.list.mockResolvedValue([mockWithoutAlt]);
-
-      const req = { method: 'GET', url: '/' } as any;
-      let html: string = '';
-
-      const res = {
-        send: (htmlContent: string) => {
-          html = htmlContent;
-        },
-        set: () => res,
-        status: () => res,
-      } as any;
-
-      await new Promise<void>((resolve) => {
-        res.send = (htmlContent: string) => {
-          html = htmlContent;
-          resolve();
-        };
-        myFunctions.cat(req, res);
-      });
-
-      expect(html).toContain('alt="Cat photo"'); // Fallback alt text
-    });
-
-    it('should include responsive layout structure', async () => {
-      const req = { method: 'GET', url: '/' } as any;
-      let html: string = '';
-
-      const res = {
-        send: (htmlContent: string) => {
-          html = htmlContent;
-        },
-        set: () => res,
-        status: () => res,
-      } as any;
-
-      await new Promise<void>((resolve) => {
-        res.send = (htmlContent: string) => {
-          html = htmlContent;
-          resolve();
-        };
-        myFunctions.cat(req, res);
-      });
-
-      expect(html).toContain('class="container"');
-      expect(html).toContain('class="left-column"');
-      expect(html).toContain('class="center-column"');
-      expect(html).toContain('class="right-column"');
-      expect(html).toContain('class="user-profile"');
-      expect(html).toContain('class="user-row"');
-      expect(html).toContain('class="right-section"');
-      expect(html).toContain('@media (max-width: 768px)'); // Responsive CSS
-    });
-
-    it('should handle API errors gracefully', async () => {
-      // Override the mock to reject for this test
-      catApiMock.list.mockRejectedValue(new Error('API Error'));
+    it('should handle errors gracefully', async () => {
+      storageMock.getPhotoForDate.mockRejectedValue(new Error('Storage Error'));
 
       const req = { method: 'GET', url: '/' } as any;
       let statusCode: number = 0;
@@ -422,7 +342,6 @@ describe('Cat Function', () => {
         send: (msg: string) => {
           message = msg;
         },
-        set: () => res,
         status: (code: number) => {
           statusCode = code;
           return res;
@@ -441,65 +360,7 @@ describe('Cat Function', () => {
       expect(message).toBe('Error fetching cat image');
     });
 
-    it('should handle valid date paths', async () => {
-      const req = { method: 'GET', url: '/2025-06-27' } as any;
-
-      let sendCalled = false;
-      const res = {
-        send: () => {
-          sendCalled = true;
-        },
-        set: () => res,
-        status: () => res,
-      } as any;
-
-      await new Promise<void>((resolve) => {
-        res.send = () => {
-          sendCalled = true;
-          resolve();
-        };
-        myFunctions.cat(req, res);
-      });
-
-      expect(catApiMock.list).toHaveBeenCalledOnce();
-      expect(storageMock.getPhotoForDate).toHaveBeenCalledWith('2025-06-27');
-      expect(storageMock.savePhotoForDate).toHaveBeenCalledWith(
-        '2025-06-27',
-        mockApiResponse
-      );
-      expect(sendCalled).toBe(true);
-    });
-
-    it('should return 404 for future dates', async () => {
-      const req = { method: 'GET', url: '/2025-12-31' } as any;
-      let statusCode: number = 0;
-      let message: string = '';
-
-      const res = {
-        send: (msg: string) => {
-          message = msg;
-        },
-        set: () => res,
-        status: (code: number) => {
-          statusCode = code;
-          return res;
-        },
-      } as any;
-
-      await new Promise<void>((resolve) => {
-        res.send = (msg: string) => {
-          message = msg;
-          resolve();
-        };
-        myFunctions.cat(req, res);
-      });
-
-      expect(statusCode).toBe(404);
-      expect(message).toBe('Future dates are not available.');
-      expect(catApiMock.list).not.toHaveBeenCalled();
-    });
-
-    it('should return 404 for invalid date format', async () => {
+    it('should validate date format', async () => {
       const req = { method: 'GET', url: '/invalid-date' } as any;
       let statusCode: number = 0;
       let message: string = '';
@@ -508,7 +369,6 @@ describe('Cat Function', () => {
         send: (msg: string) => {
           message = msg;
         },
-        set: () => res,
         status: (code: number) => {
           statusCode = code;
           return res;
@@ -525,11 +385,14 @@ describe('Cat Function', () => {
 
       expect(statusCode).toBe(404);
       expect(message).toBe('Invalid date format. Use YYYY-MM-DD.');
-      expect(catApiMock.list).not.toHaveBeenCalled();
     });
 
-    it('should return 404 for invalid dates', async () => {
-      const req = { method: 'GET', url: '/2025-02-30' } as any; // Invalid date (Feb 30th)
+    it('should reject future dates', async () => {
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 1);
+      const futureDateString = futureDate.toISOString().split('T')[0];
+
+      const req = { method: 'GET', url: `/${futureDateString}` } as any;
       let statusCode: number = 0;
       let message: string = '';
 
@@ -537,7 +400,33 @@ describe('Cat Function', () => {
         send: (msg: string) => {
           message = msg;
         },
-        set: () => res,
+        status: (code: number) => {
+          statusCode = code;
+          return res;
+        },
+      } as any;
+
+      await new Promise<void>((resolve) => {
+        res.send = (msg: string) => {
+          message = msg;
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
+
+      expect(statusCode).toBe(404);
+      expect(message).toBe('Future dates are not available.');
+    });
+
+    it('should validate date values', async () => {
+      const req = { method: 'GET', url: '/2025-13-45' } as any;
+      let statusCode: number = 0;
+      let message: string = '';
+
+      const res = {
+        send: (msg: string) => {
+          message = msg;
+        },
         status: (code: number) => {
           statusCode = code;
           return res;
@@ -554,322 +443,198 @@ describe('Cat Function', () => {
 
       expect(statusCode).toBe(404);
       expect(message).toBe('Invalid date.');
-      expect(catApiMock.list).not.toHaveBeenCalled();
     });
 
-    it('should handle past dates with no existing record', async () => {
-      const req = { method: 'GET', url: '/2020-01-01' } as any;
-
-      // Mock no existing photo for this date
-      storageMock.getPhotoForDate.mockResolvedValue(null);
-
-      let sendCalled = false;
-      const res = {
-        send: () => {
-          sendCalled = true;
-        },
-        set: () => res,
-        status: () => res,
-      } as any;
-
-      await new Promise<void>((resolve) => {
-        res.send = () => {
-          sendCalled = true;
-          resolve();
-        };
-        myFunctions.cat(req, res);
-      });
-
-      expect(storageMock.getPhotoForDate).toHaveBeenCalledWith('2020-01-01');
-      expect(catApiMock.list).toHaveBeenCalledOnce();
-      expect(storageMock.savePhotoForDate).toHaveBeenCalledWith(
-        '2020-01-01',
-        mockApiResponse
-      );
-      expect(sendCalled).toBe(true);
-    });
-
-    it('should use existing photo for past dates with completed record', async () => {
-      const req = { method: 'GET', url: '/2020-01-01' } as any;
-
-      // Mock existing completed photo record for this date
-      const existingPhotoRecord = {
+    it('should pass correct template data to renderPhotoPage', async () => {
+      const completedRecord = {
+        status: 'completed',
         photo: mockApiResponse,
-        status: 'completed' as const,
       };
-      storageMock.getPhotoForDate.mockResolvedValue(existingPhotoRecord);
+      storageMock.getPhotoForDate.mockResolvedValue(completedRecord);
 
-      let sendCalled = false;
+      const req = { method: 'GET', url: '/2025-06-27' } as any;
+
       const res = {
-        send: () => {
-          sendCalled = true;
-        },
+        send: () => {},
         set: () => res,
         status: () => res,
       } as any;
 
       await new Promise<void>((resolve) => {
         res.send = () => {
-          sendCalled = true;
           resolve();
         };
         myFunctions.cat(req, res);
       });
 
-      expect(storageMock.getPhotoForDate).toHaveBeenCalledWith('2020-01-01');
-      expect(catApiMock.list).not.toHaveBeenCalled(); // Should not fetch new photo
-      expect(storageMock.savePhotoForDate).not.toHaveBeenCalled(); // Should not save
-      expect(sendCalled).toBe(true);
-    });
-
-    it('should fetch new photo for past dates with created record (no photo)', async () => {
-      const req = { method: 'GET', url: '/2020-01-01' } as any;
-
-      // Mock existing created record for this date (no photo)
-      const existingNewRecord = {
-        photo: null,
-        status: 'created' as const,
-      };
-      storageMock.getPhotoForDate.mockResolvedValue(existingNewRecord);
-
-      let sendCalled = false;
-      const res = {
-        send: () => {
-          sendCalled = true;
-        },
-        set: () => res,
-        status: () => res,
-      } as any;
-
-      await new Promise<void>((resolve) => {
-        res.send = () => {
-          sendCalled = true;
-          resolve();
-        };
-        myFunctions.cat(req, res);
+      expect(templateMock.renderPhotoPage).toHaveBeenCalledWith({
+        linkUrl: mockApiResponse.links.html,
+        imageUrl: mockApiResponse.urls.full,
+        userProfileImage: mockApiResponse.user.profile_image.medium,
+        userName: mockApiResponse.user.name,
+        userUsername: mockApiResponse.user.username,
+        userProfileUrl: mockApiResponse.user.links.html,
+        likesCount: mockApiResponse.likes.toLocaleString(),
+        altDescription: mockApiResponse.alt_description,
+        tags: mockApiResponse.tags,
+        prevDateUrl: '/2025-06-26',
+        nextDateUrl: '/2025-06-28',
+        showNextArrow: true,
       });
-
-      expect(storageMock.getPhotoForDate).toHaveBeenCalledWith('2020-01-01');
-      expect(catApiMock.list).toHaveBeenCalled(); // Should fetch new photo
-      expect(storageMock.savePhotoForDate).toHaveBeenCalled(); // Should save new photo
-      expect(sendCalled).toBe(true);
     });
 
-    it('should handle URLs with query parameters', async () => {
-      const req = { method: 'GET', url: '/2025-06-27?utm_source=test' } as any;
-
-      let sendCalled = false;
-      const res = {
-        send: () => {
-          sendCalled = true;
-        },
-        set: () => res,
-        status: () => res,
-      } as any;
-
-      await new Promise<void>((resolve) => {
-        res.send = () => {
-          sendCalled = true;
-          resolve();
-        };
-        myFunctions.cat(req, res);
-      });
-
-      expect(storageMock.getPhotoForDate).toHaveBeenCalledWith('2025-06-27');
-      expect(sendCalled).toBe(true);
-    });
-
-    it('should include navigation arrows with correct URLs for past dates', async () => {
-      // Mock API response
-      catApiMock.list.mockResolvedValue([mockApiResponse]);
+    it('should pass correct template data to renderProcessingPage', async () => {
       storageMock.getPhotoForDate.mockResolvedValue(null);
-      storageMock.savePhotoForDate.mockResolvedValue('2025-06-26');
 
-      const req = {
-        method: 'GET',
-        url: '/2025-06-26',
-      } as any;
+      const req = { method: 'GET', url: '/2025-06-27' } as any;
 
-      let htmlResponse = '';
       const res = {
-        status: vi.fn(() => res),
-        send: vi.fn((html) => {
-          htmlResponse = html;
-        }),
-        set: vi.fn(),
+        send: () => {},
+        set: () => res,
+        status: () => res,
       } as any;
 
-      await myFunctions.cat(req, res);
+      await new Promise<void>((resolve) => {
+        res.send = () => {
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
 
-      expect(htmlResponse).toContain('nav-arrow left');
-      expect(htmlResponse).toContain('href="/2025-06-25"'); // Previous date
-      expect(htmlResponse).toContain('nav-arrow right');
-      expect(htmlResponse).toContain('href="/2025-06-27"'); // Next date
-      expect(htmlResponse).toContain('class="nav-arrow right"'); // Right arrow should be visible
+      expect(templateMock.renderProcessingPage).toHaveBeenCalledWith({
+        linkUrl: '',
+        imageUrl: '',
+        userProfileImage: '',
+        userName: '',
+        userUsername: '',
+        userProfileUrl: '',
+        likesCount: '',
+        altDescription: '',
+        tags: [],
+        prevDateUrl: '/2025-06-26',
+        nextDateUrl: '/2025-06-28',
+        showNextArrow: true,
+      });
     });
 
-    it('should hide right navigation arrow for today', async () => {
-      // Mock current date to be 2025-06-27
-      const originalDate = Date;
-      const mockDate = vi.fn(
-        () => new originalDate('2025-06-27T12:00:00.000Z')
+    it('should handle query parameters in URL', async () => {
+      const completedRecord = {
+        status: 'completed',
+        photo: mockApiResponse,
+      };
+      storageMock.getPhotoForDate.mockResolvedValue(completedRecord);
+
+      const req = { method: 'GET', url: '/?test=1&param=value' } as any;
+
+      let sendCalled = false;
+      const res = {
+        send: () => {
+          sendCalled = true;
+        },
+        set: () => res,
+        status: () => res,
+      } as any;
+
+      await new Promise<void>((resolve) => {
+        res.send = () => {
+          sendCalled = true;
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
+
+      expect(sendCalled).toBe(true);
+      expect(templateMock.renderPhotoPage).toHaveBeenCalledOnce();
+    });
+
+    it('should handle photo without alt_description', async () => {
+      const photoWithoutAlt = { ...mockApiResponse };
+      delete photoWithoutAlt.alt_description;
+
+      const completedRecord = {
+        status: 'completed',
+        photo: photoWithoutAlt,
+      };
+      storageMock.getPhotoForDate.mockResolvedValue(completedRecord);
+
+      const req = { method: 'GET', url: '/' } as any;
+
+      const res = {
+        send: () => {},
+        set: () => res,
+        status: () => res,
+      } as any;
+
+      await new Promise<void>((resolve) => {
+        res.send = () => {
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
+
+      expect(templateMock.renderPhotoPage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          altDescription: 'Cat photo',
+        })
       );
-      mockDate.prototype = originalDate.prototype;
-      global.Date = mockDate as any;
-
-      // Mock API response
-      catApiMock.list.mockResolvedValue([mockApiResponse]);
-      storageMock.getPhotoForDate.mockResolvedValue(null);
-      storageMock.savePhotoForDate.mockResolvedValue('2025-06-27');
-
-      const req = {
-        method: 'GET',
-        url: '/2025-06-27',
-      } as any;
-
-      let htmlResponse = '';
-      const res = {
-        status: vi.fn(() => res),
-        send: vi.fn((html) => {
-          htmlResponse = html;
-        }),
-        set: vi.fn(),
-      } as any;
-
-      await myFunctions.cat(req, res);
-
-      expect(htmlResponse).toContain('nav-arrow left');
-      expect(htmlResponse).toContain('href="/2025-06-26"'); // Previous date
-      expect(htmlResponse).not.toContain('nav-arrow right'); // Right arrow should not be rendered at all
-
-      // Restore original Date
-      global.Date = originalDate;
     });
 
-    it('should include navigation arrows for root path (today)', async () => {
-      // Mock API response
-      catApiMock.list.mockResolvedValue([mockApiResponse]);
-      storageMock.getPhotoForDate.mockResolvedValue(null);
-      storageMock.savePhotoForDate.mockResolvedValue('2025-06-28');
+    it('should handle leap year dates correctly', async () => {
+      const completedRecord = {
+        status: 'completed',
+        photo: mockApiResponse,
+      };
+      storageMock.getPhotoForDate.mockResolvedValue(completedRecord);
 
-      const req = {
-        method: 'GET',
-        url: '/',
-      } as any;
+      const req = { method: 'GET', url: '/2024-02-29' } as any; // Leap year
 
-      let htmlResponse = '';
+      let sendCalled = false;
       const res = {
-        status: vi.fn(() => res),
-        send: vi.fn((html) => {
-          htmlResponse = html;
-        }),
-        set: vi.fn(),
+        send: () => {
+          sendCalled = true;
+        },
+        set: () => res,
+        status: () => res,
       } as any;
 
-      await myFunctions.cat(req, res);
+      await new Promise<void>((resolve) => {
+        res.send = () => {
+          sendCalled = true;
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
 
-      expect(htmlResponse).toContain('nav-arrow left');
-      expect(htmlResponse).toContain('href="/2025-06-27"'); // Previous date (yesterday)
-      expect(htmlResponse).not.toContain('nav-arrow right'); // Right arrow should not be rendered for today
+      expect(sendCalled).toBe(true);
+      expect(storageMock.getPhotoForDate).toHaveBeenCalledWith('2024-02-29');
     });
 
-    it('should include clickable header that links to root path', async () => {
-      // Mock API response
-      catApiMock.list.mockResolvedValue([mockApiResponse]);
-      storageMock.getPhotoForDate.mockResolvedValue(null);
-      storageMock.savePhotoForDate.mockResolvedValue('2025-06-28');
+    it('should reject invalid leap year dates', async () => {
+      const req = { method: 'GET', url: '/2023-02-29' } as any; // Not a leap year
 
-      const req = {
-        method: 'GET',
-        url: '/2025-06-25',
-      } as any;
+      let statusCode: number = 0;
+      let message: string = '';
 
-      let htmlResponse = '';
       const res = {
-        status: vi.fn(() => res),
-        send: vi.fn((html) => {
-          htmlResponse = html;
-        }),
-        set: vi.fn(),
+        send: (msg: string) => {
+          message = msg;
+        },
+        status: (code: number) => {
+          statusCode = code;
+          return res;
+        },
       } as any;
 
-      await myFunctions.cat(req, res);
+      await new Promise<void>((resolve) => {
+        res.send = (msg: string) => {
+          message = msg;
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
 
-      // Should contain a link to root path within the header
-      expect(htmlResponse).toContain('href="/"');
-      expect(htmlResponse).toContain('Daily Cat');
-
-      // Verify the header link structure (the header text should be wrapped in a link to "/")
-      expect(htmlResponse).toMatch(/<a[^>]*href="\/"[^>]*>.*Daily Cat.*<\/a>/s);
-    });
-
-    it('should group navigation arrows on the left side of header', async () => {
-      // Mock API response
-      catApiMock.list.mockResolvedValue([mockApiResponse]);
-      storageMock.getPhotoForDate.mockResolvedValue(null);
-      storageMock.savePhotoForDate.mockResolvedValue('2025-06-26');
-
-      const req = {
-        method: 'GET',
-        url: '/2025-06-26',
-      } as any;
-
-      let htmlResponse = '';
-      const res = {
-        status: vi.fn(() => res),
-        send: vi.fn((html) => {
-          htmlResponse = html;
-        }),
-        set: vi.fn(),
-      } as any;
-
-      await myFunctions.cat(req, res);
-
-      // Should contain the nav-arrows-left container
-      expect(htmlResponse).toContain('class="nav-arrows-left"');
-
-      // Both arrows should be present within the grouped container
-      expect(htmlResponse).toContain('nav-arrow left');
-      expect(htmlResponse).toContain('nav-arrow right');
-
-      // Verify the structure: nav-arrows-left should contain both arrow elements
-      const navArrowsLeftIndex = htmlResponse.indexOf('nav-arrows-left');
-      const leftArrowIndex = htmlResponse.indexOf('nav-arrow left');
-      const rightArrowIndex = htmlResponse.indexOf('nav-arrow right');
-
-      expect(navArrowsLeftIndex).toBeGreaterThan(-1);
-      expect(leftArrowIndex).toBeGreaterThan(navArrowsLeftIndex);
-      expect(rightArrowIndex).toBeGreaterThan(leftArrowIndex);
-    });
-
-    it('should include share button with Web Share API support check', async () => {
-      // Mock API response
-      catApiMock.list.mockResolvedValue([mockApiResponse]);
-      storageMock.getPhotoForDate.mockResolvedValue(null);
-      storageMock.savePhotoForDate.mockResolvedValue('2025-06-28');
-
-      const req = {
-        method: 'GET',
-        url: '/',
-      } as any;
-
-      let htmlResponse = '';
-      const res = {
-        status: vi.fn(() => res),
-        send: vi.fn((html) => {
-          htmlResponse = html;
-        }),
-        set: vi.fn(),
-      } as any;
-
-      await myFunctions.cat(req, res);
-
-      // Should contain the share button
-      expect(htmlResponse).toContain('id="share-button"');
-      expect(htmlResponse).toContain('class="share-button hidden"');
-      expect(htmlResponse).toContain('title="Share this page"');
-      expect(htmlResponse).toContain('<svg');
-      expect(htmlResponse).toContain('viewBox="0 -960 960 960"');
+      expect(statusCode).toBe(404);
+      expect(message).toBe('Invalid date.');
     });
   });
 });
