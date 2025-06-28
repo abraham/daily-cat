@@ -1,4 +1,5 @@
 import { html, TemplateResult } from 'lit-html';
+import { shareIcon } from './svg';
 
 interface TemplateData {
   linkUrl: string;
@@ -216,6 +217,48 @@ export function renderTemplate(data: TemplateData): TemplateResult {
             .nav-arrows-left {
               left: 10px;
             }
+          }
+          .share-button {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            color: #666;
+            text-decoration: none;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition:
+              background-color 0.2s ease,
+              color 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            border: none;
+            background: none;
+            cursor: pointer;
+          }
+          @media (max-width: 768px) {
+            .share-button {
+              width: 48px;
+              height: 48px;
+              font-size: 18px;
+              right: 10px;
+            }
+          }
+          .share-button:hover {
+            background-color: #f0f0f0;
+            color: #333;
+          }
+          .share-button:active {
+            background-color: #e0e0e0;
+            transform: translateY(-50%) scale(0.95);
+          }
+          .share-button.hidden {
+            display: none;
           }
           .user-profile {
             background-color: rgba(255, 255, 255, 0.95);
@@ -480,6 +523,9 @@ export function renderTemplate(data: TemplateData): TemplateResult {
               .nav-arrows-left {
                 left: max(10px, env(safe-area-inset-left));
               }
+              .share-button {
+                right: max(10px, env(safe-area-inset-right));
+              }
             }
           }
         </style>
@@ -499,6 +545,14 @@ export function renderTemplate(data: TemplateData): TemplateResult {
                 ${renderNextArrow(data.showNextArrow, data.nextDateUrl)}
               </div>
               <h1><a href="/" class="header-title">Daily Cat</a></h1>
+              <button
+                id="share-button"
+                class="share-button hidden"
+                title="Share this page"
+                type="button"
+              >
+                ${shareIcon()}
+              </button>
             </div>
             <div class="user-profile">
               <div class="user-row">
@@ -558,6 +612,28 @@ export function renderTemplate(data: TemplateData): TemplateResult {
           </div>
           <div class="right-column"></div>
         </div>
+        <script>
+          // Check if Web Share API is supported and show share button
+          if (navigator.share) {
+            const shareButton = document.getElementById('share-button');
+            if (shareButton) {
+              shareButton.classList.remove('hidden');
+
+              shareButton.addEventListener('click', async function () {
+                try {
+                  await navigator.share({
+                    title: 'Daily Cat',
+                    text: 'Check out this adorable cat photo from Daily Cat!',
+                    url: window.location.href,
+                  });
+                } catch (error) {
+                  // User cancelled or error occurred
+                  console.log('Error sharing:', error);
+                }
+              });
+            }
+          }
+        </script>
       </body>
     </html>
   `;

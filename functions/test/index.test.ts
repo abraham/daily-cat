@@ -805,5 +805,43 @@ describe('Cat Function', () => {
       expect(leftArrowIndex).toBeGreaterThan(navArrowsLeftIndex);
       expect(rightArrowIndex).toBeGreaterThan(leftArrowIndex);
     });
+
+    it('should include share button with Web Share API support check', async () => {
+      // Mock API response
+      catApiMock.get.mockResolvedValue(mockApiResponse);
+      storageMock.getPhotoForDate.mockResolvedValue(null);
+      storageMock.savePhotoForDate.mockResolvedValue('2025-06-28');
+
+      const req = {
+        method: 'GET',
+        url: '/',
+      } as any;
+
+      let htmlResponse = '';
+      const res = {
+        status: vi.fn(() => res),
+        send: vi.fn((html) => {
+          htmlResponse = html;
+        }),
+        set: vi.fn(),
+      } as any;
+
+      await myFunctions.cat(req, res);
+
+      // Should contain the share button
+      expect(htmlResponse).toContain('id="share-button"');
+      expect(htmlResponse).toContain('class="share-button hidden"');
+      expect(htmlResponse).toContain('title="Share this page"');
+      expect(htmlResponse).toContain('<svg');
+      expect(htmlResponse).toContain('viewBox="0 -960 960 960"');
+
+      // Should contain JavaScript for Web Share API
+      expect(htmlResponse).toContain('navigator.share');
+      expect(htmlResponse).toContain("shareButton.classList.remove('hidden')");
+      expect(htmlResponse).toContain('Daily Cat');
+      expect(htmlResponse).toContain(
+        'Check out this adorable cat photo from Daily Cat!'
+      );
+    });
   });
 });
