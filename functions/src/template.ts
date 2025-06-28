@@ -1,5 +1,5 @@
 import { html, TemplateResult } from 'lit-html';
-import { shareIcon } from './svg';
+import { backIcon, nextIcon, shareIcon } from './svg';
 
 interface TemplateData {
   linkUrl: string;
@@ -31,7 +31,9 @@ function renderTags(tags: Array<{ type: string; title: string }>) {
 
 function renderNextArrow(showNextArrow: boolean, nextDateUrl: string) {
   return showNextArrow
-    ? html`<a href="${nextDateUrl}" class="nav-arrow right" title="Next">→</a>`
+    ? html`<a href="${nextDateUrl}" class="nav-arrow right" title="Next"
+        >${nextIcon()}</a
+      >`
     : '';
 }
 
@@ -540,7 +542,7 @@ export function renderTemplate(data: TemplateData): TemplateResult {
                   href="${data.prevDateUrl}"
                   class="nav-arrow left"
                   title="Previous"
-                  >←</a
+                  >${backIcon()}</a
                 >
                 ${renderNextArrow(data.showNextArrow, data.nextDateUrl)}
               </div>
