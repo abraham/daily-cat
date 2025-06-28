@@ -7,7 +7,6 @@ import {
 } from 'firebase-admin/firestore';
 import {
   UnsplashPhoto,
-  UnsplashRandomPhoto,
   DayRecord,
   NewDayRecord,
   CompletedDayRecord,
@@ -102,23 +101,12 @@ export async function updatePhotoForDay(
  */
 export async function completePhotoForDay(
   id: string,
-  photo: UnsplashRandomPhoto
+  photo: UnsplashPhoto
 ): Promise<void> {
   const now = new Date();
 
-  // Convert UnsplashRandomPhoto to UnsplashPhoto by adding missing fields with defaults
-  const completePhoto: UnsplashPhoto = {
-    ...photo,
-    meta: {
-      index: true,
-    },
-    public_domain: false,
-    tags: [], // Default empty tags if not provided
-    topics: [], // Default empty topics if not provided
-  };
-
   await db.collection(COLLECTION_NAME).doc(id).update({
-    photo: completePhoto,
+    photo: photo,
     status: 'completed',
     updatedAt: now,
   });
