@@ -107,6 +107,9 @@ export const cat = onRequest(
       const html = htmlTemplate
         .replace('{{LINK_URL}}', cat.links.html)
         .replace('{{IMAGE_URL}}', cat.urls.full)
+        .replace('{{BLUR_HASH}}', cat.blur_hash)
+        .replace('{{IMAGE_WIDTH}}', cat.width.toString())
+        .replace('{{IMAGE_HEIGHT}}', cat.height.toString())
         .replace('{{USER_PROFILE_IMAGE}}', cat.user.profile_image.medium)
         .replace('{{USER_NAME}}', cat.user.name)
         .replace('{{USER_USERNAME}}', cat.user.username)
