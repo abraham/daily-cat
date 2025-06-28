@@ -7,6 +7,7 @@ import {
 } from 'firebase-admin/firestore';
 import {
   UnsplashPhoto,
+  UnsplashRandomPhoto,
   DayRecord,
   NewDayRecord,
   CompletedDayRecord,
@@ -94,6 +95,49 @@ export async function updatePhotoForDay(
 }
 
 /**
+ * Update a day record with a photo and set status to completed
+ * @param id - ISO date string (YYYY-MM-DD) - used as document ID
+ * @param photo - UnsplashRandomPhoto object to store (will be converted to UnsplashPhoto)
+ * @returns Promise<void>
+ */
+export async function completePhotoForDay(
+  id: string,
+  photo: UnsplashRandomPhoto
+): Promise<void> {
+  const now = new Date();
+
+  // Convert UnsplashRandomPhoto to UnsplashPhoto by adding missing fields with defaults
+  const completePhoto: UnsplashPhoto = {
+    ...photo,
+    meta: {
+      index: true,
+    },
+    public_domain: false,
+    tags: [], // Default empty tags if not provided
+    topics: [], // Default empty topics if not provided
+  };
+
+  await db.collection(COLLECTION_NAME).doc(id).update({
+    photo: completePhoto,
+    status: 'completed',
+    updatedAt: now,
+  });
+}
+
+/**
+ * Update a day record status to processing
+ * @param id - ISO date string (YYYY-MM-DD) - used as document ID
+ * @returns Promise<void>
+ */
+export async function setDayRecordProcessing(id: string): Promise<void> {
+  const now = new Date();
+  await db.collection(COLLECTION_NAME).doc(id).update({
+    status: 'processing',
+    updatedAt: now,
+  });
+}
+
+/**
  * Get photos for a date range
  * @param startDate - Start date (ISO string, YYYY-MM-DD)
  * @param endDate - End date (ISO string, YYYY-MM-DD)
@@ -155,6 +199,21 @@ export async function getMostRecentPhoto(): Promise<DayRecord | null> {
     id: doc.id,
     ...doc.data(),
   } as DayRecord;
+}
+
+/**
+ * Check if a photo ID is already used in any day record
+ * @param photoId - The Unsplash photo ID to check
+ * @returns Promise<boolean> - True if the photo ID is already used
+ */
+export async function isPhotoIdUsed(photoId: string): Promise<boolean> {
+  const snapshot = await db
+    .collection(COLLECTION_NAME)
+    .where('photo.id', '==', photoId)
+    .limit(1)
+    .get();
+
+  return !snapshot.empty;
 }
 
 /**
