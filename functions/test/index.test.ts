@@ -414,6 +414,51 @@ describe('Cat Function', () => {
       expect(html).toContain('@media (max-width: 768px)'); // Responsive CSS
     });
 
+    it('should include blurhash functionality for image loading', async () => {
+      const req = { method: 'GET', url: '/' } as any;
+      let html: string = '';
+
+      const res = {
+        send: (htmlContent: string) => {
+          html = htmlContent;
+        },
+        set: () => res,
+        status: () => res,
+      } as any;
+
+      await new Promise<void>((resolve) => {
+        res.send = (htmlContent: string) => {
+          html = htmlContent;
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
+
+      // Check for blurhash script inclusion
+      expect(html).toContain('blurhash.umd.js');
+      
+      // Check for blurhash canvas element
+      expect(html).toContain('id="blurhash-canvas"');
+      expect(html).toContain('class="blurhash-canvas"');
+      
+      // Check for image wrapper structure
+      expect(html).toContain('class="image-wrapper"');
+      
+      // Check for blurhash value in the JavaScript
+      expect(html).toContain('LJBfnU%L0L9GV[jst7xZIARjx]xu'); // The blur hash from test fixture
+      
+      // Check for image dimensions
+      expect(html).toContain('imageWidth = 1440');
+      expect(html).toContain('imageHeight = 2160');
+      
+      // Check for onload handler
+      expect(html).toContain('onload="this.classList.add(\'loaded\')"');
+      
+      // Check for blurhash rendering JavaScript
+      expect(html).toContain('blurhash.decode');
+      expect(html).toContain('createImageData');
+    });
+
     it('should handle API errors gracefully', async () => {
       // Override the mock to reject for this test
       catApiMock.get.mockRejectedValue(new Error('API Error'));
