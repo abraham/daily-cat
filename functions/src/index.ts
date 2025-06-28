@@ -99,6 +99,28 @@ export const cat = onRequest(
         )
         .join('');
 
+      // Calculate navigation dates
+      const requestedDateObj = new Date(requestedDate + 'T00:00:00.000Z');
+      const currentDateObj = new Date();
+      const currentDateString = currentDateObj.toISOString().split('T')[0];
+
+      // Previous date (always available, goes one day back)
+      const prevDateObj = new Date(requestedDateObj);
+      prevDateObj.setUTCDate(prevDateObj.getUTCDate() - 1);
+      const prevDateString = prevDateObj.toISOString().split('T')[0];
+      const prevDateUrl = `/${prevDateString}`;
+
+      // Next date (only if requested date is before today)
+      let nextDateUrl = '#';
+      let nextArrowClass = 'hidden';
+      if (requestedDate < currentDateString) {
+        const nextDateObj = new Date(requestedDateObj);
+        nextDateObj.setUTCDate(nextDateObj.getUTCDate() + 1);
+        const nextDateString = nextDateObj.toISOString().split('T')[0];
+        nextDateUrl = `/${nextDateString}`;
+        nextArrowClass = '';
+      }
+
       const html = htmlTemplate
         .replace('{{LINK_URL}}', cat.links.html)
         .replace('{{IMAGE_URL}}', cat.urls.full)
@@ -108,7 +130,10 @@ export const cat = onRequest(
         .replace('{{USER_PROFILE_URL}}', cat.user.links.html)
         .replace('{{LIKES_COUNT}}', cat.likes.toLocaleString())
         .replace('{{ALT_DESCRIPTION}}', cat.alt_description || 'Cat photo')
-        .replace('{{TAGS}}', tagsHtml);
+        .replace('{{TAGS}}', tagsHtml)
+        .replace('{{PREV_DATE_URL}}', prevDateUrl)
+        .replace('{{NEXT_DATE_URL}}', nextDateUrl)
+        .replace('{{NEXT_ARROW_CLASS}}', nextArrowClass);
 
       response.set('Cache-Control', 'public, max-age=1, s-maxage=1');
       response.status(200);

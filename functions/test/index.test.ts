@@ -646,5 +646,100 @@ describe('Cat Function', () => {
       expect(storageMock.getPhotoForDate).toHaveBeenCalledWith('2025-06-27');
       expect(sendCalled).toBe(true);
     });
+
+    it('should include navigation arrows with correct URLs for past dates', async () => {
+      // Mock API response
+      catApiMock.get.mockResolvedValue(mockApiResponse);
+      storageMock.getPhotoForDate.mockResolvedValue(null);
+      storageMock.savePhotoForDate.mockResolvedValue('2025-06-26');
+
+      const req = {
+        method: 'GET',
+        url: '/2025-06-26',
+      } as any;
+
+      let htmlResponse = '';
+      const res = {
+        status: vi.fn(() => res),
+        send: vi.fn((html) => {
+          htmlResponse = html;
+        }),
+        set: vi.fn(),
+      } as any;
+
+      await myFunctions.cat(req, res);
+
+      expect(htmlResponse).toContain('nav-arrow left');
+      expect(htmlResponse).toContain('href="/2025-06-25"'); // Previous date
+      expect(htmlResponse).toContain('nav-arrow right');
+      expect(htmlResponse).toContain('href="/2025-06-27"'); // Next date
+      expect(htmlResponse).toContain('nav-arrow right " title="Next">'); // Right arrow should be visible (no hidden class)
+    });
+
+    it('should hide right navigation arrow for today', async () => {
+      // Mock current date to be 2025-06-27
+      const originalDate = Date;
+      const mockDate = vi.fn(
+        () => new originalDate('2025-06-27T12:00:00.000Z')
+      );
+      mockDate.prototype = originalDate.prototype;
+      global.Date = mockDate as any;
+
+      // Mock API response
+      catApiMock.get.mockResolvedValue(mockApiResponse);
+      storageMock.getPhotoForDate.mockResolvedValue(null);
+      storageMock.savePhotoForDate.mockResolvedValue('2025-06-27');
+
+      const req = {
+        method: 'GET',
+        url: '/2025-06-27',
+      } as any;
+
+      let htmlResponse = '';
+      const res = {
+        status: vi.fn(() => res),
+        send: vi.fn((html) => {
+          htmlResponse = html;
+        }),
+        set: vi.fn(),
+      } as any;
+
+      await myFunctions.cat(req, res);
+
+      expect(htmlResponse).toContain('nav-arrow left');
+      expect(htmlResponse).toContain('href="/2025-06-26"'); // Previous date
+      expect(htmlResponse).toContain('nav-arrow right hidden'); // Right arrow should be hidden
+      expect(htmlResponse).toContain('href="#"'); // Next date should be #
+
+      // Restore original Date
+      global.Date = originalDate;
+    });
+
+    it('should include navigation arrows for root path (today)', async () => {
+      // Mock API response
+      catApiMock.get.mockResolvedValue(mockApiResponse);
+      storageMock.getPhotoForDate.mockResolvedValue(null);
+      storageMock.savePhotoForDate.mockResolvedValue('2025-06-28');
+
+      const req = {
+        method: 'GET',
+        url: '/',
+      } as any;
+
+      let htmlResponse = '';
+      const res = {
+        status: vi.fn(() => res),
+        send: vi.fn((html) => {
+          htmlResponse = html;
+        }),
+        set: vi.fn(),
+      } as any;
+
+      await myFunctions.cat(req, res);
+
+      expect(htmlResponse).toContain('nav-arrow left');
+      expect(htmlResponse).toContain('href="/2025-06-27"'); // Previous date (yesterday)
+      expect(htmlResponse).toContain('nav-arrow right hidden'); // Right arrow should be hidden for today
+    });
   });
 });

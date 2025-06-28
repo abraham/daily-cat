@@ -38,11 +38,45 @@
         background-color: rgba(255, 255, 255, 0.95);
         padding: 20px;
         text-align: center;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       .header h1 {
         color: #333;
         font-family: Arial, sans-serif;
         margin: 0;
+      }
+      .nav-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 24px;
+        color: #666;
+        text-decoration: none;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition:
+          background-color 0.2s ease,
+          color 0.2s ease;
+      }
+      .nav-arrow:hover {
+        background-color: #f0f0f0;
+        color: #333;
+      }
+      .nav-arrow.left {
+        left: 20px;
+      }
+      .nav-arrow.right {
+        right: 20px;
+      }
+      .nav-arrow.hidden {
+        display: none;
       }
       .user-profile {
         background-color: rgba(255, 255, 255, 0.95);
@@ -149,7 +183,16 @@
       <div class="left-column"></div>
       <div class="center-column">
         <div class="header">
+          <a href="{{PREV_DATE_URL}}" class="nav-arrow left" title="Previous"
+            >←</a
+          >
           <h1>Daily Cat</h1>
+          <a
+            href="{{NEXT_DATE_URL}}"
+            class="nav-arrow right {{NEXT_ARROW_CLASS}}"
+            title="Next"
+            >→</a
+          >
         </div>
         <div class="user-profile">
           <div class="user-row">
