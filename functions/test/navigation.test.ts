@@ -28,7 +28,7 @@ describe('Navigation Utils', () => {
 
       expect(result.prevDateUrl).toBe('/2025-06-24'); // one day before 2025-06-25
       expect(result.nextDateUrl).toBe('/2025-06-26'); // one day after 2025-06-25
-      expect(result.nextArrowClass).toBe('');
+      expect(result.showNextArrow).toBe(true);
     });
 
     it('should hide next arrow for today', () => {
@@ -46,7 +46,7 @@ describe('Navigation Utils', () => {
 
       expect(result.prevDateUrl).toBe('/2025-06-26'); // one day before 2025-06-27
       expect(result.nextDateUrl).toBe('#');
-      expect(result.nextArrowClass).toBe('hidden');
+      expect(result.showNextArrow).toBe(false);
     });
 
     it('should calculate correct navigation URLs for yesterday', () => {
@@ -64,7 +64,7 @@ describe('Navigation Utils', () => {
 
       expect(result.prevDateUrl).toBe('/2025-06-25'); // one day before 2025-06-26
       expect(result.nextDateUrl).toBe('/2025-06-27'); // one day after 2025-06-26
-      expect(result.nextArrowClass).toBe('');
+      expect(result.showNextArrow).toBe(true);
     });
 
     it('should handle month boundaries correctly', () => {
@@ -82,7 +82,7 @@ describe('Navigation Utils', () => {
 
       expect(result.prevDateUrl).toBe('/2025-06-29'); // one day before 2025-06-30
       expect(result.nextDateUrl).toBe('/2025-07-01'); // one day after 2025-06-30
-      expect(result.nextArrowClass).toBe('');
+      expect(result.showNextArrow).toBe(true);
     });
 
     it('should handle year boundaries correctly', () => {
@@ -100,7 +100,7 @@ describe('Navigation Utils', () => {
 
       expect(result.prevDateUrl).toBe('/2025-12-30'); // one day before 2025-12-31
       expect(result.nextDateUrl).toBe('/2026-01-01'); // one day after 2025-12-31
-      expect(result.nextArrowClass).toBe('');
+      expect(result.showNextArrow).toBe(true);
     });
 
     it('should handle leap year dates correctly', () => {
@@ -118,7 +118,7 @@ describe('Navigation Utils', () => {
 
       expect(result.prevDateUrl).toBe('/2024-02-28'); // one day before 2024-02-29
       expect(result.nextDateUrl).toBe('/2024-03-01'); // one day after 2024-02-29
-      expect(result.nextArrowClass).toBe('');
+      expect(result.showNextArrow).toBe(true);
     });
   });
 });
