@@ -203,6 +203,7 @@ function renderPage(
           name="twitter:image:alt"
           content="Daily Cat - Adorable cat photo"
         />
+        <script src="/index.js" defer></script>
         <style>
           html,
           body {
