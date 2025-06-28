@@ -83,7 +83,7 @@ export const cat = onRequest(async (request, response) => {
       // Render photo page template using lit-html
       templateResult = renderPhotoPage({
         linkUrl: cat.links.html,
-        imageUrl: cat.urls.full,
+        imageUrl: cat.urls.regular,
         userProfileImage: cat.user.profile_image.medium,
         userName: cat.user.name,
         userUsername: cat.user.username,

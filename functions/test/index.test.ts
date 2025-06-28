@@ -477,7 +477,7 @@ describe('Cat Function', () => {
 
       expect(templateMock.renderPhotoPage).toHaveBeenCalledWith({
         linkUrl: mockApiResponse.links.html,
-        imageUrl: mockApiResponse.urls.full,
+        imageUrl: mockApiResponse.urls.regular,
         userProfileImage: mockApiResponse.user.profile_image.medium,
         userName: mockApiResponse.user.name,
         userUsername: mockApiResponse.user.username,
