@@ -662,6 +662,114 @@ function renderPage(
   `;
 }
 
+function renderLoadingAnimation(): TemplateResult {
+  return html`
+    <div class="loading-container">
+      <div class="loading-spinner">
+        <div class="spinner"></div>
+      </div>
+      <div class="loading-text">Processing your request...</div>
+    </div>
+    <style>
+      .loading-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        padding: 40px 20px;
+      }
+
+      .loading-spinner {
+        position: relative;
+        width: 60px;
+        height: 60px;
+      }
+
+      .spinner {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: 4px solid #f0f0f0;
+        border-top: 4px solid #666;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .loading-text {
+        font-family: inherit;
+        font-size: 16px;
+        color: #666;
+        text-align: center;
+        line-height: 1.4;
+      }
+
+      @media (max-width: 768px) {
+        .loading-container {
+          gap: 16px;
+          padding: 30px 15px;
+        }
+
+        .loading-spinner {
+          width: 50px;
+          height: 50px;
+        }
+
+        .loading-text {
+          font-size: 15px;
+        }
+      }
+    </style>
+  `;
+}
+
+function renderProcessingPageContent(): TemplateResult {
+  return html`
+    ${renderLoadingAnimation()}
+    <script>
+      (function () {
+        // Get current URL and parse attempt parameter
+        const url = new URL(window.location.href);
+        const currentAttempt = parseInt(url.searchParams.get('attempt') || '0');
+
+        // Only refresh if we haven't exceeded max attempts (10)
+        if (currentAttempt < 10) {
+          setTimeout(function () {
+            // Increment attempt and add to URL
+            url.searchParams.set('attempt', (currentAttempt + 1).toString());
+            window.location.href = url.toString();
+          }, 2000); // 2 seconds delay
+        } else {
+          // After 10 attempts, show a message that processing is taking longer
+          setTimeout(function () {
+            const loadingText = document.querySelector('.loading-text');
+            if (loadingText) {
+              loadingText.innerHTML =
+                'Processing is taking longer than expected. You can manually refresh this page or try again later.';
+            }
+          }, 500);
+        }
+      })();
+    </script>
+  `;
+}
+
+export function renderProcessingPage(data: TemplateData): TemplateResult {
+  return renderPage(data, renderProcessingPageContent());
+}
+
 function renderPhotoPageContent(data: TemplateData): TemplateResult {
   return html`${renderUserProfile(data)} ${renderPhoto(data)}`;
 }

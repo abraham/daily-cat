@@ -1,6 +1,6 @@
-import { UnsplashPhoto, CatApiOptions } from './types';
+import { CatApiOptions, UnsplashRandom, UnsplashPhoto } from './types';
 
-export async function list(options: CatApiOptions): Promise<UnsplashPhoto[]> {
+export async function list(options: CatApiOptions): Promise<UnsplashRandom> {
   const url = `https://api.unsplash.com/photos/random?query=cat&count=30`;
   const response: Response = await fetch(url, {
     headers: {
@@ -8,8 +8,31 @@ export async function list(options: CatApiOptions): Promise<UnsplashPhoto[]> {
     },
   });
 
-  console.log('body');
-  const results = (await response.json()) as UnsplashPhoto[];
-  // Fallback in case the API returns a single photo
-  return results;
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch random photos: ${response.status} ${response.statusText}`
+    );
+  }
+
+  return response.json() as Promise<UnsplashRandom>;
+}
+
+export async function get(
+  options: CatApiOptions,
+  photoId: string
+): Promise<UnsplashPhoto> {
+  const url = `https://api.unsplash.com/photos/${photoId}`;
+  const response: Response = await fetch(url, {
+    headers: {
+      Authorization: `Client-ID ${options.clientId}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch photo ${photoId}: ${response.status} ${response.statusText}`
+    );
+  }
+
+  return response.json() as Promise<UnsplashPhoto>;
 }

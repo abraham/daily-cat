@@ -45,6 +45,7 @@ describe('Cat API', () => {
       const mockResponse = [mockPhoto1, mockPhoto2];
 
       const mockFetchResponse = {
+        ok: true,
         json: () => Promise.resolve(mockResponse),
       };
 
@@ -69,6 +70,7 @@ describe('Cat API', () => {
 
     it('should construct correct URL with client ID and count parameter', async () => {
       const mockFetchResponse = {
+        ok: true,
         json: () => Promise.resolve([]),
       };
 
@@ -88,6 +90,7 @@ describe('Cat API', () => {
 
     it('should return empty array when API returns empty response', async () => {
       const mockFetchResponse = {
+        ok: true,
         json: () => Promise.resolve([]),
       };
 
@@ -105,6 +108,111 @@ describe('Cat API', () => {
       await expect(catApi.list({ clientId: 'test-client-id' })).rejects.toThrow(
         'Network error'
       );
+    });
+  });
+
+  describe('get function', () => {
+    it('should fetch a specific photo by ID from Unsplash API', async () => {
+      const mockPhoto = {
+        id: 'test-photo-id',
+        urls: {
+          full: 'https://images.unsplash.com/test-full',
+        },
+        links: {
+          html: 'https://unsplash.com/photos/test-photo-id',
+        },
+        user: {
+          name: 'Test Photographer',
+          username: 'testuser',
+        },
+        meta: {
+          index: true,
+        },
+        public_domain: false,
+        tags: [],
+        topics: [],
+      };
+
+      const mockFetchResponse = {
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: () => Promise.resolve(mockPhoto),
+      };
+
+      fetchMock.mockResolvedValue(mockFetchResponse);
+
+      const result = await catApi.get(
+        { clientId: 'test-client-id' },
+        'test-photo-id'
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://api.unsplash.com/photos/test-photo-id',
+        {
+          headers: {
+            Authorization: 'Client-ID test-client-id',
+          },
+        }
+      );
+      expect(result).toEqual(mockPhoto);
+    });
+
+    it('should throw error when photo is not found (404)', async () => {
+      const mockFetchResponse = {
+        ok: false,
+        status: 404,
+        statusText: 'Not Found',
+        json: () => Promise.resolve({ error: 'Photo not found' }),
+      };
+
+      fetchMock.mockResolvedValue(mockFetchResponse);
+
+      await expect(
+        catApi.get({ clientId: 'test-client-id' }, 'non-existent-id')
+      ).rejects.toThrow('Failed to fetch photo non-existent-id: 404 Not Found');
+    });
+
+    it('should throw error when rate limited (429)', async () => {
+      const mockFetchResponse = {
+        ok: false,
+        status: 429,
+        statusText: 'Too Many Requests',
+        json: () => Promise.resolve({ error: 'Rate limit exceeded' }),
+      };
+
+      fetchMock.mockResolvedValue(mockFetchResponse);
+
+      await expect(
+        catApi.get({ clientId: 'test-client-id' }, 'test-photo-id')
+      ).rejects.toThrow(
+        'Failed to fetch photo test-photo-id: 429 Too Many Requests'
+      );
+    });
+
+    it('should throw error when unauthorized (401)', async () => {
+      const mockFetchResponse = {
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+        json: () => Promise.resolve({ error: 'Invalid client ID' }),
+      };
+
+      fetchMock.mockResolvedValue(mockFetchResponse);
+
+      await expect(
+        catApi.get({ clientId: 'invalid-client-id' }, 'test-photo-id')
+      ).rejects.toThrow(
+        'Failed to fetch photo test-photo-id: 401 Unauthorized'
+      );
+    });
+
+    it('should handle network errors', async () => {
+      fetchMock.mockRejectedValue(new Error('Network error'));
+
+      await expect(
+        catApi.get({ clientId: 'test-client-id' }, 'test-photo-id')
+      ).rejects.toThrow('Network error');
     });
   });
 });

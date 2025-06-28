@@ -113,6 +113,59 @@ describe('Storage Functions', () => {
     });
   });
 
+  describe('createNewDayRecord', () => {
+    it('should create a new day record with created status and null photo', async () => {
+      const testDate = '2025-06-27';
+
+      const result = await storage.createNewDayRecord(testDate);
+
+      expect(mockFirestore.collection).toHaveBeenCalledWith('days');
+      expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
+      expect(mockDoc.set).toHaveBeenCalledWith({
+        status: 'created',
+        photo: null,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+      });
+
+      expect(result).toEqual({
+        id: testDate,
+        status: 'created',
+        photo: null,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+      });
+    });
+
+    it('should use the current timestamp for createdAt and updatedAt', async () => {
+      const testDate = '2025-06-27';
+      const beforeTime = new Date();
+
+      const result = await storage.createNewDayRecord(testDate);
+
+      const afterTime = new Date();
+      const callArgs = mockDoc.set.mock.calls[0][0];
+
+      expect(callArgs.createdAt).toBeInstanceOf(Date);
+      expect(callArgs.updatedAt).toBeInstanceOf(Date);
+      expect(callArgs.createdAt.getTime()).toBeGreaterThanOrEqual(
+        beforeTime.getTime()
+      );
+      expect(callArgs.createdAt.getTime()).toBeLessThanOrEqual(
+        afterTime.getTime()
+      );
+      expect(callArgs.updatedAt.getTime()).toBeGreaterThanOrEqual(
+        beforeTime.getTime()
+      );
+      expect(callArgs.updatedAt.getTime()).toBeLessThanOrEqual(
+        afterTime.getTime()
+      );
+
+      expect(result.createdAt).toBe(callArgs.createdAt);
+      expect(result.updatedAt).toBe(callArgs.updatedAt);
+    });
+  });
+
   describe('getPhotoForDate', () => {
     it('should return a CompletedDayRecord when document exists with completed status and photo', async () => {
       const testDate = '2025-06-27';
@@ -420,6 +473,145 @@ describe('Storage Functions', () => {
       await expect(
         storage.updatePhotoForDay(testDate, mockPhoto)
       ).rejects.toThrow('Document not found');
+    });
+  });
+
+  describe('isPhotoIdUsed', () => {
+    it('should return true when photo ID is already used', async () => {
+      const photoId = 'test-photo-id';
+
+      // Mock query result with matching document
+      const mockQuerySnapshot = {
+        empty: false,
+        docs: [{ id: 'some-day-id', data: () => ({}) }],
+      };
+
+      const mockQuery = {
+        limit: vi.fn().mockReturnThis(),
+        get: vi.fn().mockResolvedValue(mockQuerySnapshot),
+      };
+
+      mockCollection.where = vi.fn().mockReturnValue(mockQuery);
+
+      const result = await storage.isPhotoIdUsed(photoId);
+
+      expect(result).toBe(true);
+      expect(mockCollection.where).toHaveBeenCalledWith(
+        'photo.id',
+        '==',
+        photoId
+      );
+      expect(mockQuery.limit).toHaveBeenCalledWith(1);
+    });
+
+    it('should return false when photo ID is not used', async () => {
+      const photoId = 'unused-photo-id';
+
+      // Mock empty query result
+      const mockQuerySnapshot = {
+        empty: true,
+        docs: [],
+      };
+
+      const mockQuery = {
+        limit: vi.fn().mockReturnThis(),
+        get: vi.fn().mockResolvedValue(mockQuerySnapshot),
+      };
+
+      mockCollection.where = vi.fn().mockReturnValue(mockQuery);
+
+      const result = await storage.isPhotoIdUsed(photoId);
+
+      expect(result).toBe(false);
+      expect(mockCollection.where).toHaveBeenCalledWith(
+        'photo.id',
+        '==',
+        photoId
+      );
+    });
+
+    it('should handle query errors', async () => {
+      const photoId = 'test-photo-id';
+      const firestoreError = new Error('Query failed');
+
+      const mockQuery = {
+        limit: vi.fn().mockReturnThis(),
+        get: vi.fn().mockRejectedValue(firestoreError),
+      };
+
+      mockCollection.where = vi.fn().mockReturnValue(mockQuery);
+
+      await expect(storage.isPhotoIdUsed(photoId)).rejects.toThrow(
+        'Query failed'
+      );
+    });
+  });
+
+  describe('completePhotoForDay', () => {
+    it('should update day record with complete photo and set status to completed', async () => {
+      const testDate = '2025-06-28';
+      const mockRandomPhoto = {
+        id: 'test-id',
+        urls: { full: 'test-url' },
+        user: { name: 'Test User' },
+        // Missing fields that will be added by completePhotoForDay
+      } as any;
+
+      mockDoc.update.mockResolvedValue(undefined);
+
+      await storage.completePhotoForDay(testDate, mockRandomPhoto);
+
+      expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
+      expect(mockDoc.update).toHaveBeenCalledWith({
+        photo: {
+          ...mockRandomPhoto,
+          meta: { index: true },
+          public_domain: false,
+          tags: [],
+          topics: [],
+        },
+        status: 'completed',
+        updatedAt: expect.any(Date),
+      });
+    });
+
+    it('should handle update errors', async () => {
+      const testDate = '2025-06-28';
+      const mockRandomPhoto = { id: 'test-id' } as any;
+      const firestoreError = new Error('Update failed');
+
+      mockDoc.update.mockRejectedValue(firestoreError);
+
+      await expect(
+        storage.completePhotoForDay(testDate, mockRandomPhoto)
+      ).rejects.toThrow('Update failed');
+    });
+  });
+
+  describe('setDayRecordProcessing', () => {
+    it('should update day record status to processing', async () => {
+      const testDate = '2025-06-28';
+
+      mockDoc.update.mockResolvedValue(undefined);
+
+      await storage.setDayRecordProcessing(testDate);
+
+      expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
+      expect(mockDoc.update).toHaveBeenCalledWith({
+        status: 'processing',
+        updatedAt: expect.any(Date),
+      });
+    });
+
+    it('should handle update errors', async () => {
+      const testDate = '2025-06-28';
+      const firestoreError = new Error('Update failed');
+
+      mockDoc.update.mockRejectedValue(firestoreError);
+
+      await expect(storage.setDayRecordProcessing(testDate)).rejects.toThrow(
+        'Update failed'
+      );
     });
   });
 });
