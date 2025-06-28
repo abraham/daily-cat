@@ -30,6 +30,7 @@ export async function savePhotoForDate(
 ): Promise<string> {
   const now = new Date();
   const dayRecord: Omit<DayRecord, 'id'> = {
+    status: 'completed',
     photo,
     createdAt: now,
     updatedAt: now,
