@@ -4,7 +4,7 @@
   "description": "A Firebase Function that serves daily cat images from the Unsplash API",
   "private": true,
   "devDependencies": {
-    "firebase-tools": "^13.32.0",
+    "firebase-tools": "^14.9.0",
     "prettier": "^3.6.2"
   },
   "scripts": {
