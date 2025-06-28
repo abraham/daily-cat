@@ -6,25 +6,80 @@ import * as path from 'path';
 const photoFixturePath = path.join(__dirname, 'fixtures', 'photo.json');
 const mockApiResponse = JSON.parse(fs.readFileSync(photoFixturePath, 'utf8'));
 
+// Mock Firebase Admin
+const mockDoc = {
+  id: '',
+  exists: false,
+  data: vi.fn(),
+  get: vi.fn(),
+  set: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+};
+
+const mockCollection = {
+  doc: vi.fn(() => mockDoc),
+  add: vi.fn(),
+  where: vi.fn(() => mockCollection),
+  orderBy: vi.fn(() => mockCollection),
+  limit: vi.fn(() => mockCollection),
+  get: vi.fn(),
+};
+
+const mockFirestore = {
+  collection: vi.fn(() => mockCollection),
+};
+
+const mockApp = {};
+
+vi.mock('firebase-admin/app', () => ({
+  initializeApp: vi.fn(() => mockApp),
+  getApps: vi.fn(() => []),
+}));
+
+vi.mock('firebase-admin/firestore', () => ({
+  getFirestore: vi.fn(() => mockFirestore),
+}));
+
 // Mock the cat-api module
 vi.mock('../src/cat-api', () => ({
   get: vi.fn(),
 }));
 
+// Mock the storage module
+vi.mock('../src/storage', () => ({
+  getPhotoForDate: vi.fn(),
+  savePhotoForDate: vi.fn(),
+}));
+
 describe('Cat Function', () => {
   let catApiMock: any;
+  let storageMock: any;
   let myFunctions: any;
 
   beforeEach(async () => {
     // Set up the API key environment variable for testing
     process.env.UNSPLASH_CLIENT_ID = 'test_client_id';
 
-    // Get the mocked cat-api
-    catApiMock = await import('../src/cat-api');
-    catApiMock.get.mockResolvedValue(mockApiResponse);
+    // Reset all mocks
+    vi.clearAllMocks();
 
-    // Clear module cache and re-import to get fresh instance
+    // Reset mock responses
+    mockDoc.exists = false;
+    mockDoc.data.mockReturnValue({});
+
+    // Clear module cache first
     vi.resetModules();
+
+    // Get the mocked modules after reset
+    catApiMock = await import('../src/cat-api');
+    storageMock = await import('../src/storage');
+
+    catApiMock.get.mockResolvedValue(mockApiResponse);
+    storageMock.getPhotoForDate.mockResolvedValue(null); // Default: no existing photo
+    storageMock.savePhotoForDate.mockResolvedValue('2025-06-27');
+
+    // Import the functions after mocks are set up
     myFunctions = await import('../src/index');
   });
 

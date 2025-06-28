@@ -12,6 +12,8 @@ import { onRequest } from 'firebase-functions/v2/https';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as catAPI from './cat-api';
+import * as storage from './storage';
+import { UnsplashPhoto } from './types';
 
 const API_KEY = process.env.UNSPLASH_CLIENT_ID;
 
@@ -29,14 +31,28 @@ export const cat = onRequest(
     }
 
     try {
-      // const cat = JSON.parse(
-      //   await fs.promises.readFile(
-      //     path.join(__dirname, '..', 'test', 'fixtures', 'photo.json'),
-      //     'utf8'
-      //   )
-      // );
-      const cat = await catAPI.get({ clientId: API_KEY });
-      logger.log('Cat fetched successfully:', cat);
+      // Get current UTC date in YYYY-MM-DD format
+      const currentDate = new Date().toISOString().split('T')[0];
+
+      // Try to get existing cat photo for today
+      let dayRecord = await storage.getPhotoForDate(currentDate);
+      let cat: UnsplashPhoto;
+
+      if (dayRecord) {
+        // Use existing photo for today
+        cat = dayRecord.photo;
+        logger.log('Using existing cat photo for date:', currentDate);
+      } else {
+        // Fetch new photo from API and save it
+        cat = await catAPI.get({ clientId: API_KEY });
+        await storage.savePhotoForDate(currentDate, cat);
+        logger.log('Fetched and saved new cat photo for date:', currentDate);
+      }
+
+      logger.log('Cat photo details:', {
+        id: cat.id,
+        alt_description: cat.alt_description,
+      });
 
       const templatePath = path.join(__dirname, '..', 'template.html');
       const htmlTemplate = await fs.promises.readFile(templatePath, 'utf8');
