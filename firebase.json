@@ -20,6 +20,10 @@
       {
         "source": "/",
         "function": "cat"
+      },
+      {
+        "source": "/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]",
+        "function": "cat"
       }
     ],
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]

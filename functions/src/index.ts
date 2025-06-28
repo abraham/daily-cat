@@ -10,7 +10,7 @@
 import * as logger from 'firebase-functions/logger';
 import { onRequest } from 'firebase-functions/v2/https';
 import * as fs from 'fs';
-import * as path from 'path';
+import { join } from 'path';
 import * as catAPI from './cat-api';
 import * as storage from './storage';
 import { UnsplashPhoto } from './types';
@@ -31,22 +31,55 @@ export const cat = onRequest(
     }
 
     try {
-      // Get current UTC date in YYYY-MM-DD format
-      const currentDate = new Date().toISOString().split('T')[0];
+      // Extract date from URL path
+      const path = request.url.split('?')[0]; // Remove query params
+      let requestedDate: string;
 
-      // Try to get existing cat photo for today
-      let dayRecord = await storage.getPhotoForDate(currentDate);
+      if (path === '/') {
+        // Root path - use current date
+        requestedDate = new Date().toISOString().split('T')[0];
+      } else {
+        // Extract date from path (format: /yyyy-mm-dd)
+        const dateMatch = path.match(/^\/(\d{4}-\d{2}-\d{2})$/);
+
+        if (!dateMatch) {
+          response.status(404).send('Invalid date format. Use YYYY-MM-DD.');
+          return;
+        }
+
+        requestedDate = dateMatch[1];
+
+        // Validate date format and check if it's a valid date
+        const dateObj = new Date(requestedDate + 'T00:00:00.000Z');
+        if (
+          isNaN(dateObj.getTime()) ||
+          dateObj.toISOString().split('T')[0] !== requestedDate
+        ) {
+          response.status(404).send('Invalid date.');
+          return;
+        }
+
+        // Check if the requested date is in the future
+        const currentDate = new Date().toISOString().split('T')[0];
+        if (requestedDate > currentDate) {
+          response.status(404).send('Future dates are not available.');
+          return;
+        }
+      }
+
+      // Try to get existing cat photo for the requested date
+      let dayRecord = await storage.getPhotoForDate(requestedDate);
       let cat: UnsplashPhoto;
 
       if (dayRecord) {
-        // Use existing photo for today
+        // Use existing photo for the date
         cat = dayRecord.photo;
-        logger.log('Using existing cat photo for date:', currentDate);
+        logger.log('Using existing cat photo for date:', requestedDate);
       } else {
-        // Fetch new photo from API and save it
+        // Fetch new photo from API and save it for any date (past or present)
         cat = await catAPI.get({ clientId: API_KEY });
-        await storage.savePhotoForDate(currentDate, cat);
-        logger.log('Fetched and saved new cat photo for date:', currentDate);
+        await storage.savePhotoForDate(requestedDate, cat);
+        logger.log('Fetched and saved new cat photo for date:', requestedDate);
       }
 
       logger.log('Cat photo details:', {
@@ -54,7 +87,7 @@ export const cat = onRequest(
         alt_description: cat.alt_description,
       });
 
-      const templatePath = path.join(__dirname, '..', 'template.html');
+      const templatePath = join(__dirname, '..', 'template.html');
       const htmlTemplate = await fs.promises.readFile(templatePath, 'utf8');
 
       // Get up to 5 tags
