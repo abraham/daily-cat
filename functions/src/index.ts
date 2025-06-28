@@ -119,7 +119,7 @@ export const cat = onRequest(
       response.status(200);
       response.send(html);
     } catch (error) {
-      console.error('Error fetching cat:', error);
+      logger.error('Error fetching cat:', error);
       response.status(500).send('Error fetching cat image');
     }
   }
