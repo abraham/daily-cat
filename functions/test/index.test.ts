@@ -766,5 +766,44 @@ describe('Cat Function', () => {
       // Verify the header link structure (the header text should be wrapped in a link to "/")
       expect(htmlResponse).toMatch(/<a[^>]*href="\/"[^>]*>.*Daily Cat.*<\/a>/s);
     });
+
+    it('should group navigation arrows on the left side of header', async () => {
+      // Mock API response
+      catApiMock.get.mockResolvedValue(mockApiResponse);
+      storageMock.getPhotoForDate.mockResolvedValue(null);
+      storageMock.savePhotoForDate.mockResolvedValue('2025-06-26');
+
+      const req = {
+        method: 'GET',
+        url: '/2025-06-26',
+      } as any;
+
+      let htmlResponse = '';
+      const res = {
+        status: vi.fn(() => res),
+        send: vi.fn((html) => {
+          htmlResponse = html;
+        }),
+        set: vi.fn(),
+      } as any;
+
+      await myFunctions.cat(req, res);
+
+      // Should contain the nav-arrows-left container
+      expect(htmlResponse).toContain('class="nav-arrows-left"');
+
+      // Both arrows should be present within the grouped container
+      expect(htmlResponse).toContain('nav-arrow left');
+      expect(htmlResponse).toContain('nav-arrow right');
+
+      // Verify the structure: nav-arrows-left should contain both arrow elements
+      const navArrowsLeftIndex = htmlResponse.indexOf('nav-arrows-left');
+      const leftArrowIndex = htmlResponse.indexOf('nav-arrow left');
+      const rightArrowIndex = htmlResponse.indexOf('nav-arrow right');
+
+      expect(navArrowsLeftIndex).toBeGreaterThan(-1);
+      expect(leftArrowIndex).toBeGreaterThan(navArrowsLeftIndex);
+      expect(rightArrowIndex).toBeGreaterThan(leftArrowIndex);
+    });
   });
 });
