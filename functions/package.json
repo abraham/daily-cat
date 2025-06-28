@@ -10,7 +10,7 @@
   "private": true,
   "devDependencies": {
     "@lit-labs/ssr": "^3.3.1",
-    "@types/node": "^22.0.0",
+    "@types/node": "^24.0.6",
     "@vitest/ui": "^3.2.4",
     "firebase-functions-test": "^3.1.0",
     "ts-node": "^10.9.2",
