@@ -7,14 +7,14 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
+import { render } from '@lit-labs/ssr';
 import * as logger from 'firebase-functions/logger';
 import { onRequest } from 'firebase-functions/v2/https';
-import { render } from '@lit-labs/ssr';
 import * as catAPI from './cat-api';
-import * as storage from './storage';
-import { UnsplashPhoto } from './types';
 import { calculateNavigationUrls } from './navigation';
-import { renderTemplate } from './template';
+import * as storage from './storage';
+import { renderPhotoPage } from './template';
+import { UnsplashPhoto } from './types';
 
 const API_KEY = process.env.UNSPLASH_CLIENT_ID;
 
@@ -94,7 +94,7 @@ export const cat = onRequest(
         calculateNavigationUrls(requestedDate);
 
       // Render template using lit-html
-      const templateResult = renderTemplate({
+      const templateResult = renderPhotoPage({
         linkUrl: cat.links.html,
         imageUrl: cat.urls.full,
         userProfileImage: cat.user.profile_image.medium,
