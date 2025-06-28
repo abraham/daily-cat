@@ -103,6 +103,19 @@
           font-size: 20px;
         }
       }
+      .header-title {
+        color: inherit;
+        text-decoration: none;
+        transition: opacity 0.2s ease;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+      }
+      .header-title:hover {
+        opacity: 0.8;
+      }
+      .header-title:active {
+        opacity: 0.6;
+      }
       .nav-arrow {
         position: absolute;
         top: 50%;
@@ -391,7 +404,7 @@
           <a href="{{PREV_DATE_URL}}" class="nav-arrow left" title="Previous"
             >←</a
           >
-          <h1>Daily Cat</h1>
+          <h1><a href="/" class="header-title">Daily Cat</a></h1>
           <a
             href="{{NEXT_DATE_URL}}"
             class="nav-arrow right {{NEXT_ARROW_CLASS}}"

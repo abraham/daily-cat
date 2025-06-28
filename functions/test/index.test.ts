@@ -741,5 +741,35 @@ describe('Cat Function', () => {
       expect(htmlResponse).toContain('href="/2025-06-27"'); // Previous date (yesterday)
       expect(htmlResponse).toContain('nav-arrow right hidden'); // Right arrow should be hidden for today
     });
+
+    it('should include clickable header that links to root path', async () => {
+      // Mock API response
+      catApiMock.get.mockResolvedValue(mockApiResponse);
+      storageMock.getPhotoForDate.mockResolvedValue(null);
+      storageMock.savePhotoForDate.mockResolvedValue('2025-06-28');
+
+      const req = {
+        method: 'GET',
+        url: '/2025-06-25',
+      } as any;
+
+      let htmlResponse = '';
+      const res = {
+        status: vi.fn(() => res),
+        send: vi.fn((html) => {
+          htmlResponse = html;
+        }),
+        set: vi.fn(),
+      } as any;
+
+      await myFunctions.cat(req, res);
+
+      // Should contain a link to root path within the header
+      expect(htmlResponse).toContain('href="/"');
+      expect(htmlResponse).toContain('Daily Cat');
+
+      // Verify the header link structure (the header text should be wrapped in a link to "/")
+      expect(htmlResponse).toMatch(/<a[^>]*href="\/"[^>]*>.*Daily Cat.*<\/a>/s);
+    });
   });
 });
