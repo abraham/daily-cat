@@ -4,11 +4,16 @@
   "description": "A Firebase Function that serves daily cat images from the Unsplash API",
   "private": true,
   "devDependencies": {
+    "@types/node": "^22.0.7",
     "firebase-tools": "^14.9.0",
-    "prettier": "^3.6.2"
+    "prettier": "^3.6.2",
+    "typescript": "^5.8.3",
+    "vite": "^7.0.0"
   },
   "scripts": {
-    "build": "npm run build --prefix functions",
+    "start": "firebase emulators:exec \"npm start --prefix functions\"",
+    "build": "npm run build --prefix functions && vite build",
+    "deploy": "firebase deploy",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "postinstall": "npm ci --prefix functions"
