@@ -563,13 +563,7 @@ describe('Storage Functions', () => {
 
       expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
       expect(mockDoc.update).toHaveBeenCalledWith({
-        photo: {
-          ...mockRandomPhoto,
-          meta: { index: true },
-          public_domain: false,
-          tags: [],
-          topics: [],
-        },
+        photo: mockRandomPhoto,
         status: 'completed',
         updatedAt: expect.any(Date),
       });
