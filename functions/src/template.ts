@@ -1,5 +1,5 @@
 import { html, TemplateResult } from 'lit-html';
-import { shareIcon } from './svg';
+import { backIcon, nextIcon, shareIcon } from './svg';
 
 interface TemplateData {
   linkUrl: string;
@@ -31,7 +31,9 @@ function renderTags(tags: Array<{ type: string; title: string }>) {
 
 function renderNextArrow(showNextArrow: boolean, nextDateUrl: string) {
   return showNextArrow
-    ? html`<a href="${nextDateUrl}" class="nav-arrow right" title="Next">→</a>`
+    ? html`<a href="${nextDateUrl}" class="nav-arrow right" title="Next"
+        >${nextIcon()}</a
+      >`
     : '';
 }
 
@@ -480,11 +482,8 @@ export function renderTemplate(data: TemplateData): TemplateResult {
             text-decoration: underline;
           }
 
-          .footer a:not(:last-child)::after {
-            content: '•';
+          .footer .separator {
             color: #ccc;
-            margin-left: 8px;
-            font-size: 12px;
           }
 
           @media (max-width: 768px) {
@@ -540,7 +539,7 @@ export function renderTemplate(data: TemplateData): TemplateResult {
                   href="${data.prevDateUrl}"
                   class="nav-arrow left"
                   title="Previous"
-                  >←</a
+                  >${backIcon()}</a
                 >
                 ${renderNextArrow(data.showNextArrow, data.nextDateUrl)}
               </div>
@@ -590,18 +589,21 @@ export function renderTemplate(data: TemplateData): TemplateResult {
                 rel="noopener noreferrer"
                 >abrah.am</a
               >
+              <span class="separator">•</span>
               <a
                 href="https://github.com/abraham/daily-cat"
                 target="_blank"
                 rel="noopener noreferrer"
                 >Source</a
               >
+              <span class="separator">•</span>
               <a
                 href="https://unsplash.com/"
                 target="_blank"
                 rel="noopener noreferrer"
                 >Unsplash</a
               >
+              <span class="separator">•</span>
               <a
                 href="https://undraw.co/"
                 target="_blank"
