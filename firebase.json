@@ -16,6 +16,7 @@
   ],
   "hosting": {
     "public": "public",
+    "predeploy": ["npm run build"],
     "rewrites": [
       {
         "source": "/",

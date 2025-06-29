@@ -67,6 +67,21 @@ const listen = (messaging: Messaging) => {
   console.log('Listening for messages...');
   onMessage(messaging, (payload) => {
     console.log('Message received. ', payload);
+    const notification = new Notification(
+      '[f] ' + (payload.notification?.title || 'Foreground default title'),
+      {
+        body:
+          '[f] ' + (payload.notification?.body || 'Foreground default body'),
+        icon: payload.notification?.icon || '/icon-192x192.png',
+        badge: '/icon-192x192.png',
+      }
+    );
+
+    notification.onclick = () => {
+      console.log('Notification clicked:', payload);
+      window.focus();
+      notification.close();
+    };
   });
 };
 

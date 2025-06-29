@@ -2,28 +2,39 @@
 declare const self: ServiceWorkerGlobalScope;
 
 import { initializeApp } from 'firebase/app';
-import { getMessaging, onBackgroundMessage } from 'firebase/messaging/sw';
+import {
+  getMessaging,
+  MessagePayload,
+  onBackgroundMessage,
+} from 'firebase/messaging/sw';
 import { firebaseConfig } from './config';
 
 const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
 
-onBackgroundMessage(messaging, (payload) => {
+const handleMessage = (payload: MessagePayload) => {
   console.log(
     '[firebase-messaging-sw.js] Received background message ',
     payload
   );
 
   const notificationTitle =
-    payload.notification?.title || 'Payload title not set';
+    '[b] ' + (payload.notification?.title || 'Background default title');
   const notificationOptions = {
-    body: payload.notification?.body || 'Payload body not set',
+    body: '[b] ' + (payload.notification?.body || 'Background default body'),
     icon: '/firebase-logo.png',
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
-});
+};
+
+onBackgroundMessage(messaging, handleMessage);
 
 self.addEventListener('notificationclick', (event) => {
-  console.log(event);
+  console.log(
+    '[firebase-messaging-sw.js] Received notification click event',
+    event
+  );
+  event.notification.close();
+  event.waitUntil(self.clients.openWindow(self.location.origin));
 });

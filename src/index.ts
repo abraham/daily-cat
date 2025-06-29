@@ -8,10 +8,6 @@ const app = initializeApp(firebaseConfig);
 
 initNotifications(app);
 
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('firebase-messaging-sw.js');
-}
-
 const urlParams = new URLSearchParams(window.location.search);
 const ff = urlParams.get('ff');
 
