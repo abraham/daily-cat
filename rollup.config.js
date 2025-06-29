@@ -8,25 +8,41 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export default {
-  input: resolve(__dirname, 'src/index.ts'),
-  output: {
-    file: 'public/index.js',
-    format: 'umd',
-    name: 'DailyCat',
+export default [
+  {
+    input: resolve(__dirname, 'src/index.ts'),
+    output: {
+      file: 'public/index.js',
+      format: 'umd',
+      name: 'DailyCat',
+    },
+    plugins: [
+      nodeResolve({
+        browser: true,
+        preferBuiltins: false,
+      }),
+      typescript({
+        tsconfig: './tsconfig.json',
+      }),
+      copy({
+        targets: [{ src: 'assets/*', dest: 'public' }],
+      }),
+    ],
   },
-  plugins: [
-    nodeResolve({
-      browser: true,
-      preferBuiltins: false,
-    }),
-    typescript({
-      tsconfig: './tsconfig.json',
-    }),
-    copy({
-      targets: [
-        { src: 'assets/*', dest: 'public' }
-      ]
-    })
-  ],
-};
+  {
+    input: resolve(__dirname, 'src/firebase-messaging-sw.ts'),
+    output: {
+      file: 'public/firebase-messaging-sw.js',
+      format: 'iife',
+    },
+    plugins: [
+      nodeResolve({
+        browser: true,
+        preferBuiltins: false,
+      }),
+      typescript({
+        tsconfig: './tsconfig.json',
+      }),
+    ],
+  },
+];

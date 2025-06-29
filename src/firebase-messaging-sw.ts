@@ -3,24 +3,27 @@ declare const self: ServiceWorkerGlobalScope;
 
 import { initializeApp } from 'firebase/app';
 import { getMessaging, onBackgroundMessage } from 'firebase/messaging/sw';
+import { firebaseConfig } from './config';
 
-fetch('/__/firebase/init.json').then(async (response) => {
-  const app = initializeApp(await response.json());
+const app = initializeApp(firebaseConfig);
+const messaging = getMessaging(app);
 
-  const messaging = getMessaging(app);
-  onBackgroundMessage(messaging, (payload) => {
-    console.log(
-      '[firebase-messaging-sw.js] Received background message ',
-      payload
-    );
+onBackgroundMessage(messaging, (payload) => {
+  console.log(
+    '[firebase-messaging-sw.js] Received background message ',
+    payload
+  );
 
-    const notificationTitle = 'Background Message Title';
-    const notificationOptions = {
-      body: 'Background Message body.',
-      icon: '/firebase-logo.png',
-    };
+  const notificationTitle =
+    payload.notification?.title || 'Payload title not set';
+  const notificationOptions = {
+    body: payload.notification?.body || 'Payload body not set',
+    icon: '/firebase-logo.png',
+  };
 
-    // Cast self to ServiceWorkerGlobalScope to access registration
-    self.registration.showNotification(notificationTitle, notificationOptions);
-  });
+  self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+self.addEventListener('notificationclick', (event) => {
+  console.log(event);
 });
