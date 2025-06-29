@@ -5,10 +5,13 @@
   "private": true,
   "devDependencies": {
     "@types/node": "^22.0.7",
+    "@vitest/ui": "^3.2.4",
     "firebase-tools": "^14.9.0",
+    "jsdom": "^26.0.1",
     "prettier": "^3.6.2",
     "typescript": "^5.8.3",
-    "vite": "^7.0.0"
+    "vite": "^7.0.0",
+    "vitest": "^3.2.4"
   },
   "scripts": {
     "start": "firebase emulators:exec \"npm start --prefix functions\"",
@@ -16,7 +19,10 @@
     "deploy": "firebase deploy",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "postinstall": "npm ci --prefix functions"
+    "postinstall": "npm ci --prefix functions",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run"
   },
   "engines": {
     "node": ">=18"

@@ -1,5 +1,11 @@
 import { html, TemplateResult } from 'lit-html';
-import { backIcon, nextIcon, shareIcon } from './svg';
+import {
+  backIcon,
+  nextIcon,
+  notificationsOffIcon,
+  notificationsOnIcon,
+  shareIcon,
+} from './svg';
 
 interface TemplateData {
   linkUrl: string;
@@ -47,14 +53,25 @@ function renderHeader(data: TemplateData): TemplateResult {
         ${renderNextArrow(data.showNextArrow, data.nextDateUrl)}
       </div>
       <h1><a href="/" class="header-title">Daily Cat</a></h1>
-      <button
-        id="share-button"
-        class="share-button hidden"
-        title="Share this page"
-        type="button"
-      >
-        ${shareIcon()}
-      </button>
+      <div class="header-controls">
+        <button
+          id="notifications-button"
+          class="notifications-button hidden"
+          title="Toggle notifications"
+          type="button"
+        >
+          <span class="notifications-on hidden">${notificationsOnIcon()}</span>
+          <span class="notifications-off">${notificationsOffIcon()}</span>
+        </button>
+        <button
+          id="share-button"
+          class="share-button hidden"
+          title="Share this page"
+          type="button"
+        >
+          ${shareIcon()}
+        </button>
+      </div>
     </div>
   `;
 }
@@ -372,12 +389,61 @@ function renderPage(
             background: none;
             cursor: pointer;
           }
+          .header-controls {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 8px;
+            align-items: center;
+          }
+          .notifications-button {
+            font-size: 20px;
+            color: #666;
+            text-decoration: none;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition:
+              background-color 0.2s ease,
+              color 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            border: none;
+            background: none;
+            cursor: pointer;
+            position: relative;
+          }
+          .notifications-button .notifications-on,
+          .notifications-button .notifications-off {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: opacity 0.2s ease;
+          }
+          .share-button {
+            position: static;
+            transform: none;
+          }
           @media (max-width: 768px) {
             .share-button {
               width: 48px;
               height: 48px;
               font-size: 18px;
               right: 10px;
+            }
+            .header-controls {
+              right: 10px;
+            }
+            .notifications-button {
+              width: 48px;
+              height: 48px;
+              font-size: 18px;
             }
           }
           .share-button:hover {
@@ -388,7 +454,15 @@ function renderPage(
             background-color: #e0e0e0;
             transform: translateY(-50%) scale(0.95);
           }
-          .share-button.hidden {
+          .notifications-button:hover {
+            background-color: #f0f0f0;
+            color: #333;
+          }
+          .notifications-button:active {
+            background-color: #e0e0e0;
+            transform: scale(0.95);
+          }
+          .hidden {
             display: none;
           }
           .user-profile {
@@ -652,6 +726,9 @@ function renderPage(
                 left: max(10px, env(safe-area-inset-left));
               }
               .share-button {
+                right: max(10px, env(safe-area-inset-right));
+              }
+              .header-controls {
                 right: max(10px, env(safe-area-inset-right));
               }
             }
