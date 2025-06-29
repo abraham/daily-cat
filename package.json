@@ -20,9 +20,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "postinstall": "npm ci --prefix functions",
-    "test": "vitest",
+    "test": "vitest run",
     "test:ui": "vitest --ui",
-    "test:run": "vitest run"
+    "test:watch": "vitest"
   },
   "engines": {
     "node": ">=18"
