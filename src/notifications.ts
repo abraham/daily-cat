@@ -4,6 +4,7 @@ import {
   getMessaging,
   getToken,
   Messaging,
+  onMessage,
 } from 'firebase/messaging';
 
 let token: string | null = null;
@@ -29,6 +30,7 @@ export const initNotifications = async (app: FirebaseApp) => {
   }
 
   messaging = getMessaging(app);
+  listen(messaging);
   const granted = Notification.permission === 'granted';
   console.log('granted', granted);
   if (granted) {
@@ -59,6 +61,13 @@ export const initNotifications = async (app: FirebaseApp) => {
       console.log('permission', Notification.permission);
     });
   }
+};
+
+const listen = (messaging: Messaging) => {
+  console.log('Listening for messages...');
+  onMessage(messaging, (payload) => {
+    console.log('Message received. ', payload);
+  });
 };
 
 const subscribe = async () => {
