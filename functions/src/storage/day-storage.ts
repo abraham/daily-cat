@@ -180,21 +180,6 @@ export async function getMostRecentPhoto(): Promise<DayRecord | null> {
 }
 
 /**
- * Check if a photo ID is already used in any day record
- * @param photoId - The Unsplash photo ID to check
- * @returns Promise<boolean> - True if the photo ID is already used
- */
-export async function isPhotoIdUsed(photoId: string): Promise<boolean> {
-  const snapshot = await db
-    .collection(COLLECTION_NAME)
-    .where('photo.id', '==', photoId)
-    .limit(1)
-    .get();
-
-  return !snapshot.empty;
-}
-
-/**
  * Create a new day record with 'created' status
  * @param id - ISO date string (YYYY-MM-DD)
  * @returns Promise<NewDayRecord> - The created day record

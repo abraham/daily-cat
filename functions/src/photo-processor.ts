@@ -1,7 +1,8 @@
 import * as logger from 'firebase-functions/logger';
 import { defineSecret } from 'firebase-functions/params';
 import * as catApi from './cat-api';
-import { completePhotoForDay, isPhotoIdUsed } from './storage/day-storage';
+import { completePhotoForDay } from './storage/day-storage';
+import { isPhotoIdUsed } from './storage/photo-id-storage';
 
 // Define the Unsplash client ID secret
 const unsplashClientId = defineSecret('UNSPLASH_CLIENT_ID');

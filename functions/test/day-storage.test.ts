@@ -364,7 +364,6 @@ describe('Day Storage Functions', () => {
     });
   });
 
-
   describe('getMostRecentPhoto', () => {
     it('should return most recent photo', async () => {
       const mockData = {
@@ -454,77 +453,6 @@ describe('Day Storage Functions', () => {
       await expect(
         dayStorage.updatePhotoForDay(testDate, mockPhoto)
       ).rejects.toThrow('Document not found');
-    });
-  });
-
-  describe('isPhotoIdUsed', () => {
-    it('should return true when photo ID is already used', async () => {
-      const photoId = 'test-photo-id';
-
-      // Mock query result with matching document
-      const mockQuerySnapshot = {
-        empty: false,
-        docs: [{ id: 'some-day-id', data: () => ({}) }],
-      };
-
-      const mockQuery = {
-        limit: vi.fn().mockReturnThis(),
-        get: vi.fn().mockResolvedValue(mockQuerySnapshot),
-      };
-
-      mockCollection.where = vi.fn().mockReturnValue(mockQuery);
-
-      const result = await dayStorage.isPhotoIdUsed(photoId);
-
-      expect(result).toBe(true);
-      expect(mockCollection.where).toHaveBeenCalledWith(
-        'photo.id',
-        '==',
-        photoId
-      );
-      expect(mockQuery.limit).toHaveBeenCalledWith(1);
-    });
-
-    it('should return false when photo ID is not used', async () => {
-      const photoId = 'unused-photo-id';
-
-      // Mock empty query result
-      const mockQuerySnapshot = {
-        empty: true,
-        docs: [],
-      };
-
-      const mockQuery = {
-        limit: vi.fn().mockReturnThis(),
-        get: vi.fn().mockResolvedValue(mockQuerySnapshot),
-      };
-
-      mockCollection.where = vi.fn().mockReturnValue(mockQuery);
-
-      const result = await dayStorage.isPhotoIdUsed(photoId);
-
-      expect(result).toBe(false);
-      expect(mockCollection.where).toHaveBeenCalledWith(
-        'photo.id',
-        '==',
-        photoId
-      );
-    });
-
-    it('should handle query errors', async () => {
-      const photoId = 'test-photo-id';
-      const firestoreError = new Error('Query failed');
-
-      const mockQuery = {
-        limit: vi.fn().mockReturnThis(),
-        get: vi.fn().mockRejectedValue(firestoreError),
-      };
-
-      mockCollection.where = vi.fn().mockReturnValue(mockQuery);
-
-      await expect(dayStorage.isPhotoIdUsed(photoId)).rejects.toThrow(
-        'Query failed'
-      );
     });
   });
 
