@@ -45,6 +45,7 @@ vi.mock('firebase-admin/firestore', () => ({
 vi.mock('../src/storage', () => ({
   getPhotoForDate: vi.fn(),
   createNewDayRecord: vi.fn(),
+  getConfig: vi.fn(),
 }));
 
 // Mock the template module
@@ -85,6 +86,9 @@ describe('Cat Function', () => {
       photo: null,
       createdAt: new Date(),
       updatedAt: new Date(),
+    });
+    storageMock.getConfig.mockResolvedValue({
+      minDate: '2025-01-01',
     });
     templateMock.renderPhotoPage.mockReturnValue('mocked photo page html');
     templateMock.renderProcessingPage.mockReturnValue(
@@ -426,7 +430,11 @@ describe('Cat Function', () => {
       expect(message).toBe('Future dates are not available.');
     });
 
-    it('should reject dates before 2025', async () => {
+    it('should reject dates before configured minDate', async () => {
+      storageMock.getConfig.mockResolvedValue({
+        minDate: '2025-01-01',
+      });
+
       const req = { method: 'GET', url: '/2024-12-31' } as any;
       let statusCode: number = 0;
       let message: string = '';
@@ -450,11 +458,17 @@ describe('Cat Function', () => {
       });
 
       expect(statusCode).toBe(403);
-      expect(message).toBe('Forbidden! Dates before 2025 are not allowed.');
+      expect(message).toBe(
+        'Forbidden! Dates before 2025-01-01 are not allowed.'
+      );
     });
 
-    it('should validate date values', async () => {
-      const req = { method: 'GET', url: '/2025-13-45' } as any;
+    it('should use custom minDate from config', async () => {
+      storageMock.getConfig.mockResolvedValue({
+        minDate: '2025-06-01',
+      });
+
+      const req = { method: 'GET', url: '/2025-05-31' } as any;
       let statusCode: number = 0;
       let message: string = '';
 
@@ -476,8 +490,73 @@ describe('Cat Function', () => {
         myFunctions.cat(req, res);
       });
 
-      expect(statusCode).toBe(404);
-      expect(message).toBe('Invalid date.');
+      expect(statusCode).toBe(403);
+      expect(message).toBe(
+        'Forbidden! Dates before 2025-06-01 are not allowed.'
+      );
+    });
+
+    it('should allow dates on or after configured minDate', async () => {
+      storageMock.getConfig.mockResolvedValue({
+        minDate: '2025-06-01',
+      });
+
+      const completedRecord = {
+        status: 'completed',
+        photo: mockApiResponse,
+      };
+      storageMock.getPhotoForDate.mockResolvedValue(completedRecord);
+
+      const req = { method: 'GET', url: '/2025-06-01' } as any;
+      let statusCode: number = 0;
+
+      const res = {
+        send: () => {},
+        set: () => res,
+        status: (code: number) => {
+          statusCode = code;
+          return res;
+        },
+      } as any;
+
+      await new Promise<void>((resolve) => {
+        res.send = () => {
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
+
+      expect(statusCode).toBe(200);
+      expect(storageMock.getPhotoForDate).toHaveBeenCalledWith('2025-06-01');
+    });
+
+    it('should handle config retrieval errors', async () => {
+      storageMock.getConfig.mockRejectedValue(new Error('Config not found'));
+
+      const req = { method: 'GET', url: '/2025-06-01' } as any;
+      let statusCode: number = 0;
+      let message: string = '';
+
+      const res = {
+        send: (msg: string) => {
+          message = msg;
+        },
+        status: (code: number) => {
+          statusCode = code;
+          return res;
+        },
+      } as any;
+
+      await new Promise<void>((resolve) => {
+        res.send = (msg: string) => {
+          message = msg;
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
+
+      expect(statusCode).toBe(500);
+      expect(message).toBe('Error fetching cat image');
     });
 
     it('should pass correct template data to renderPhotoPage', async () => {

@@ -25,6 +25,7 @@ export const cat = onRequest(async (request, response) => {
   }
 
   try {
+    const config = await storage.getConfig();
     // Extract date from URL path
     const path = request.url.split('?')[0]; // Remove query params
     let requestedDate: string;
@@ -53,11 +54,11 @@ export const cat = onRequest(async (request, response) => {
         return;
       }
 
-      // Check if the requested date is before 2025
-      if (requestedDate < '2025-01-01') {
+      // Check if the requested date is before the minimum allowed date
+      if (requestedDate < config.minDate) {
         response
           .status(403)
-          .send('Forbidden! Dates before 2025 are not allowed.');
+          .send(`Forbidden! Dates before ${config.minDate} are not allowed.`);
         return;
       }
 
