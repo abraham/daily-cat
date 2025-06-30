@@ -6,6 +6,7 @@ import {
   Messaging,
   onMessage,
 } from 'firebase/messaging';
+import { showToast } from './toast';
 
 let token: string | null = null;
 const vapidKey =
@@ -88,25 +89,40 @@ const subscribe = async () => {
   try {
     const permission = await Notification.requestPermission();
     console.log('permission', permission);
-    token = await getToken(messaging, { vapidKey });
-    console.log('token', token);
-    localStorage.setItem('notification_token', token);
-    notificationsOn?.classList.remove('hidden');
-    notificationsOff?.classList.add('hidden');
+
+    if (permission === 'granted') {
+      token = await getToken(messaging, { vapidKey });
+      console.log('token', token);
+      localStorage.setItem('notification_token', token);
+      notificationsOn?.classList.remove('hidden');
+      notificationsOff?.classList.add('hidden');
+
+      showToast('Subscribed to daily notifications', 'success');
+    } else {
+      showToast('Notifications permission denied', 'info');
+    }
   } catch (error) {
     console.error('Error requesting notification permission:', error);
+    showToast('Failed to subscribe to notifications', 'info');
   }
 };
 
 const unsubscribe = async () => {
   console.log('Unsubscribing from notifications...');
   if (token) {
-    await deleteToken(messaging);
-    console.log('Token deleted successfully');
-    token = null;
-    localStorage.removeItem('notification_token');
-    notificationsOn?.classList.add('hidden');
-    notificationsOff?.classList.remove('hidden');
+    try {
+      await deleteToken(messaging);
+      console.log('Token deleted successfully');
+      token = null;
+      localStorage.removeItem('notification_token');
+      notificationsOn?.classList.add('hidden');
+      notificationsOff?.classList.remove('hidden');
+
+      showToast('Unsubscribed from daily notifications', 'info');
+    } catch (error) {
+      console.error('Error unsubscribing from notifications:', error);
+      showToast('Failed to unsubscribe from notifications', 'info');
+    }
   }
 };
 

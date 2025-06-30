@@ -151,6 +151,7 @@ function renderBody(
 ): TemplateResult {
   return html`
     <body>
+      <div id="toast" class="toast"></div>
       <div class="container">
         <div class="left-column"></div>
         <div class="center-column">
@@ -708,8 +709,53 @@ function renderPage(
             }
           }
 
+          /* Toast notification styles */
+          .toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(64, 64, 64, 0.95);
+            color: #f5f5f5;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            max-width: 90%;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+          }
+
+          .toast.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+          }
+
+          @media (max-width: 768px) {
+            .toast {
+              top: 70px;
+              font-size: 13px;
+              padding: 10px 16px;
+              max-width: 85%;
+            }
+          }
+
           /* Handle safe areas for devices with notches */
           @supports (padding: max(0px)) {
+            .toast {
+              top: max(80px, calc(env(safe-area-inset-top) + 20px));
+            }
+            @media (max-width: 768px) {
+              .toast {
+                top: max(70px, calc(env(safe-area-inset-top) + 15px));
+              }
+            }
             .header {
               padding-left: max(20px, env(safe-area-inset-left));
               padding-right: max(20px, env(safe-area-inset-right));
