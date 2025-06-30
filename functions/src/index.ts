@@ -22,7 +22,7 @@ import {
   getPhotoForDate,
   setDayRecordProcessing,
 } from './storage/day-storage';
-import { recordPhotoIdOnDayWrite } from './record-photo-id-task';
+import { recordPhotoIdOnDayWrite } from './tasks/record-photo-id-task';
 
 export const cat = onRequest(async (request, response) => {
   if (request.method !== 'GET') {
