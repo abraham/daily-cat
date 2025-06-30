@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { DayRecord } from './types';
+import { DayRecord } from '../types';
 
 // Load the photo fixture for testing
-const photoFixturePath = path.join(__dirname, 'fixtures', 'photo.json');
+const photoFixturePath = path.join(__dirname, '..', 'fixtures', 'photo.json');
 const mockPhoto = JSON.parse(fs.readFileSync(photoFixturePath, 'utf8'));
 
 // Mock Firebase Admin
@@ -44,7 +44,7 @@ vi.mock('firebase-admin/firestore', () => ({
 
 // Mock the photo-id-storage module
 const mockStorePhotoId = vi.fn();
-vi.mock('../src/storage/photo-id-storage', () => ({
+vi.mock('../storage/photo-id-storage', () => ({
   storePhotoId: mockStorePhotoId,
 }));
 

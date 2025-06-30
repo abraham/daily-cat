@@ -39,7 +39,7 @@ vi.mock('firebase-admin/firestore', () => ({
 }));
 
 describe('Config Storage Functions', () => {
-  let configStorage: typeof import('./storage/config-storage');
+  let configStorage: typeof import('./config-storage');
 
   beforeEach(async () => {
     // Reset all mocks
@@ -59,7 +59,7 @@ describe('Config Storage Functions', () => {
 
     // Import fresh instance of config storage module
     vi.resetModules();
-    configStorage = await import('./storage/config-storage.js');
+    configStorage = await import('./config-storage.js');
   });
 
   afterEach(() => {
