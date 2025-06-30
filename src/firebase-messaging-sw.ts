@@ -18,11 +18,10 @@ const handleMessage = (payload: MessagePayload) => {
     payload
   );
 
-  const notificationTitle =
-    '[b] ' + (payload.notification?.title || 'Background default title');
+  const notificationTitle = '[b] ' + payload.notification?.title;
   const notificationOptions = {
-    body: '[b] ' + (payload.notification?.body || 'Background default body'),
-    icon: '/firebase-logo.png',
+    body: '[b] ' + payload.notification?.body,
+    icon: payload.notification?.icon,
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);

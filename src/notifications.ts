@@ -68,12 +68,10 @@ const listen = (messaging: Messaging) => {
   onMessage(messaging, (payload) => {
     console.log('Message received. ', payload);
     const notification = new Notification(
-      '[f] ' + (payload.notification?.title || 'Foreground default title'),
+      '[f] ' + payload.notification?.title,
       {
-        body:
-          '[f] ' + (payload.notification?.body || 'Foreground default body'),
-        icon: payload.notification?.icon || '/icon-192x192.png',
-        badge: '/icon-192x192.png',
+        body: '[f] ' + payload.notification?.body,
+        icon: payload.notification?.icon,
       }
     );
 
