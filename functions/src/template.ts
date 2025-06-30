@@ -194,6 +194,7 @@ function renderPage(
           content="width=device-width, initial-scale=1.0, user-scalable=no"
         />
         <title>Daily Cat</title>
+        <link rel="icon" type="image/png" href="/images/cat-face-small.png" />
 
         <!-- Open Graph tags for social media sharing -->
         <meta property="og:title" content="Daily Cat" />
