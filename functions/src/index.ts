@@ -53,6 +53,14 @@ export const cat = onRequest(async (request, response) => {
         return;
       }
 
+      // Check if the requested date is before 2025
+      if (requestedDate < '2025-01-01') {
+        response
+          .status(403)
+          .send('Forbidden! Dates before 2025 are not allowed.');
+        return;
+      }
+
       // Check if the requested date is in the future
       const currentDate = new Date().toISOString().split('T')[0];
       if (requestedDate > currentDate) {
