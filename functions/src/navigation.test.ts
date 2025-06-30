@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { calculateNavigationUrls } from '../src/navigation';
+import { calculateNavigationUrls } from './navigation';
 
 describe('Navigation Utils', () => {
   describe('calculateNavigationUrls', () => {

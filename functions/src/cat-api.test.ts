@@ -13,7 +13,7 @@ describe('Cat API', () => {
     global.fetch = fetchMock;
 
     // Dynamically import the module to ensure mocks are applied
-    catApi = await import('../src/cat-api');
+    catApi = await import('./cat-api.js');
   });
 
   afterEach(() => {

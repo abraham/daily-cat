@@ -81,9 +81,9 @@ describe('Cat Function', () => {
     vi.resetModules();
 
     // Get the mocked modules after reset
-    dayStorageMock = await import('../src/storage/day-storage');
-    configStorageMock = await import('../src/storage/config-storage');
-    templateMock = await import('../src/template');
+    dayStorageMock = await import('./storage/day-storage.js');
+    configStorageMock = await import('./storage/config-storage.js');
+    templateMock = await import('./template.js');
 
     dayStorageMock.getPhotoForDate.mockResolvedValue(null); // Default: no existing photo
     dayStorageMock.createNewDayRecord.mockResolvedValue({
@@ -102,7 +102,7 @@ describe('Cat Function', () => {
     );
 
     // Import the functions after mocks are set up
-    myFunctions = await import('../src/index');
+    myFunctions = await import('./index.js');
   });
 
   afterEach(() => {
