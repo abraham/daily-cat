@@ -41,10 +41,14 @@ vi.mock('firebase-admin/firestore', () => ({
   getFirestore: vi.fn(() => mockFirestore),
 }));
 
-// Mock the storage module
-vi.mock('../src/storage', () => ({
+// Mock the storage modules
+vi.mock('../src/storage/day-storage', () => ({
   getPhotoForDate: vi.fn(),
   createNewDayRecord: vi.fn(),
+  setDayRecordProcessing: vi.fn(),
+}));
+
+vi.mock('../src/storage/config-storage', () => ({
   getConfig: vi.fn(),
 }));
 
@@ -60,7 +64,8 @@ vi.mock('@lit-labs/ssr', () => ({
 }));
 
 describe('Cat Function', () => {
-  let storageMock: any;
+  let dayStorageMock: any;
+  let configStorageMock: any;
   let templateMock: any;
   let myFunctions: any;
 
@@ -76,18 +81,19 @@ describe('Cat Function', () => {
     vi.resetModules();
 
     // Get the mocked modules after reset
-    storageMock = await import('../src/storage');
+    dayStorageMock = await import('../src/storage/day-storage');
+    configStorageMock = await import('../src/storage/config-storage');
     templateMock = await import('../src/template');
 
-    storageMock.getPhotoForDate.mockResolvedValue(null); // Default: no existing photo
-    storageMock.createNewDayRecord.mockResolvedValue({
+    dayStorageMock.getPhotoForDate.mockResolvedValue(null); // Default: no existing photo
+    dayStorageMock.createNewDayRecord.mockResolvedValue({
       id: 'test-date',
       status: 'created',
       photo: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    storageMock.getConfig.mockResolvedValue({
+    configStorageMock.getConfig.mockResolvedValue({
       minDate: '2025-01-01',
     });
     templateMock.renderPhotoPage.mockReturnValue('mocked photo page html');
@@ -110,7 +116,7 @@ describe('Cat Function', () => {
         status: 'completed',
         photo: mockApiResponse,
       };
-      storageMock.getPhotoForDate.mockResolvedValue(completedRecord);
+      dayStorageMock.getPhotoForDate.mockResolvedValue(completedRecord);
 
       const req = { method: 'GET', url: '/' } as any;
 
@@ -139,14 +145,14 @@ describe('Cat Function', () => {
       expect(statusCode).toBe(200);
       expect(templateMock.renderPhotoPage).toHaveBeenCalledOnce();
       expect(templateMock.renderProcessingPage).not.toHaveBeenCalled();
-      expect(storageMock.getPhotoForDate).toHaveBeenCalledWith(
+      expect(dayStorageMock.getPhotoForDate).toHaveBeenCalledWith(
         expect.any(String)
       );
     });
 
     it('should handle GET requests for root path with no completed record', async () => {
       // Mock no record found
-      storageMock.getPhotoForDate.mockResolvedValue(null);
+      dayStorageMock.getPhotoForDate.mockResolvedValue(null);
 
       const req = { method: 'GET', url: '/' } as any;
 
@@ -175,7 +181,7 @@ describe('Cat Function', () => {
       expect(statusCode).toBe(200);
       expect(templateMock.renderProcessingPage).toHaveBeenCalledOnce();
       expect(templateMock.renderPhotoPage).not.toHaveBeenCalled();
-      expect(storageMock.getPhotoForDate).toHaveBeenCalledWith(
+      expect(dayStorageMock.getPhotoForDate).toHaveBeenCalledWith(
         expect.any(String)
       );
     });
@@ -185,7 +191,7 @@ describe('Cat Function', () => {
         status: 'completed',
         photo: mockApiResponse,
       };
-      storageMock.getPhotoForDate.mockResolvedValue(completedRecord);
+      dayStorageMock.getPhotoForDate.mockResolvedValue(completedRecord);
 
       const req = { method: 'GET', url: '/2025-06-27' } as any;
 
@@ -214,7 +220,7 @@ describe('Cat Function', () => {
       expect(statusCode).toBe(200);
       expect(templateMock.renderPhotoPage).toHaveBeenCalledOnce();
       expect(templateMock.renderProcessingPage).not.toHaveBeenCalled();
-      expect(storageMock.getPhotoForDate).toHaveBeenCalledWith('2025-06-27');
+      expect(dayStorageMock.getPhotoForDate).toHaveBeenCalledWith('2025-06-27');
     });
 
     it('should handle GET requests for specific date with processing record', async () => {
@@ -222,7 +228,7 @@ describe('Cat Function', () => {
         status: 'processing',
         photo: null,
       };
-      storageMock.getPhotoForDate.mockResolvedValue(processingRecord);
+      dayStorageMock.getPhotoForDate.mockResolvedValue(processingRecord);
 
       const req = { method: 'GET', url: '/2025-06-27' } as any;
 
@@ -251,7 +257,7 @@ describe('Cat Function', () => {
       expect(statusCode).toBe(200);
       expect(templateMock.renderProcessingPage).toHaveBeenCalledOnce();
       expect(templateMock.renderPhotoPage).not.toHaveBeenCalled();
-      expect(storageMock.getPhotoForDate).toHaveBeenCalledWith('2025-06-27');
+      expect(dayStorageMock.getPhotoForDate).toHaveBeenCalledWith('2025-06-27');
     });
 
     it('should reject non-GET requests', async () => {
@@ -286,7 +292,7 @@ describe('Cat Function', () => {
         status: 'completed',
         photo: mockApiResponse,
       };
-      storageMock.getPhotoForDate.mockResolvedValue(completedRecord);
+      dayStorageMock.getPhotoForDate.mockResolvedValue(completedRecord);
 
       const req = { method: 'GET', url: '/' } as any;
       let cacheKey: string = '';
@@ -315,7 +321,7 @@ describe('Cat Function', () => {
     });
 
     it('should set caching headers for processing pages', async () => {
-      storageMock.getPhotoForDate.mockResolvedValue(null);
+      dayStorageMock.getPhotoForDate.mockResolvedValue(null);
 
       const req = { method: 'GET', url: '/' } as any;
       let cacheKey: string = '';
@@ -344,7 +350,9 @@ describe('Cat Function', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      storageMock.getPhotoForDate.mockRejectedValue(new Error('Storage Error'));
+      dayStorageMock.getPhotoForDate.mockRejectedValue(
+        new Error('Storage Error')
+      );
 
       const req = { method: 'GET', url: '/' } as any;
       let statusCode: number = 0;
@@ -431,7 +439,7 @@ describe('Cat Function', () => {
     });
 
     it('should reject dates before configured minDate', async () => {
-      storageMock.getConfig.mockResolvedValue({
+      configStorageMock.getConfig.mockResolvedValue({
         minDate: '2025-01-01',
       });
 
@@ -464,7 +472,7 @@ describe('Cat Function', () => {
     });
 
     it('should use custom minDate from config', async () => {
-      storageMock.getConfig.mockResolvedValue({
+      configStorageMock.getConfig.mockResolvedValue({
         minDate: '2025-06-01',
       });
 
@@ -497,7 +505,7 @@ describe('Cat Function', () => {
     });
 
     it('should allow dates on or after configured minDate', async () => {
-      storageMock.getConfig.mockResolvedValue({
+      configStorageMock.getConfig.mockResolvedValue({
         minDate: '2025-06-01',
       });
 
@@ -505,7 +513,7 @@ describe('Cat Function', () => {
         status: 'completed',
         photo: mockApiResponse,
       };
-      storageMock.getPhotoForDate.mockResolvedValue(completedRecord);
+      dayStorageMock.getPhotoForDate.mockResolvedValue(completedRecord);
 
       const req = { method: 'GET', url: '/2025-06-01' } as any;
       let statusCode: number = 0;
@@ -527,11 +535,13 @@ describe('Cat Function', () => {
       });
 
       expect(statusCode).toBe(200);
-      expect(storageMock.getPhotoForDate).toHaveBeenCalledWith('2025-06-01');
+      expect(dayStorageMock.getPhotoForDate).toHaveBeenCalledWith('2025-06-01');
     });
 
     it('should handle config retrieval errors', async () => {
-      storageMock.getConfig.mockRejectedValue(new Error('Config not found'));
+      configStorageMock.getConfig.mockRejectedValue(
+        new Error('Config not found')
+      );
 
       const req = { method: 'GET', url: '/2025-06-01' } as any;
       let statusCode: number = 0;
@@ -564,7 +574,7 @@ describe('Cat Function', () => {
         status: 'completed',
         photo: mockApiResponse,
       };
-      storageMock.getPhotoForDate.mockResolvedValue(completedRecord);
+      dayStorageMock.getPhotoForDate.mockResolvedValue(completedRecord);
 
       const req = { method: 'GET', url: '/2025-06-27' } as any;
 
@@ -598,7 +608,7 @@ describe('Cat Function', () => {
     });
 
     it('should pass correct template data to renderProcessingPage', async () => {
-      storageMock.getPhotoForDate.mockResolvedValue(null);
+      dayStorageMock.getPhotoForDate.mockResolvedValue(null);
 
       const req = { method: 'GET', url: '/2025-06-27' } as any;
 
@@ -636,7 +646,7 @@ describe('Cat Function', () => {
         status: 'completed',
         photo: mockApiResponse,
       };
-      storageMock.getPhotoForDate.mockResolvedValue(completedRecord);
+      dayStorageMock.getPhotoForDate.mockResolvedValue(completedRecord);
 
       const req = { method: 'GET', url: '/?test=1&param=value' } as any;
 
@@ -669,7 +679,7 @@ describe('Cat Function', () => {
         status: 'completed',
         photo: photoWithoutAlt,
       };
-      storageMock.getPhotoForDate.mockResolvedValue(completedRecord);
+      dayStorageMock.getPhotoForDate.mockResolvedValue(completedRecord);
 
       const req = { method: 'GET', url: '/' } as any;
 
@@ -698,7 +708,7 @@ describe('Cat Function', () => {
         status: 'completed',
         photo: mockApiResponse,
       };
-      storageMock.getPhotoForDate.mockResolvedValue(completedRecord);
+      dayStorageMock.getPhotoForDate.mockResolvedValue(completedRecord);
 
       const req = { method: 'GET', url: '/2025-02-28' } as any; // Valid date in 2025
 
@@ -720,7 +730,7 @@ describe('Cat Function', () => {
       });
 
       expect(sendCalled).toBe(true);
-      expect(storageMock.getPhotoForDate).toHaveBeenCalledWith('2025-02-28');
+      expect(dayStorageMock.getPhotoForDate).toHaveBeenCalledWith('2025-02-28');
     });
 
     it('should reject invalid leap year dates', async () => {
@@ -753,7 +763,7 @@ describe('Cat Function', () => {
 
     it('should create a new day record when none exists', async () => {
       // Mock no existing record
-      storageMock.getPhotoForDate.mockResolvedValue(null);
+      dayStorageMock.getPhotoForDate.mockResolvedValue(null);
 
       const req = { method: 'GET', url: '/2025-06-27' } as any;
 
@@ -775,7 +785,9 @@ describe('Cat Function', () => {
       });
 
       expect(sendCalled).toBe(true);
-      expect(storageMock.createNewDayRecord).toHaveBeenCalledWith('2025-06-27');
+      expect(dayStorageMock.createNewDayRecord).toHaveBeenCalledWith(
+        '2025-06-27'
+      );
       expect(templateMock.renderProcessingPage).toHaveBeenCalledOnce();
     });
 
@@ -785,7 +797,7 @@ describe('Cat Function', () => {
         status: 'processing',
         photo: null,
       };
-      storageMock.getPhotoForDate.mockResolvedValue(processingRecord);
+      dayStorageMock.getPhotoForDate.mockResolvedValue(processingRecord);
 
       const req = { method: 'GET', url: '/2025-06-27' } as any;
 
@@ -807,7 +819,7 @@ describe('Cat Function', () => {
       });
 
       expect(sendCalled).toBe(true);
-      expect(storageMock.createNewDayRecord).not.toHaveBeenCalled();
+      expect(dayStorageMock.createNewDayRecord).not.toHaveBeenCalled();
       expect(templateMock.renderProcessingPage).toHaveBeenCalledOnce();
     });
   });

@@ -10,8 +10,7 @@ import {
   DayRecord,
   NewDayRecord,
   CompletedDayRecord,
-  Config,
-} from './types';
+} from '../types';
 
 // Initialize Firebase Admin if not already initialized
 let app: App;
@@ -225,19 +224,4 @@ export async function createNewDayRecord(id: string): Promise<NewDayRecord> {
     id,
     ...newRecord,
   };
-}
-
-/**
- * Get the configuration document from Firestore
- * @returns Promise<Config> - The configuration object
- * @throws Error if the configuration document is not found
- */
-export async function getConfig(): Promise<Config> {
-  const doc = await db.collection('config').doc('config').get();
-
-  if (!doc.exists) {
-    throw new Error('Configuration document not found at config/config');
-  }
-
-  return doc.data() as Config;
 }

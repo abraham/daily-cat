@@ -48,10 +48,12 @@ vi.mock('firebase-admin/app', () => ({
 
 vi.mock('firebase-admin/firestore', () => ({
   getFirestore: vi.fn(() => mockFirestore),
+  DocumentData: {},
+  QueryDocumentSnapshot: {},
 }));
 
-describe('Storage Functions', () => {
-  let storage: typeof import('../src/storage');
+describe('Day Storage Functions', () => {
+  let dayStorage: typeof import('../src/storage/day-storage');
 
   beforeEach(async () => {
     // Reset all mocks
@@ -60,10 +62,18 @@ describe('Storage Functions', () => {
     // Reset mock responses
     mockDoc.exists = false;
     mockDoc.data.mockReturnValue({});
+    mockDoc.get.mockResolvedValue(mockDoc);
+    mockDoc.set.mockResolvedValue(undefined);
+    mockDoc.update.mockResolvedValue(undefined);
+    mockDoc.delete.mockResolvedValue(undefined);
 
-    // Import fresh instance of storage module
+    // Reset collection mock to return mockDoc by default
+    mockCollection.doc.mockReturnValue(mockDoc);
+    mockCollection.get.mockResolvedValue({ docs: [] });
+
+    // Import fresh instance of day storage module
     vi.resetModules();
-    storage = await import('../src/storage');
+    dayStorage = await import('../src/storage/day-storage');
   });
 
   afterEach(() => {
@@ -74,7 +84,7 @@ describe('Storage Functions', () => {
     it('should save a photo for a specific date with completed status', async () => {
       const testDate = '2025-06-27';
 
-      const result = await storage.savePhotoForDate(testDate, mockPhoto);
+      const result = await dayStorage.savePhotoForDate(testDate, mockPhoto);
 
       expect(mockFirestore.collection).toHaveBeenCalledWith('days');
       expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
@@ -91,7 +101,7 @@ describe('Storage Functions', () => {
       const testDate = '2025-06-27';
       const beforeTime = new Date();
 
-      await storage.savePhotoForDate(testDate, mockPhoto);
+      await dayStorage.savePhotoForDate(testDate, mockPhoto);
 
       const afterTime = new Date();
       const callArgs = mockDoc.set.mock.calls[0][0];
@@ -117,7 +127,7 @@ describe('Storage Functions', () => {
     it('should create a new day record with created status and null photo', async () => {
       const testDate = '2025-06-27';
 
-      const result = await storage.createNewDayRecord(testDate);
+      const result = await dayStorage.createNewDayRecord(testDate);
 
       expect(mockFirestore.collection).toHaveBeenCalledWith('days');
       expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
@@ -141,7 +151,7 @@ describe('Storage Functions', () => {
       const testDate = '2025-06-27';
       const beforeTime = new Date();
 
-      const result = await storage.createNewDayRecord(testDate);
+      const result = await dayStorage.createNewDayRecord(testDate);
 
       const afterTime = new Date();
       const callArgs = mockDoc.set.mock.calls[0][0];
@@ -181,7 +191,7 @@ describe('Storage Functions', () => {
       mockDoc.data.mockReturnValue(mockData);
       mockDoc.get.mockResolvedValue(mockDoc);
 
-      const result = await storage.getPhotoForDate(testDate);
+      const result = await dayStorage.getPhotoForDate(testDate);
 
       expect(mockFirestore.collection).toHaveBeenCalledWith('days');
       expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
@@ -208,7 +218,7 @@ describe('Storage Functions', () => {
       mockDoc.data.mockReturnValue(mockData);
       mockDoc.get.mockResolvedValue(mockDoc);
 
-      const result = await storage.getPhotoForDate(testDate);
+      const result = await dayStorage.getPhotoForDate(testDate);
 
       expect(mockFirestore.collection).toHaveBeenCalledWith('days');
       expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
@@ -235,7 +245,7 @@ describe('Storage Functions', () => {
       mockDoc.data.mockReturnValue(mockData);
       mockDoc.get.mockResolvedValue(mockDoc);
 
-      const result = await storage.getPhotoForDate(testDate);
+      const result = await dayStorage.getPhotoForDate(testDate);
 
       expect(mockFirestore.collection).toHaveBeenCalledWith('days');
       expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
@@ -249,7 +259,7 @@ describe('Storage Functions', () => {
       mockDoc.exists = false;
       mockDoc.get.mockResolvedValue(mockDoc);
 
-      const result = await storage.getPhotoForDate(testDate);
+      const result = await dayStorage.getPhotoForDate(testDate);
 
       expect(mockFirestore.collection).toHaveBeenCalledWith('days');
       expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
@@ -264,7 +274,7 @@ describe('Storage Functions', () => {
       const newPhoto = { ...mockPhoto, id: 'new-photo-id' };
 
       const beforeTime = new Date();
-      await storage.updatePhotoForDay(testDate, newPhoto);
+      await dayStorage.updatePhotoForDay(testDate, newPhoto);
       const afterTime = new Date();
 
       expect(mockFirestore.collection).toHaveBeenCalledWith('days');
@@ -310,7 +320,7 @@ describe('Storage Functions', () => {
       const mockSnapshot = { docs: mockDocs };
       mockCollection.get.mockResolvedValue(mockSnapshot);
 
-      const result = await storage.getPhotosForDateRange(startDate, endDate);
+      const result = await dayStorage.getPhotosForDateRange(startDate, endDate);
 
       expect(mockFirestore.collection).toHaveBeenCalledWith('days');
       expect(mockCollection.where).toHaveBeenCalledWith(
@@ -336,7 +346,7 @@ describe('Storage Functions', () => {
       const mockSnapshot = { docs: [] };
       mockCollection.get.mockResolvedValue(mockSnapshot);
 
-      const result = await storage.getPhotosForDateRange(startDate, endDate);
+      const result = await dayStorage.getPhotosForDateRange(startDate, endDate);
 
       expect(result).toEqual([]);
     });
@@ -346,7 +356,7 @@ describe('Storage Functions', () => {
     it('should delete a day record by date', async () => {
       const testDate = '2025-06-27';
 
-      await storage.deleteDayRecord(testDate);
+      await dayStorage.deleteDayRecord(testDate);
 
       expect(mockFirestore.collection).toHaveBeenCalledWith('days');
       expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
@@ -361,7 +371,7 @@ describe('Storage Functions', () => {
       mockDoc.exists = true;
       mockDoc.get.mockResolvedValue(mockDoc);
 
-      const result = await storage.hasPhotoForDate(testDate);
+      const result = await dayStorage.hasPhotoForDate(testDate);
 
       expect(mockFirestore.collection).toHaveBeenCalledWith('days');
       expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
@@ -375,7 +385,7 @@ describe('Storage Functions', () => {
       mockDoc.exists = false;
       mockDoc.get.mockResolvedValue(mockDoc);
 
-      const result = await storage.hasPhotoForDate(testDate);
+      const result = await dayStorage.hasPhotoForDate(testDate);
 
       expect(mockFirestore.collection).toHaveBeenCalledWith('days');
       expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
@@ -406,7 +416,7 @@ describe('Storage Functions', () => {
       };
       mockCollection.get.mockResolvedValue(mockSnapshot);
 
-      const result = await storage.getMostRecentPhoto();
+      const result = await dayStorage.getMostRecentPhoto();
 
       expect(mockFirestore.collection).toHaveBeenCalledWith('days');
       expect(mockCollection.orderBy).toHaveBeenCalledWith('__name__', 'desc');
@@ -424,7 +434,7 @@ describe('Storage Functions', () => {
       };
       mockCollection.get.mockResolvedValue(mockSnapshot);
 
-      const result = await storage.getMostRecentPhoto();
+      const result = await dayStorage.getMostRecentPhoto();
 
       expect(mockFirestore.collection).toHaveBeenCalledWith('days');
       expect(mockCollection.orderBy).toHaveBeenCalledWith('__name__', 'desc');
@@ -437,7 +447,7 @@ describe('Storage Functions', () => {
     it('should handle ISO date format correctly', async () => {
       const isoDate = '2025-06-27';
 
-      await storage.savePhotoForDate(isoDate, mockPhoto);
+      await dayStorage.savePhotoForDate(isoDate, mockPhoto);
 
       expect(mockCollection.doc).toHaveBeenCalledWith(isoDate);
     });
@@ -446,7 +456,7 @@ describe('Storage Functions', () => {
       const dates = ['2025-01-01', '2025-12-31', '2024-02-29']; // including leap year
 
       for (const date of dates) {
-        await storage.savePhotoForDate(date, mockPhoto);
+        await dayStorage.savePhotoForDate(date, mockPhoto);
         expect(mockCollection.doc).toHaveBeenCalledWith(date);
       }
     });
@@ -460,7 +470,7 @@ describe('Storage Functions', () => {
       mockDoc.set.mockRejectedValue(firestoreError);
 
       await expect(
-        storage.savePhotoForDate(testDate, mockPhoto)
+        dayStorage.savePhotoForDate(testDate, mockPhoto)
       ).rejects.toThrow('Firestore connection failed');
     });
 
@@ -471,7 +481,7 @@ describe('Storage Functions', () => {
       mockDoc.update.mockRejectedValue(firestoreError);
 
       await expect(
-        storage.updatePhotoForDay(testDate, mockPhoto)
+        dayStorage.updatePhotoForDay(testDate, mockPhoto)
       ).rejects.toThrow('Document not found');
     });
   });
@@ -493,7 +503,7 @@ describe('Storage Functions', () => {
 
       mockCollection.where = vi.fn().mockReturnValue(mockQuery);
 
-      const result = await storage.isPhotoIdUsed(photoId);
+      const result = await dayStorage.isPhotoIdUsed(photoId);
 
       expect(result).toBe(true);
       expect(mockCollection.where).toHaveBeenCalledWith(
@@ -520,7 +530,7 @@ describe('Storage Functions', () => {
 
       mockCollection.where = vi.fn().mockReturnValue(mockQuery);
 
-      const result = await storage.isPhotoIdUsed(photoId);
+      const result = await dayStorage.isPhotoIdUsed(photoId);
 
       expect(result).toBe(false);
       expect(mockCollection.where).toHaveBeenCalledWith(
@@ -541,7 +551,7 @@ describe('Storage Functions', () => {
 
       mockCollection.where = vi.fn().mockReturnValue(mockQuery);
 
-      await expect(storage.isPhotoIdUsed(photoId)).rejects.toThrow(
+      await expect(dayStorage.isPhotoIdUsed(photoId)).rejects.toThrow(
         'Query failed'
       );
     });
@@ -559,7 +569,7 @@ describe('Storage Functions', () => {
 
       mockDoc.update.mockResolvedValue(undefined);
 
-      await storage.completePhotoForDay(testDate, mockRandomPhoto);
+      await dayStorage.completePhotoForDay(testDate, mockRandomPhoto);
 
       expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
       expect(mockDoc.update).toHaveBeenCalledWith({
@@ -577,7 +587,7 @@ describe('Storage Functions', () => {
       mockDoc.update.mockRejectedValue(firestoreError);
 
       await expect(
-        storage.completePhotoForDay(testDate, mockRandomPhoto)
+        dayStorage.completePhotoForDay(testDate, mockRandomPhoto)
       ).rejects.toThrow('Update failed');
     });
   });
@@ -588,7 +598,7 @@ describe('Storage Functions', () => {
 
       mockDoc.update.mockResolvedValue(undefined);
 
-      await storage.setDayRecordProcessing(testDate);
+      await dayStorage.setDayRecordProcessing(testDate);
 
       expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
       expect(mockDoc.update).toHaveBeenCalledWith({
@@ -603,57 +613,9 @@ describe('Storage Functions', () => {
 
       mockDoc.update.mockRejectedValue(firestoreError);
 
-      await expect(storage.setDayRecordProcessing(testDate)).rejects.toThrow(
+      await expect(dayStorage.setDayRecordProcessing(testDate)).rejects.toThrow(
         'Update failed'
       );
-    });
-  });
-
-  describe('getConfig', () => {
-    it('should return config data when document exists', async () => {
-      const mockConfigData = {
-        apiUrl: 'https://api.example.com',
-        maxRetries: 3,
-        features: {
-          enableNotifications: true,
-          enableAnalytics: false,
-        },
-      };
-
-      mockDoc.exists = true;
-      mockDoc.data.mockReturnValue(mockConfigData);
-      mockDoc.get.mockResolvedValue(mockDoc);
-
-      const result = await storage.getConfig();
-
-      expect(mockFirestore.collection).toHaveBeenCalledWith('config');
-      expect(mockCollection.doc).toHaveBeenCalledWith('config');
-      expect(mockDoc.get).toHaveBeenCalled();
-      expect(result).toEqual(mockConfigData);
-    });
-
-    it('should throw error when document does not exist', async () => {
-      mockDoc.exists = false;
-      mockDoc.get.mockResolvedValue(mockDoc);
-
-      await expect(storage.getConfig()).rejects.toThrow(
-        'Configuration document not found at config/config'
-      );
-
-      expect(mockFirestore.collection).toHaveBeenCalledWith('config');
-      expect(mockCollection.doc).toHaveBeenCalledWith('config');
-      expect(mockDoc.get).toHaveBeenCalled();
-    });
-
-    it('should handle firestore errors', async () => {
-      const firestoreError = new Error('Network error');
-      mockDoc.get.mockRejectedValue(firestoreError);
-
-      await expect(storage.getConfig()).rejects.toThrow('Network error');
-
-      expect(mockFirestore.collection).toHaveBeenCalledWith('config');
-      expect(mockCollection.doc).toHaveBeenCalledWith('config');
-      expect(mockDoc.get).toHaveBeenCalled();
     });
   });
 });
