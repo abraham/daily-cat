@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@lit-labs/ssr';
-import { renderProcessingPage, renderPhotoPage } from '../src/template';
+import { renderProcessingPage, renderPhotoPage } from './template';
 
 describe('Template', () => {
   describe('renderProcessingPage', () => {

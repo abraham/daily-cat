@@ -1,12 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import {
-  UnsplashPhoto,
-  DayRecord,
-  NewDayRecord,
-  CompletedDayRecord,
-} from '../src/types';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { UnsplashPhoto } from './types';
 
 // Load the photo fixture for testing
 const photoFixturePath = path.join(__dirname, 'fixtures', 'photo.json');
@@ -53,7 +48,7 @@ vi.mock('firebase-admin/firestore', () => ({
 }));
 
 describe('Day Storage Functions', () => {
-  let dayStorage: typeof import('../src/storage/day-storage');
+  let dayStorage: typeof import('./storage/day-storage');
 
   beforeEach(async () => {
     // Reset all mocks
@@ -73,7 +68,7 @@ describe('Day Storage Functions', () => {
 
     // Import fresh instance of day storage module
     vi.resetModules();
-    dayStorage = await import('../src/storage/day-storage');
+    dayStorage = await import('./storage/day-storage.js');
   });
 
   afterEach(() => {

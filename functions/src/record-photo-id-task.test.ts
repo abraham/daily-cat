@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { DayRecord } from '../src/types';
+import { DayRecord } from './types';
 
 // Load the photo fixture for testing
 const photoFixturePath = path.join(__dirname, 'fixtures', 'photo.json');
@@ -64,7 +64,7 @@ vi.mock('firebase-functions/v2/firestore', () => ({
 }));
 
 describe('Record Photo ID Task', () => {
-  let recordPhotoIdTask: typeof import('../src/record-photo-id-task');
+  let recordPhotoIdTask: typeof import('./record-photo-id-task');
 
   beforeEach(async () => {
     // Reset all mocks
@@ -80,7 +80,7 @@ describe('Record Photo ID Task', () => {
 
     // Import fresh instance
     vi.resetModules();
-    recordPhotoIdTask = await import('../src/record-photo-id-task');
+    recordPhotoIdTask = await import('./record-photo-id-task.js');
   });
 
   afterEach(() => {
@@ -89,9 +89,6 @@ describe('Record Photo ID Task', () => {
 
   describe('recordPhotoIdOnDayWrite', () => {
     const dayId = '2024-01-15';
-    const mockEvent = {
-      params: { dayId },
-    };
 
     it('should record photo ID when a new day record is created with a photo', async () => {
       const completedDayRecord: DayRecord = {

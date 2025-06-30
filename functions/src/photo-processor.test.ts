@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { UnsplashPhoto, UnsplashRandomPhoto } from '../src/types';
+import { UnsplashPhoto, UnsplashRandomPhoto } from './types';
 
 // Load fixtures for testing
 const photoFixturePath = path.join(__dirname, 'fixtures', 'photo.json');
@@ -65,7 +65,7 @@ describe('Photo Processor', () => {
     mockCatApi.get.mockResolvedValue(mockCompletePhoto);
 
     // Dynamically import the module to ensure mocks are applied
-    photoProcessor = await import('../src/photo-processor');
+    photoProcessor = await import('./photo-processor.js');
   });
 
   afterEach(() => {
