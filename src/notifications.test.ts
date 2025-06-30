@@ -450,4 +450,129 @@ describe('Notifications', () => {
       expect(deleted).toBe(true);
     });
   });
+
+  describe('getHoursUntilNextNotification', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    const testTimeCalculation = (
+      mockTime: string,
+      expectedHours: number,
+      description: string
+    ) => {
+      it(description, async () => {
+        // Set the system time to the mock time
+        vi.setSystemTime(new Date(mockTime));
+
+        // Re-import the module to get fresh function with mocked time
+        vi.resetModules();
+        const { getHoursUntilNextNotification } = await import(
+          './notifications'
+        );
+        const result = getHoursUntilNextNotification();
+        expect(result).toBe(expectedHours);
+      });
+    };
+
+    // Test various times throughout the day
+    testTimeCalculation(
+      '2025-06-30T00:10:00.000Z',
+      1,
+      'should return 1 hour when current time is 00:10 GMT (5 minutes before notification)'
+    );
+
+    testTimeCalculation(
+      '2025-06-30T00:14:59.999Z',
+      1,
+      'should return 1 hour when current time is 00:14:59 GMT (1 second before notification)'
+    );
+
+    testTimeCalculation(
+      '2025-06-30T00:15:00.000Z',
+      24,
+      'should return 24 hours when current time is exactly 00:15 GMT (notification time)'
+    );
+
+    testTimeCalculation(
+      '2025-06-30T00:16:00.000Z',
+      24,
+      'should return 24 hours when current time is 00:16 GMT (1 minute after notification)'
+    );
+
+    testTimeCalculation(
+      '2025-06-30T01:00:00.000Z',
+      24,
+      'should return 24 hours when current time is 01:00 GMT (45 minutes after notification)'
+    );
+
+    testTimeCalculation(
+      '2025-06-30T12:00:00.000Z',
+      13,
+      'should return 13 hours when current time is 12:00 GMT (noon)'
+    );
+
+    testTimeCalculation(
+      '2025-06-30T18:00:00.000Z',
+      7,
+      'should return 7 hours when current time is 18:00 GMT (6 PM)'
+    );
+
+    testTimeCalculation(
+      '2025-06-30T23:00:00.000Z',
+      2,
+      'should return 2 hours when current time is 23:00 GMT (11 PM)'
+    );
+
+    testTimeCalculation(
+      '2025-06-30T23:59:59.999Z',
+      1,
+      'should return 1 hour when current time is 23:59:59 GMT (1 second before midnight)'
+    );
+
+    // Test edge cases
+    testTimeCalculation(
+      '2025-12-31T23:59:59.999Z',
+      1,
+      "should correctly handle year boundary (New Year's Eve)"
+    );
+
+    testTimeCalculation(
+      '2025-02-28T23:59:59.999Z',
+      1,
+      'should correctly handle month boundary (end of February)'
+    );
+
+    testTimeCalculation(
+      '2024-02-29T00:15:00.000Z',
+      24,
+      'should correctly handle leap year (February 29th notification time)'
+    );
+
+    it('should handle fractional hours correctly by rounding up', async () => {
+      // Test with a time that results in fractional hours
+      vi.setSystemTime(new Date('2025-06-30T23:45:00.000Z')); // 30 minutes until notification
+
+      vi.resetModules();
+      const { getHoursUntilNextNotification } = await import('./notifications');
+      const result = getHoursUntilNextNotification();
+      // 30 minutes = 0.5 hours, should round up to 1
+      expect(result).toBe(1);
+    });
+
+    it('should handle very small time differences correctly', async () => {
+      // Test with 1 minute until notification
+      vi.setSystemTime(new Date('2025-06-30T00:14:00.000Z')); // 1 minute until notification
+
+      vi.resetModules();
+      const { getHoursUntilNextNotification } = await import('./notifications');
+      const result = getHoursUntilNextNotification();
+      // 1 minute = 0.0167 hours, should round up to 1
+      expect(result).toBe(1);
+    });
+  });
 });
