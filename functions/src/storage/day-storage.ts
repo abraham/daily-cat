@@ -158,16 +158,6 @@ export async function deleteDayRecord(id: string): Promise<void> {
 }
 
 /**
- * Check if a photo exists for a specific date
- * @param id - ISO date string (YYYY-MM-DD)
- * @returns Promise<boolean> - True if a photo exists for the date
- */
-export async function hasPhotoForDate(id: string): Promise<boolean> {
-  const doc = await db.collection(COLLECTION_NAME).doc(id).get();
-  return doc.exists;
-}
-
-/**
  * Get the most recent day record
  * @returns Promise<DayRecord | null> - The most recent day record or null if none exist
  */
@@ -187,21 +177,6 @@ export async function getMostRecentPhoto(): Promise<DayRecord | null> {
     id: doc.id,
     ...doc.data(),
   } as DayRecord;
-}
-
-/**
- * Check if a photo ID is already used in any day record
- * @param photoId - The Unsplash photo ID to check
- * @returns Promise<boolean> - True if the photo ID is already used
- */
-export async function isPhotoIdUsed(photoId: string): Promise<boolean> {
-  const snapshot = await db
-    .collection(COLLECTION_NAME)
-    .where('photo.id', '==', photoId)
-    .limit(1)
-    .get();
-
-  return !snapshot.empty;
 }
 
 /**

@@ -31,11 +31,17 @@ vi.mock('firebase-functions/params', () => ({
 
 // Mock day storage module
 const mockDayStorage = {
-  isPhotoIdUsed: vi.fn(),
   completePhotoForDay: vi.fn(),
 };
 
 vi.mock('../src/storage/day-storage', () => mockDayStorage);
+
+// Mock photo ID storage module
+const mockPhotoIdStorage = {
+  isPhotoIdUsed: vi.fn(),
+};
+
+vi.mock('../src/storage/photo-id-storage', () => mockPhotoIdStorage);
 
 // Mock cat-api module
 const mockCatApi = {
@@ -53,7 +59,7 @@ describe('Photo Processor', () => {
     vi.clearAllMocks();
 
     // Reset mock implementations
-    mockDayStorage.isPhotoIdUsed.mockResolvedValue(false);
+    mockPhotoIdStorage.isPhotoIdUsed.mockResolvedValue(false);
     mockDayStorage.completePhotoForDay.mockResolvedValue(undefined);
     mockCatApi.list.mockResolvedValue(mockRandomPhotos);
     mockCatApi.get.mockResolvedValue(mockCompletePhoto);
@@ -76,7 +82,7 @@ describe('Photo Processor', () => {
       expect(mockCatApi.list).toHaveBeenCalledWith({
         clientId: 'test-client-id',
       });
-      expect(mockDayStorage.isPhotoIdUsed).toHaveBeenCalledWith(
+      expect(mockPhotoIdStorage.isPhotoIdUsed).toHaveBeenCalledWith(
         mockRandomPhotos[0].id
       );
       expect(mockCatApi.get).toHaveBeenCalledWith(
@@ -93,19 +99,19 @@ describe('Photo Processor', () => {
       const dayId = '2025-06-28';
 
       // Mock first photo as used, second as unused
-      mockDayStorage.isPhotoIdUsed
+      mockPhotoIdStorage.isPhotoIdUsed
         .mockResolvedValueOnce(true) // First photo is used
         .mockResolvedValueOnce(false); // Second photo is unused
 
       const result = await photoProcessor.processPhotoForDay(dayId, 1);
 
       expect(result).toBe(true);
-      expect(mockDayStorage.isPhotoIdUsed).toHaveBeenCalledTimes(2);
-      expect(mockDayStorage.isPhotoIdUsed).toHaveBeenNthCalledWith(
+      expect(mockPhotoIdStorage.isPhotoIdUsed).toHaveBeenCalledTimes(2);
+      expect(mockPhotoIdStorage.isPhotoIdUsed).toHaveBeenNthCalledWith(
         1,
         mockRandomPhotos[0].id
       );
-      expect(mockDayStorage.isPhotoIdUsed).toHaveBeenNthCalledWith(
+      expect(mockPhotoIdStorage.isPhotoIdUsed).toHaveBeenNthCalledWith(
         2,
         mockRandomPhotos[1].id
       );
@@ -148,7 +154,7 @@ describe('Photo Processor', () => {
 
       // Mock all photos as used on first attempt, first photo unused on second attempt
       let callCount = 0;
-      mockDayStorage.isPhotoIdUsed.mockImplementation(() => {
+      mockPhotoIdStorage.isPhotoIdUsed.mockImplementation(() => {
         callCount++;
         // First 30 calls (first attempt) return true (all used)
         // 31st call (second attempt, first photo) returns false (unused)
@@ -177,7 +183,7 @@ describe('Photo Processor', () => {
       const dayId = '2025-06-28';
 
       // Mock all photos as used
-      mockDayStorage.isPhotoIdUsed.mockResolvedValue(true);
+      mockPhotoIdStorage.isPhotoIdUsed.mockResolvedValue(true);
 
       // Mock setTimeout to resolve immediately for faster tests
       vi.spyOn(global, 'setTimeout').mockImplementation((callback: any) => {
@@ -245,7 +251,7 @@ describe('Photo Processor', () => {
       const dayId = '2025-06-28';
 
       // Mock all photos as used to trigger retries
-      mockDayStorage.isPhotoIdUsed.mockResolvedValue(true);
+      mockPhotoIdStorage.isPhotoIdUsed.mockResolvedValue(true);
 
       // Mock setTimeout to capture delay values
       const setTimeoutSpy = vi
@@ -277,7 +283,7 @@ describe('Photo Processor', () => {
       const dayId = '2025-06-28';
 
       // Mock all photos as used to trigger retries
-      mockDayStorage.isPhotoIdUsed.mockResolvedValue(true);
+      mockPhotoIdStorage.isPhotoIdUsed.mockResolvedValue(true);
 
       // Mock setTimeout to capture delay values
       const setTimeoutSpy = vi
