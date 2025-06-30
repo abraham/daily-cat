@@ -1,6 +1,7 @@
 import { html, TemplateResult } from 'lit-html';
 import {
   backIcon,
+  heartIcon,
   nextIcon,
   notificationsOffIcon,
   notificationsOnIcon,
@@ -91,7 +92,7 @@ function renderUserProfile(data: TemplateData): TemplateResult {
         </div>
         <div class="right-section">
           <div class="likes-count">
-            <span>❤️</span>
+            <span>${heartIcon()}</span>
             <span>${data.likesCount}</span>
           </div>
           <div class="tags">${renderTags(data.tags || [])}</div>
@@ -554,13 +555,24 @@ function renderPage(
             align-items: center;
             gap: 4px;
             font-family: inherit;
-            font-size: 14px;
             color: #666;
             line-height: 1.2;
           }
+          .likes-count svg {
+            width: 20px;
+            height: 20px;
+            vertical-align: middle;
+          }
+          .likes-count span {
+            vertical-align: middle;
+          }
           @media (max-width: 768px) {
             .likes-count {
-              font-size: 13px;
+              font-size: 16px;
+            }
+            .likes-count svg {
+              width: 18px;
+              height: 18px;
             }
           }
           .tags {
