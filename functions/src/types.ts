@@ -143,3 +143,8 @@ export interface CompletedDayRecord extends DayRecord {
   photo: UnsplashPhoto;
   status: 'completed';
 }
+
+export interface Config {
+  minDate: string; // ISO date string (YYYY-MM-DD)
+  importEnabled: boolean; // Whether to enable import functionality
+}
