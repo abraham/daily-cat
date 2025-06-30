@@ -49,7 +49,7 @@ const mockCatApi = {
   get: vi.fn(),
 };
 
-vi.mock('../src/cat-api', () => mockCatApi);
+vi.mock('../src/api/cat-api', () => mockCatApi);
 
 describe('Photo Processor', () => {
   let photoProcessor: any;

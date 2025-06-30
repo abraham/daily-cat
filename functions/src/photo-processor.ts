@@ -1,6 +1,6 @@
 import * as logger from 'firebase-functions/logger';
 import { defineSecret } from 'firebase-functions/params';
-import * as catApi from './cat-api';
+import * as catApi from './api/cat-api';
 import { completePhotoForDay } from './storage/day-storage';
 import { isPhotoIdUsed } from './storage/photo-id-storage';
 
