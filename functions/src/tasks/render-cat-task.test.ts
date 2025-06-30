@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // Load the actual photo.json fixture
-const photoFixturePath = path.join(__dirname, 'fixtures', 'photo.json');
+const photoFixturePath = path.join(__dirname, '..', 'fixtures', 'photo.json');
 const mockApiResponse = JSON.parse(fs.readFileSync(photoFixturePath, 'utf8'));
 
 // Mock Firebase Admin
@@ -42,18 +42,18 @@ vi.mock('firebase-admin/firestore', () => ({
 }));
 
 // Mock the storage modules
-vi.mock('../src/storage/day-storage', () => ({
+vi.mock('../storage/day-storage', () => ({
   getPhotoForDate: vi.fn(),
   createNewDayRecord: vi.fn(),
   setDayRecordProcessing: vi.fn(),
 }));
 
-vi.mock('../src/storage/config-storage', () => ({
+vi.mock('../storage/config-storage', () => ({
   getConfig: vi.fn(),
 }));
 
 // Mock the template module
-vi.mock('../src/template', () => ({
+vi.mock('../template', () => ({
   renderPhotoPage: vi.fn(),
   renderProcessingPage: vi.fn(),
 }));
@@ -81,9 +81,9 @@ describe('Cat Function', () => {
     vi.resetModules();
 
     // Get the mocked modules after reset
-    dayStorageMock = await import('./storage/day-storage.js');
-    configStorageMock = await import('./storage/config-storage.js');
-    templateMock = await import('./template.js');
+    dayStorageMock = await import('../storage/day-storage.js');
+    configStorageMock = await import('../storage/config-storage.js');
+    templateMock = await import('../template.js');
 
     dayStorageMock.getPhotoForDate.mockResolvedValue(null); // Default: no existing photo
     dayStorageMock.createNewDayRecord.mockResolvedValue({
@@ -102,7 +102,7 @@ describe('Cat Function', () => {
     );
 
     // Import the functions after mocks are set up
-    myFunctions = await import('./index.js');
+    myFunctions = await import('./render-cat-task.js');
   });
 
   afterEach(() => {
