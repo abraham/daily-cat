@@ -7,3 +7,6 @@ functions/test/compiled.test.js
 
 # Package lock files (auto-generated)
 **/package-lock.json
+
+# Firebase emulator data
+seed
