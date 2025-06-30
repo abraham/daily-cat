@@ -12,11 +12,16 @@ import * as logger from 'firebase-functions/logger';
 import { onRequest } from 'firebase-functions/v2/https';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { calculateNavigationUrls } from './navigation';
-import * as storage from './storage';
 import { renderPhotoPage, renderProcessingPage } from './template';
 import { TemplateResult } from 'lit-html';
 import { DayRecord } from './types';
 import { processPhotoForDay, unsplashClientId } from './photo-processor';
+import { getConfig } from './storage/config-storage';
+import {
+  createNewDayRecord,
+  getPhotoForDate,
+  setDayRecordProcessing,
+} from './storage/day-storage';
 
 export const cat = onRequest(async (request, response) => {
   if (request.method !== 'GET') {
@@ -25,7 +30,7 @@ export const cat = onRequest(async (request, response) => {
   }
 
   try {
-    const config = await storage.getConfig();
+    const config = await getConfig();
     // Extract date from URL path
     const path = request.url.split('?')[0]; // Remove query params
     let requestedDate: string;
@@ -71,7 +76,7 @@ export const cat = onRequest(async (request, response) => {
     }
 
     // Try to get existing cat photo for the requested date
-    let dayRecord = await storage.getPhotoForDate(requestedDate);
+    let dayRecord = await getPhotoForDate(requestedDate);
 
     // Calculate navigation dates
     const { prevDateUrl, nextDateUrl, showNextArrow } =
@@ -110,7 +115,7 @@ export const cat = onRequest(async (request, response) => {
       // No completed record found - create a new day record if none exists
       if (!dayRecord) {
         logger.log('Creating new day record for date:', requestedDate);
-        dayRecord = await storage.createNewDayRecord(requestedDate);
+        dayRecord = await createNewDayRecord(requestedDate);
       }
 
       // Render processing page template
@@ -178,7 +183,7 @@ export const onDayRecordCreated = onDocumentCreated(
         logger.log(`Processing new day record for date: ${dayId}`);
 
         // Set status to processing to prevent duplicate processing
-        await storage.setDayRecordProcessing(dayId);
+        await setDayRecordProcessing(dayId);
 
         // Process the photo for the day record with retries
         const success = await processPhotoForDay(dayId, 10);

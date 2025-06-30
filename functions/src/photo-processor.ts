@@ -1,7 +1,7 @@
 import * as logger from 'firebase-functions/logger';
 import { defineSecret } from 'firebase-functions/params';
-import * as storage from './storage';
 import * as catApi from './cat-api';
+import { completePhotoForDay, isPhotoIdUsed } from './storage/day-storage';
 
 // Define the Unsplash client ID secret
 const unsplashClientId = defineSecret('UNSPLASH_CLIENT_ID');
@@ -32,7 +32,7 @@ export async function processPhotoForDay(
       // Find the first photo that hasn't been used yet
       let selectedPhoto = null;
       for (const photo of catPhotos) {
-        const isUsed = await storage.isPhotoIdUsed(photo.id);
+        const isUsed = await isPhotoIdUsed(photo.id);
         if (!isUsed) {
           // Get the complete photo details using the photo ID
           logger.log(`Fetching complete photo details for ${photo.id}...`);
@@ -58,7 +58,7 @@ export async function processPhotoForDay(
 
       if (selectedPhoto) {
         // Update the day record with the complete photo data
-        await storage.completePhotoForDay(dayId, selectedPhoto);
+        await completePhotoForDay(dayId, selectedPhoto);
         logger.log(
           `Successfully updated day record ${dayId} with photo ${selectedPhoto.id} on attempt ${attempt}`
         );
