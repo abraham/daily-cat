@@ -8,11 +8,28 @@ import {
 } from 'firebase/messaging';
 import { showToast } from './toast';
 
+// Function to calculate hours until next notification at 00:15 GMT
+const getHoursUntilNextNotification = (): number => {
+  const now = new Date();
+
+  // Create next notification time (00:15 GMT) - use current date as starting point
+  const nextNotification = new Date(now);
+  nextNotification.setUTCHours(0, 15, 0, 0);
+
+  // If we've already passed 00:15 GMT today, set it for tomorrow
+  if (now >= nextNotification) {
+    nextNotification.setUTCDate(nextNotification.getUTCDate() + 1);
+  }
+
+  // Calculate hours difference
+  const timeDiff = nextNotification.getTime() - now.getTime();
+  return Math.ceil(timeDiff / (1000 * 60 * 60)); // Convert to hours and round up
+};
+
 let token: string | null = null;
 const vapidKey =
   'BNtBpdqelkS4eJuJ1crRVYaPEkf_Ksr11Nm_nKjNLMNl6L9aDsIALPyxNdzjdj4WKzrMjP1ChuNs3AMd_Sb8XzA';
 let messaging: Messaging;
-const ff = localStorage.getItem('ff') === 'true';
 
 const notificationsButton = document.getElementById('notifications-button');
 const notificationsOn = notificationsButton?.querySelector('.notifications-on');
@@ -20,10 +37,6 @@ const notificationsOff =
   notificationsButton?.querySelector('.notifications-off');
 
 export const initNotifications = async (app: FirebaseApp) => {
-  if (!ff) {
-    console.warn('Notifications are disabled in this build.');
-    return;
-  }
   const browserSupportsNotifications = 'Notification' in window;
   if (!browserSupportsNotifications) {
     console.warn('This browser does not support notifications.');
@@ -97,7 +110,12 @@ const subscribe = async () => {
       notificationsOn?.classList.remove('hidden');
       notificationsOff?.classList.add('hidden');
 
-      showToast('Subscribed to daily notifications', 'success');
+      const hoursUntilNext = getHoursUntilNextNotification();
+      const hoursText = hoursUntilNext === 1 ? 'hour' : 'hours';
+      showToast(
+        `Subscribed to daily notifications. Next push in ${hoursUntilNext} ${hoursText}`,
+        'success'
+      );
     } else {
       showToast('Notifications permission denied', 'info');
     }
@@ -127,4 +145,4 @@ const unsubscribe = async () => {
 };
 
 // Export internal functions for testing
-export { subscribe, unsubscribe, listen };
+export { subscribe, unsubscribe, listen, getHoursUntilNextNotification };
