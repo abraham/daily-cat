@@ -12,7 +12,6 @@ let token: string | null = null;
 const vapidKey =
   'BNtBpdqelkS4eJuJ1crRVYaPEkf_Ksr11Nm_nKjNLMNl6L9aDsIALPyxNdzjdj4WKzrMjP1ChuNs3AMd_Sb8XzA';
 let messaging: Messaging;
-const ff = localStorage.getItem('ff') === 'true';
 
 const notificationsButton = document.getElementById('notifications-button');
 const notificationsOn = notificationsButton?.querySelector('.notifications-on');
@@ -20,10 +19,6 @@ const notificationsOff =
   notificationsButton?.querySelector('.notifications-off');
 
 export const initNotifications = async (app: FirebaseApp) => {
-  if (!ff) {
-    console.warn('Notifications are disabled in this build.');
-    return;
-  }
   const browserSupportsNotifications = 'Notification' in window;
   if (!browserSupportsNotifications) {
     console.warn('This browser does not support notifications.');

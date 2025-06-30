@@ -7,12 +7,3 @@ import { firebaseConfig } from './config';
 const app = initializeApp(firebaseConfig);
 
 initNotifications(app);
-
-const urlParams = new URLSearchParams(window.location.search);
-const ff = urlParams.get('ff');
-
-if (ff === 'on') {
-  localStorage.setItem('ff', 'true');
-} else if (ff === 'off') {
-  localStorage.removeItem('ff');
-}
