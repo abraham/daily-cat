@@ -109,3 +109,6 @@ const unsubscribe = async () => {
     notificationsOff?.classList.remove('hidden');
   }
 };
+
+// Export internal functions for testing
+export { subscribe, unsubscribe, listen };
