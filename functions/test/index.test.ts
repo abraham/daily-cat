@@ -426,6 +426,33 @@ describe('Cat Function', () => {
       expect(message).toBe('Future dates are not available.');
     });
 
+    it('should reject dates before 2025', async () => {
+      const req = { method: 'GET', url: '/2024-12-31' } as any;
+      let statusCode: number = 0;
+      let message: string = '';
+
+      const res = {
+        send: (msg: string) => {
+          message = msg;
+        },
+        status: (code: number) => {
+          statusCode = code;
+          return res;
+        },
+      } as any;
+
+      await new Promise<void>((resolve) => {
+        res.send = (msg: string) => {
+          message = msg;
+          resolve();
+        };
+        myFunctions.cat(req, res);
+      });
+
+      expect(statusCode).toBe(403);
+      expect(message).toBe('Forbidden! Dates before 2025 are not allowed.');
+    });
+
     it('should validate date values', async () => {
       const req = { method: 'GET', url: '/2025-13-45' } as any;
       let statusCode: number = 0;
@@ -587,14 +614,14 @@ describe('Cat Function', () => {
       );
     });
 
-    it('should handle leap year dates correctly', async () => {
+    it('should handle valid dates in 2025', async () => {
       const completedRecord = {
         status: 'completed',
         photo: mockApiResponse,
       };
       storageMock.getPhotoForDate.mockResolvedValue(completedRecord);
 
-      const req = { method: 'GET', url: '/2024-02-29' } as any; // Leap year
+      const req = { method: 'GET', url: '/2025-02-28' } as any; // Valid date in 2025
 
       let sendCalled = false;
       const res = {
@@ -614,7 +641,7 @@ describe('Cat Function', () => {
       });
 
       expect(sendCalled).toBe(true);
-      expect(storageMock.getPhotoForDate).toHaveBeenCalledWith('2024-02-29');
+      expect(storageMock.getPhotoForDate).toHaveBeenCalledWith('2025-02-28');
     });
 
     it('should reject invalid leap year dates', async () => {
