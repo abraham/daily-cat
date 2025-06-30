@@ -364,35 +364,6 @@ describe('Day Storage Functions', () => {
     });
   });
 
-  describe('hasPhotoForDate', () => {
-    it('should return true when document exists', async () => {
-      const testDate = '2025-06-27';
-
-      mockDoc.exists = true;
-      mockDoc.get.mockResolvedValue(mockDoc);
-
-      const result = await dayStorage.hasPhotoForDate(testDate);
-
-      expect(mockFirestore.collection).toHaveBeenCalledWith('days');
-      expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
-      expect(mockDoc.get).toHaveBeenCalled();
-      expect(result).toBe(true);
-    });
-
-    it('should return false when document does not exist', async () => {
-      const testDate = '2025-06-27';
-
-      mockDoc.exists = false;
-      mockDoc.get.mockResolvedValue(mockDoc);
-
-      const result = await dayStorage.hasPhotoForDate(testDate);
-
-      expect(mockFirestore.collection).toHaveBeenCalledWith('days');
-      expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
-      expect(mockDoc.get).toHaveBeenCalled();
-      expect(result).toBe(false);
-    });
-  });
 
   describe('getMostRecentPhoto', () => {
     it('should return most recent photo', async () => {

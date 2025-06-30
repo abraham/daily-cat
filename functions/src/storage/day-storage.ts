@@ -158,16 +158,6 @@ export async function deleteDayRecord(id: string): Promise<void> {
 }
 
 /**
- * Check if a photo exists for a specific date
- * @param id - ISO date string (YYYY-MM-DD)
- * @returns Promise<boolean> - True if a photo exists for the date
- */
-export async function hasPhotoForDate(id: string): Promise<boolean> {
-  const doc = await db.collection(COLLECTION_NAME).doc(id).get();
-  return doc.exists;
-}
-
-/**
  * Get the most recent day record
  * @returns Promise<DayRecord | null> - The most recent day record or null if none exist
  */
