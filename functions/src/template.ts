@@ -29,7 +29,9 @@ function renderTags(tags: Array<{ type: string; title: string }>) {
     .map(
       (tag) =>
         html`<a
-          href="https://unsplash.com/s/photos/${encodeURIComponent(tag.title)}"
+          href="https://unsplash.com/s/photos/${encodeURIComponent(
+            tag.title
+          )}?utm_source=daily.cat&utm_medium=referral"
           class="tag"
           >${tag.title}</a
         >`
@@ -85,7 +87,9 @@ function renderUserProfile(data: TemplateData): TemplateResult {
           <img src="${data.userProfileImage}" alt="User profile" />
           <div class="user-info">
             <div class="user-name">${data.userName}</div>
-            <a href="${data.userProfileUrl}" class="user-username"
+            <a
+              href="${data.userProfileUrl}?utm_source=daily.cat&utm_medium=referral"
+              class="user-username"
               >@${data.userUsername}</a
             >
           </div>
@@ -105,7 +109,7 @@ function renderUserProfile(data: TemplateData): TemplateResult {
 function renderPhoto(data: TemplateData): TemplateResult {
   return html`
     <div class="photo-container">
-      <a href="${data.linkUrl}">
+      <a href="${data.linkUrl}?utm_source=daily.cat&utm_medium=referral">
         <img
           class="cat-image"
           src="${data.imageUrl}"
