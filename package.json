@@ -19,7 +19,7 @@
     "vitest": "^3.2.4"
   },
   "scripts": {
-    "start": "firebase emulators:exec \"npm start --prefix functions\"",
+    "start": "firebase emulators:exec \"npm start --prefix functions\" --import=seed --ui",
     "build": "npm run build --prefix functions && rollup -c",
     "deploy": "firebase deploy",
     "format": "prettier --write .",
