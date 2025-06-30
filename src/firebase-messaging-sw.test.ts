@@ -135,9 +135,9 @@ describe('Firebase Messaging Service Worker', () => {
         payload
       );
 
-      const notificationTitle = '[b] ' + payload.notification?.title;
+      const notificationTitle = payload.notification?.title;
       const notificationOptions = {
-        body: '[b] ' + payload.notification?.body,
+        body: payload.notification?.body,
         icon: payload.notification?.icon,
       };
 
@@ -167,9 +167,9 @@ describe('Firebase Messaging Service Worker', () => {
       );
 
       expect(mockRegistration.showNotification).toHaveBeenCalledWith(
-        '[b] Test Title',
+        'Test Title',
         {
-          body: '[b] Test Body',
+          body: 'Test Body',
           icon: 'test-icon.png',
         }
       );
@@ -191,9 +191,9 @@ describe('Firebase Messaging Service Worker', () => {
       );
 
       expect(mockRegistration.showNotification).toHaveBeenCalledWith(
-        '[b] Test Title',
+        'Test Title',
         {
-          body: '[b] undefined', // body is undefined
+          body: undefined, // body is undefined
           icon: undefined, // icon is undefined
         }
       );
@@ -214,9 +214,9 @@ describe('Firebase Messaging Service Worker', () => {
       );
 
       expect(mockRegistration.showNotification).toHaveBeenCalledWith(
-        '[b] undefined', // title is undefined
+        undefined, // title is undefined
         {
-          body: '[b] undefined', // body is undefined
+          body: undefined, // body is undefined
           icon: undefined, // icon is undefined
         }
       );
@@ -235,30 +235,10 @@ describe('Firebase Messaging Service Worker', () => {
       );
 
       expect(mockRegistration.showNotification).toHaveBeenCalledWith(
-        '[b] undefined',
+        undefined,
         {
-          body: '[b] undefined',
+          body: undefined,
           icon: undefined,
-        }
-      );
-    });
-
-    it('should add [b] prefix to notification title and body', () => {
-      const mockPayload = createMockPayload({
-        notification: {
-          title: 'Original Title',
-          body: 'Original Body',
-          icon: 'icon.png',
-        },
-      });
-
-      simulateHandleMessage(mockPayload);
-
-      expect(mockRegistration.showNotification).toHaveBeenCalledWith(
-        '[b] Original Title',
-        {
-          body: '[b] Original Body',
-          icon: 'icon.png',
         }
       );
     });
@@ -401,9 +381,9 @@ describe('Firebase Messaging Service Worker', () => {
           '[firebase-messaging-sw.js] Received background message ',
           mockPayload
         );
-        const notificationTitle = '[b] ' + mockPayload.notification?.title;
+        const notificationTitle = mockPayload.notification?.title;
         const notificationOptions = {
-          body: '[b] ' + mockPayload.notification?.body,
+          body: mockPayload.notification?.body,
           icon: mockPayload.notification?.icon,
         };
         mockSelf.registration.showNotification(
@@ -443,9 +423,9 @@ describe('Firebase Messaging Service Worker', () => {
         '[firebase-messaging-sw.js] Received background message ',
         mockPayload
       );
-      const notificationTitle = '[b] ' + mockPayload.notification?.title;
+      const notificationTitle = mockPayload.notification?.title;
       const notificationOptions = {
-        body: '[b] ' + mockPayload.notification?.body,
+        body: mockPayload.notification?.body,
         icon: mockPayload.notification?.icon,
       };
       mockSelf.registration.showNotification(
@@ -454,9 +434,9 @@ describe('Firebase Messaging Service Worker', () => {
       );
 
       expect(mockRegistration.showNotification).toHaveBeenCalledWith(
-        '[b] Integration Test',
+        'Integration Test',
         {
-          body: '[b] Click me!',
+          body: 'Click me!',
           icon: 'integration.png',
         }
       );

@@ -18,9 +18,9 @@ const handleMessage = (payload: MessagePayload) => {
     payload
   );
 
-  const notificationTitle = '[b] ' + payload.notification?.title;
+  const notificationTitle = payload.notification?.title!;
   const notificationOptions = {
-    body: '[b] ' + payload.notification?.body,
+    body: payload.notification?.body,
     icon: payload.notification?.icon,
   };
 

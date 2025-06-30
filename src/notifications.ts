@@ -81,13 +81,10 @@ const listen = (messaging: Messaging) => {
   console.log('Listening for messages...');
   onMessage(messaging, (payload) => {
     console.log('Message received. ', payload);
-    const notification = new Notification(
-      '[f] ' + payload.notification?.title,
-      {
-        body: '[f] ' + payload.notification?.body,
-        icon: payload.notification?.icon,
-      }
-    );
+    const notification = new Notification(payload.notification!.title!, {
+      body: payload.notification?.body,
+      icon: payload.notification?.icon,
+    });
 
     notification.onclick = () => {
       console.log('Notification clicked:', payload);

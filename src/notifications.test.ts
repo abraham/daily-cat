@@ -385,14 +385,14 @@ describe('Notifications', () => {
 
       try {
         // Simulate what the message handler does
-        new global.Notification('[f] ' + mockPayload.notification?.title, {
-          body: '[f] ' + mockPayload.notification?.body,
+        new global.Notification(mockPayload.notification?.title, {
+          body: mockPayload.notification?.body,
           icon: mockPayload.notification?.icon,
         });
 
         // Verify correct notification creation
-        expect(NotificationSpy).toHaveBeenCalledWith('[f] Test Title', {
-          body: '[f] Test Body',
+        expect(NotificationSpy).toHaveBeenCalledWith('Test Title', {
+          body: 'Test Body',
           icon: 'test-icon.png',
         });
       } finally {
