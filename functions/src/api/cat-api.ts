@@ -1,4 +1,4 @@
-import { CatApiOptions, UnsplashRandom, UnsplashPhoto } from './types';
+import { CatApiOptions, UnsplashRandom, UnsplashPhoto } from '../types';
 
 export async function list(options: CatApiOptions): Promise<UnsplashRandom> {
   const url = `https://api.unsplash.com/photos/random?query=cat&count=30`;
