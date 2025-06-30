@@ -608,4 +608,52 @@ describe('Storage Functions', () => {
       );
     });
   });
+
+  describe('getConfig', () => {
+    it('should return config data when document exists', async () => {
+      const mockConfigData = {
+        apiUrl: 'https://api.example.com',
+        maxRetries: 3,
+        features: {
+          enableNotifications: true,
+          enableAnalytics: false,
+        },
+      };
+
+      mockDoc.exists = true;
+      mockDoc.data.mockReturnValue(mockConfigData);
+      mockDoc.get.mockResolvedValue(mockDoc);
+
+      const result = await storage.getConfig();
+
+      expect(mockFirestore.collection).toHaveBeenCalledWith('config');
+      expect(mockCollection.doc).toHaveBeenCalledWith('config');
+      expect(mockDoc.get).toHaveBeenCalled();
+      expect(result).toEqual(mockConfigData);
+    });
+
+    it('should throw error when document does not exist', async () => {
+      mockDoc.exists = false;
+      mockDoc.get.mockResolvedValue(mockDoc);
+
+      await expect(storage.getConfig()).rejects.toThrow(
+        'Configuration document not found at config/config'
+      );
+
+      expect(mockFirestore.collection).toHaveBeenCalledWith('config');
+      expect(mockCollection.doc).toHaveBeenCalledWith('config');
+      expect(mockDoc.get).toHaveBeenCalled();
+    });
+
+    it('should handle firestore errors', async () => {
+      const firestoreError = new Error('Network error');
+      mockDoc.get.mockRejectedValue(firestoreError);
+
+      await expect(storage.getConfig()).rejects.toThrow('Network error');
+
+      expect(mockFirestore.collection).toHaveBeenCalledWith('config');
+      expect(mockCollection.doc).toHaveBeenCalledWith('config');
+      expect(mockDoc.get).toHaveBeenCalled();
+    });
+  });
 });
