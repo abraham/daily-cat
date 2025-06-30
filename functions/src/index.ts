@@ -22,6 +22,7 @@ import {
   getPhotoForDate,
   setDayRecordProcessing,
 } from './storage/day-storage';
+import { recordPhotoIdOnDayWrite } from './record-photo-id-task';
 
 export const cat = onRequest(async (request, response) => {
   if (request.method !== 'GET') {
@@ -200,3 +201,6 @@ export const onDayRecordCreated = onDocumentCreated(
     }
   }
 );
+
+// Export the record photo ID task
+export { recordPhotoIdOnDayWrite };
