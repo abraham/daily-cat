@@ -2,23 +2,37 @@
   "name": "daily-cat",
   "version": "1.0.0",
   "description": "A Firebase Function that serves daily cat images from the Unsplash API",
+  "type": "module",
   "private": true,
   "devDependencies": {
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-typescript": "^11.1.6",
     "@types/node": "^22.0.7",
+    "@vitest/ui": "^3.2.4",
     "firebase-tools": "^14.9.0",
+    "jsdom": "^26.0.1",
     "prettier": "^3.6.2",
+    "rollup": "^4.24.4",
+    "rollup-plugin-copy": "^3.5.0",
+    "tslib": "^2.8.1",
     "typescript": "^5.8.3",
-    "vite": "^7.0.0"
+    "vitest": "^3.2.4"
   },
   "scripts": {
     "start": "firebase emulators:exec \"npm start --prefix functions\"",
-    "build": "npm run build --prefix functions && vite build",
+    "build": "npm run build --prefix functions && rollup -c",
     "deploy": "firebase deploy",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "postinstall": "npm ci --prefix functions"
+    "postinstall": "npm ci --prefix functions",
+    "test": "vitest run",
+    "test:ui": "vitest --ui",
+    "test:watch": "vitest"
   },
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "firebase": "^11.9.1"
   }
 }
