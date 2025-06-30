@@ -626,9 +626,8 @@ function renderPage(
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 100%;
-            height: 100%;
             -webkit-tap-highlight-color: transparent;
+            margin: 0 5px;
           }
           .cat-image {
             max-width: 100%;
@@ -654,12 +653,8 @@ function renderPage(
               height: auto;
               max-width: 100%;
               max-height: 100%;
+              margin: 0 8px;
             }
-          }
-
-          /* Loading state */
-          .cat-image {
-            background-color: #f5f5f5;
           }
 
           /* Smooth scrolling for the whole page */
