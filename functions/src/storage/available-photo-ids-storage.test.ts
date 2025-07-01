@@ -104,7 +104,8 @@ describe('Available Photo IDs Storage Functions', () => {
 
       mockCollection.limit = vi.fn(() => mockLimitedCollection);
 
-      const result = await availablePhotoIdsStorage.getNextAvailablePhotoIds();
+      const result =
+        await availablePhotoIdsStorage.getNextAvailablePhotoIds(10);
 
       expect(mockFirestore.collection).toHaveBeenCalledWith(
         'available-photo-ids'
@@ -122,7 +123,8 @@ describe('Available Photo IDs Storage Functions', () => {
 
       mockCollection.limit = vi.fn(() => mockLimitedCollection);
 
-      const result = await availablePhotoIdsStorage.getNextAvailablePhotoIds();
+      const result =
+        await availablePhotoIdsStorage.getNextAvailablePhotoIds(10);
 
       expect(mockFirestore.collection).toHaveBeenCalledWith(
         'available-photo-ids'

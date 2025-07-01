@@ -38,8 +38,8 @@ export const importPhotosScheduled = onSchedule(
 
       logger.log(`Starting import from page ${currentPage}`);
 
-      // Process 10 pages of photos
-      for (let i = 0; i < 10; i++) {
+      // Process importLimit pages of photos
+      for (let i = 0; i < config.importLimit; i++) {
         try {
           logger.log(`Fetching page ${currentPage} from cat API`);
 
