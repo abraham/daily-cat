@@ -1,14 +1,14 @@
 import * as logger from 'firebase-functions/logger';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { get } from '../api/cat-api';
-import { getConfig } from '../storage/config-storage';
+import { unsplashClientId } from '../photo-processor';
 import {
   getNextAvailablePhotoIds,
   removeAvailablePhotoId,
 } from '../storage/available-photo-ids-storage';
+import { getConfig } from '../storage/config-storage';
+import { getPhotoForDate, savePhotoForDate } from '../storage/day-storage';
 import { isPhotoIdUsed } from '../storage/photo-id-storage';
-import { getPhotoForDate, completePhotoForDay } from '../storage/day-storage';
-import { unsplashClientId } from '../photo-processor';
 
 /**
  * Generate date string in YYYY-MM-DD format
@@ -156,7 +156,7 @@ export const processAvailablePhotosScheduled = onSchedule(
           logger.log(`Assigning photo ${photoId} to date ${targetDate}`);
 
           // Complete the photo for the day
-          await completePhotoForDay(targetDate, photoDetails);
+          await savePhotoForDate(targetDate, photoDetails);
 
           // Remove the photo ID from available list since it's now used
           await removeAvailablePhotoId(photoId);

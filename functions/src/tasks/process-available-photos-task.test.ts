@@ -96,10 +96,10 @@ vi.mock('../storage/photo-id-storage', () => ({
 
 // Mock the day-storage module
 const mockGetPhotoForDate = vi.fn();
-const mockCompletePhotoForDay = vi.fn();
+const mockSavePhotoForDate = vi.fn();
 vi.mock('../storage/day-storage', () => ({
   getPhotoForDate: mockGetPhotoForDate,
-  completePhotoForDay: mockCompletePhotoForDay,
+  savePhotoForDate: mockSavePhotoForDate,
 }));
 
 describe('Process Available Photos Task', () => {
@@ -136,7 +136,7 @@ describe('Process Available Photos Task', () => {
     mockIsPhotoIdUsed.mockResolvedValue(false);
     mockGet.mockResolvedValue(mockPhoto);
     mockGetPhotoForDate.mockResolvedValue(null); // No existing records by default
-    mockCompletePhotoForDay.mockResolvedValue(undefined);
+    mockSavePhotoForDate.mockResolvedValue(undefined);
     mockRemoveAvailablePhotoId.mockResolvedValue(undefined);
 
     // Import the task module to initialize the handler
@@ -171,7 +171,7 @@ describe('Process Available Photos Task', () => {
     );
 
     // Verify that photos were assigned to days
-    expect(mockCompletePhotoForDay).toHaveBeenCalledTimes(3);
+    expect(mockSavePhotoForDate).toHaveBeenCalledTimes(3);
 
     // Verify that photo IDs were removed from available list
     expect(mockRemoveAvailablePhotoId).toHaveBeenCalledTimes(3);
@@ -204,7 +204,7 @@ describe('Process Available Photos Task', () => {
     );
 
     // Verify that only 2 photos were assigned
-    expect(mockCompletePhotoForDay).toHaveBeenCalledTimes(2);
+    expect(mockSavePhotoForDate).toHaveBeenCalledTimes(2);
 
     // Verify that all photos were removed from available list (including the used one)
     expect(mockRemoveAvailablePhotoId).toHaveBeenCalledTimes(3);
@@ -224,7 +224,7 @@ describe('Process Available Photos Task', () => {
     // Verify that no further processing occurred
     expect(mockIsPhotoIdUsed).not.toHaveBeenCalled();
     expect(mockGet).not.toHaveBeenCalled();
-    expect(mockCompletePhotoForDay).not.toHaveBeenCalled();
+    expect(mockSavePhotoForDate).not.toHaveBeenCalled();
     expect(mockRemoveAvailablePhotoId).not.toHaveBeenCalled();
 
     // Verify appropriate log message
@@ -271,7 +271,7 @@ describe('Process Available Photos Task', () => {
     expect(mockRemoveAvailablePhotoId).toHaveBeenCalledWith('photo-2');
 
     // Verify that processing continued with other photos
-    expect(mockCompletePhotoForDay).toHaveBeenCalledTimes(2); // First and third photos
+    expect(mockSavePhotoForDate).toHaveBeenCalledTimes(2); // First and third photos
   });
 
   it('should work backwards to fill older dates when next 30 days are complete', async () => {
@@ -307,7 +307,7 @@ describe('Process Available Photos Task', () => {
     await mockScheduleHandler();
 
     // Should process photos for past dates (at least 1, up to available photos)
-    expect(mockCompletePhotoForDay).toHaveBeenCalled();
+    expect(mockSavePhotoForDate).toHaveBeenCalled();
 
     // Should log that it's working backwards
     expect(mockLogger.log).toHaveBeenCalledWith(
@@ -343,7 +343,7 @@ describe('Process Available Photos Task', () => {
     await mockScheduleHandler();
 
     // Should only process 2 photos (for 2 dates that need them)
-    expect(mockCompletePhotoForDay).toHaveBeenCalledTimes(2);
+    expect(mockSavePhotoForDate).toHaveBeenCalledTimes(2);
 
     // Should log that all dates are filled
     expect(mockLogger.log).toHaveBeenCalledWith(
