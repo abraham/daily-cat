@@ -125,6 +125,7 @@ export type UnsplashRandom = UnsplashRandomPhoto[];
 
 export interface CatApiOptions {
   clientId: string;
+  page: string;
 }
 
 export interface DayRecord {
@@ -147,4 +148,5 @@ export interface CompletedDayRecord extends DayRecord {
 export interface Config {
   minDate: string; // ISO date string (YYYY-MM-DD)
   importEnabled: boolean; // Whether to enable import functionality
+  lastPage: string; // Last page processed for import
 }

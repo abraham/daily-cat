@@ -3,6 +3,7 @@ import { defineSecret } from 'firebase-functions/params';
 import * as catApi from './api/cat-api';
 import { completePhotoForDay } from './storage/day-storage';
 import { isPhotoIdUsed } from './storage/photo-id-storage';
+import { getConfig, updateConfig } from './storage/config-storage';
 
 // Define the Unsplash client ID secret
 const unsplashClientId = defineSecret('UNSPLASH_CLIENT_ID');
@@ -18,6 +19,8 @@ export async function processPhotoForDay(
   maxRetries: number = 10
 ): Promise<boolean> {
   const clientId = unsplashClientId.value();
+  const config = await getConfig();
+  let page = config.lastPage;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     logger.log(
@@ -25,14 +28,16 @@ export async function processPhotoForDay(
     );
 
     try {
-      const catPhotos = await catApi.list({ clientId });
+      const catPhotos = await catApi.list({ clientId, page });
+      page = (Number(page) + 1).toString();
+      await updateConfig({ lastPage: page });
       logger.log(
-        `Received ${catPhotos.length} cat photos from API on attempt ${attempt}`
+        `Received ${catPhotos.results.length} cat photos from API on attempt ${attempt}`
       );
 
       // Find the first photo that hasn't been used yet
       let selectedPhoto = null;
-      for (const photo of catPhotos) {
+      for (const photo of catPhotos.results) {
         const isUsed = await isPhotoIdUsed(photo.id);
         if (!isUsed) {
           // Get the complete photo details using the photo ID
@@ -66,7 +71,7 @@ export async function processPhotoForDay(
         return true;
       } else {
         logger.warn(
-          `Attempt ${attempt}/${maxRetries}: No unused photos found for day ${dayId}. All ${catPhotos.length} photos from API are already used.`
+          `Attempt ${attempt}/${maxRetries}: No unused photos found for day ${dayId}. All ${catPhotos.results.length} photos from API are already used.`
         );
 
         if (attempt < maxRetries) {
