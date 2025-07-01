@@ -113,4 +113,62 @@ describe('Config Storage Functions', () => {
       expect(mockDoc.get).toHaveBeenCalled();
     });
   });
+
+  describe('updateConfig', () => {
+    it('should update config document with partial data', async () => {
+      const partialConfig = {
+        minDate: '2025-01-01',
+        importEnabled: true,
+      };
+
+      mockDoc.update.mockResolvedValue(undefined);
+
+      await configStorage.updateConfig(partialConfig);
+
+      expect(mockFirestore.collection).toHaveBeenCalledWith('config');
+      expect(mockCollection.doc).toHaveBeenCalledWith('config');
+      expect(mockDoc.update).toHaveBeenCalledWith(partialConfig);
+    });
+
+    it('should update config document with single field', async () => {
+      const singleFieldUpdate = {
+        lastPage: 'page-5',
+      };
+
+      mockDoc.update.mockResolvedValue(undefined);
+
+      await configStorage.updateConfig(singleFieldUpdate);
+
+      expect(mockFirestore.collection).toHaveBeenCalledWith('config');
+      expect(mockCollection.doc).toHaveBeenCalledWith('config');
+      expect(mockDoc.update).toHaveBeenCalledWith(singleFieldUpdate);
+    });
+
+    it('should handle firestore update errors', async () => {
+      const firestoreError = new Error('Update failed');
+      mockDoc.update.mockRejectedValue(firestoreError);
+
+      const updateData = { importEnabled: false };
+
+      await expect(configStorage.updateConfig(updateData)).rejects.toThrow(
+        'Update failed'
+      );
+
+      expect(mockFirestore.collection).toHaveBeenCalledWith('config');
+      expect(mockCollection.doc).toHaveBeenCalledWith('config');
+      expect(mockDoc.update).toHaveBeenCalledWith(updateData);
+    });
+
+    it('should handle empty update object', async () => {
+      const emptyUpdate = {};
+
+      mockDoc.update.mockResolvedValue(undefined);
+
+      await configStorage.updateConfig(emptyUpdate);
+
+      expect(mockFirestore.collection).toHaveBeenCalledWith('config');
+      expect(mockCollection.doc).toHaveBeenCalledWith('config');
+      expect(mockDoc.update).toHaveBeenCalledWith(emptyUpdate);
+    });
+  });
 });

@@ -36,6 +36,14 @@ const mockDayStorage = {
 
 vi.mock('../src/storage/day-storage', () => mockDayStorage);
 
+// Mock config storage module
+const mockConfigStorage = {
+  getConfig: vi.fn(),
+  updateConfig: vi.fn(),
+};
+
+vi.mock('../src/storage/config-storage', () => mockConfigStorage);
+
 // Mock photo ID storage module
 const mockPhotoIdStorage = {
   isPhotoIdUsed: vi.fn(),
@@ -61,7 +69,17 @@ describe('Photo Processor', () => {
     // Reset mock implementations
     mockPhotoIdStorage.isPhotoIdUsed.mockResolvedValue(false);
     mockDayStorage.completePhotoForDay.mockResolvedValue(undefined);
-    mockCatApi.list.mockResolvedValue(mockRandomPhotos);
+    mockConfigStorage.getConfig.mockResolvedValue({
+      minDate: '2025-01-01',
+      importEnabled: true,
+      lastPage: '1',
+    });
+    mockConfigStorage.updateConfig.mockResolvedValue(undefined);
+    mockCatApi.list.mockResolvedValue({
+      total: mockRandomPhotos.length,
+      total_pages: 1,
+      results: mockRandomPhotos,
+    });
     mockCatApi.get.mockResolvedValue(mockCompletePhoto);
 
     // Dynamically import the module to ensure mocks are applied
@@ -79,8 +97,13 @@ describe('Photo Processor', () => {
       const result = await photoProcessor.processPhotoForDay(dayId, 1);
 
       expect(result).toBe(true);
+      expect(mockConfigStorage.getConfig).toHaveBeenCalled();
       expect(mockCatApi.list).toHaveBeenCalledWith({
         clientId: 'test-client-id',
+        page: '1',
+      });
+      expect(mockConfigStorage.updateConfig).toHaveBeenCalledWith({
+        lastPage: '2',
       });
       expect(mockPhotoIdStorage.isPhotoIdUsed).toHaveBeenCalledWith(
         mockRandomPhotos[0].id
@@ -156,10 +179,23 @@ describe('Photo Processor', () => {
       let callCount = 0;
       mockPhotoIdStorage.isPhotoIdUsed.mockImplementation(() => {
         callCount++;
-        // First 30 calls (first attempt) return true (all used)
-        // 31st call (second attempt, first photo) returns false (unused)
-        return Promise.resolve(callCount <= 30);
+        // First calls for first batch (all used)
+        // Next call for second batch, first photo (unused)
+        return Promise.resolve(callCount <= mockRandomPhotos.length);
       });
+
+      // Mock config to return different pages
+      mockConfigStorage.getConfig
+        .mockResolvedValueOnce({
+          minDate: '2025-01-01',
+          importEnabled: true,
+          lastPage: '1',
+        })
+        .mockResolvedValueOnce({
+          minDate: '2025-01-01',
+          importEnabled: true,
+          lastPage: '2',
+        });
 
       // Mock setTimeout to resolve immediately for faster tests
       vi.spyOn(global, 'setTimeout').mockImplementation((callback: any) => {
@@ -171,6 +207,7 @@ describe('Photo Processor', () => {
 
       expect(result).toBe(true);
       expect(mockCatApi.list).toHaveBeenCalledTimes(2);
+      expect(mockConfigStorage.updateConfig).toHaveBeenCalledTimes(2);
       expect(mockDayStorage.completePhotoForDay).toHaveBeenCalledWith(
         dayId,
         mockCompletePhoto
@@ -206,7 +243,24 @@ describe('Photo Processor', () => {
       // Mock API to fail on first attempt, succeed on second
       mockCatApi.list
         .mockRejectedValueOnce(new Error('Network Error'))
-        .mockResolvedValueOnce(mockRandomPhotos);
+        .mockResolvedValueOnce({
+          total: mockRandomPhotos.length,
+          total_pages: 1,
+          results: mockRandomPhotos,
+        });
+
+      // Mock config to return different pages
+      mockConfigStorage.getConfig
+        .mockResolvedValueOnce({
+          minDate: '2025-01-01',
+          importEnabled: true,
+          lastPage: '1',
+        })
+        .mockResolvedValueOnce({
+          minDate: '2025-01-01',
+          importEnabled: true,
+          lastPage: '2',
+        });
 
       // Mock setTimeout to resolve immediately for faster tests
       vi.spyOn(global, 'setTimeout').mockImplementation((callback: any) => {
