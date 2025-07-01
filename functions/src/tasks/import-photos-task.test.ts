@@ -117,6 +117,8 @@ describe('import-photos-task', () => {
       minDate: '2024-01-01',
       importEnabled: true,
       lastPage: '5',
+      importLimit: 10,
+      processLimit: 10,
     });
 
     mockList.mockResolvedValue(mockSearchResults);
@@ -137,10 +139,10 @@ describe('import-photos-task', () => {
 
     // Verify that cat API was called 10 times with incremental pages
     expect(mockList).toHaveBeenCalledTimes(10);
-    for (let i = 1; i <= 10; i++) {
-      expect(mockList).toHaveBeenNthCalledWith(i, {
+    for (let i = 0; i < 10; i++) {
+      expect(mockList).toHaveBeenNthCalledWith(i + 1, {
         clientId: 'test-client-id',
-        page: (4 + i).toString(),
+        page: (5 + i).toString(), // Starting from page 5 (lastPage)
       });
     }
 
@@ -154,9 +156,9 @@ describe('import-photos-task', () => {
 
     // Verify that config was updated 10 times with incremental pages
     expect(mockUpdateConfig).toHaveBeenCalledTimes(10);
-    for (let i = 1; i <= 10; i++) {
-      expect(mockUpdateConfig).toHaveBeenNthCalledWith(i, {
-        lastPage: (5 + i).toString(),
+    for (let i = 0; i < 10; i++) {
+      expect(mockUpdateConfig).toHaveBeenNthCalledWith(i + 1, {
+        lastPage: (6 + i).toString(), // Starting from page 6 (5 + 1)
       });
     }
   });
@@ -166,6 +168,8 @@ describe('import-photos-task', () => {
       minDate: '2024-01-01',
       importEnabled: false,
       lastPage: '5',
+      importLimit: 10,
+      processLimit: 10,
     });
 
     // Execute the scheduled function
@@ -235,7 +239,7 @@ describe('import-photos-task', () => {
     // Verify that all 10 API calls were attempted
     expect(mockList).toHaveBeenCalledTimes(10);
 
-    // Verify that config was updated 9 times (excluding the failed page)
+    // Verify that config was updated 3 times (before the failing page)
     expect(mockUpdateConfig).toHaveBeenCalledTimes(3);
 
     // Verify that error was logged

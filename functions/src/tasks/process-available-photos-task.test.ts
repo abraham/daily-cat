@@ -125,6 +125,8 @@ describe('Process Available Photos Task', () => {
       minDate: '2025-01-01',
       importEnabled: true,
       lastPage: '5',
+      importLimit: 10,
+      processLimit: 10,
     });
 
     mockGetNextAvailablePhotoIds.mockResolvedValue([
@@ -154,8 +156,9 @@ describe('Process Available Photos Task', () => {
     // Verify that config was retrieved
     expect(mockGetConfig).toHaveBeenCalledOnce();
 
-    // Verify that available photo IDs were retrieved
+    // Verify that available photo IDs were retrieved with processLimit
     expect(mockGetNextAvailablePhotoIds).toHaveBeenCalledOnce();
+    expect(mockGetNextAvailablePhotoIds).toHaveBeenCalledWith(10);
 
     // Verify that photo IDs were checked for usage
     expect(mockIsPhotoIdUsed).toHaveBeenCalledTimes(3);
@@ -218,8 +221,9 @@ describe('Process Available Photos Task', () => {
     // Verify that config was retrieved
     expect(mockGetConfig).toHaveBeenCalledOnce();
 
-    // Verify that available photo IDs were retrieved
+    // Verify that available photo IDs were retrieved with processLimit
     expect(mockGetNextAvailablePhotoIds).toHaveBeenCalledOnce();
+    expect(mockGetNextAvailablePhotoIds).toHaveBeenCalledWith(10);
 
     // Verify that no further processing occurred
     expect(mockIsPhotoIdUsed).not.toHaveBeenCalled();
@@ -285,12 +289,15 @@ describe('Process Available Photos Task', () => {
     // Mock that next 30 days have completed photos but past dates need photos
     mockGetPhotoForDate.mockImplementation((dateString: string) => {
       const date = new Date(dateString);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0); // Normalize for comparison
+      const today = new Date('2025-07-01'); // Fixed date for test consistency
+      today.setHours(0, 0, 0, 0);
       date.setHours(0, 0, 0, 0);
 
-      // Future dates (today and next 30 days) are complete
-      if (date >= today) {
+      // For next 30 days from today (including today), all have completed photos
+      const thirtyDaysFromNow = new Date(today);
+      thirtyDaysFromNow.setDate(today.getDate() + 30);
+
+      if (date >= today && date < thirtyDaysFromNow) {
         return Promise.resolve({
           id: dateString,
           status: 'completed',
@@ -301,7 +308,18 @@ describe('Process Available Photos Task', () => {
       }
 
       // Past dates need photos
-      return Promise.resolve(null);
+      if (date < today) {
+        return Promise.resolve(null);
+      }
+
+      // Dates beyond 30 days also have photos (not relevant for this test)
+      return Promise.resolve({
+        id: dateString,
+        status: 'completed',
+        photo: mockPhoto,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
     });
 
     await mockScheduleHandler();
@@ -369,5 +387,132 @@ describe('Process Available Photos Task', () => {
       'Failed to remove problematic photo ID photo-1:',
       expect.any(Error)
     );
+  });
+
+  it('should use processLimit from config to determine how many photo IDs to retrieve', async () => {
+    // Mock config with different processLimit
+    mockGetConfig.mockResolvedValue({
+      minDate: '2025-01-01',
+      importEnabled: true,
+      lastPage: '5',
+      importLimit: 10,
+      processLimit: 5, // Different limit
+    });
+
+    await mockScheduleHandler();
+
+    // Verify that getNextAvailablePhotoIds was called with the processLimit from config
+    expect(mockGetNextAvailablePhotoIds).toHaveBeenCalledWith(5);
+  });
+
+  it('should respect the processLimit when processing multiple photos', async () => {
+    // Mock config with smaller processLimit
+    mockGetConfig.mockResolvedValue({
+      minDate: '2025-01-01',
+      importEnabled: true,
+      lastPage: '5',
+      importLimit: 10,
+      processLimit: 2,
+    });
+
+    // Mock fewer available photo IDs based on processLimit
+    mockGetNextAvailablePhotoIds.mockResolvedValue(['photo-1', 'photo-2']);
+
+    await mockScheduleHandler();
+
+    // Verify that only 2 photos were processed
+    expect(mockGetNextAvailablePhotoIds).toHaveBeenCalledWith(2);
+    expect(mockGet).toHaveBeenCalledTimes(2);
+    expect(mockSavePhotoForDate).toHaveBeenCalledTimes(2);
+  });
+
+  it('should respect minDate from config when checking backwards', async () => {
+    // Mock config with recent minDate
+    const recentMinDate = '2025-06-15'; // 2 weeks ago from July 1, 2025
+    mockGetConfig.mockResolvedValue({
+      minDate: recentMinDate,
+      importEnabled: true,
+      lastPage: '5',
+      importLimit: 10,
+      processLimit: 3,
+    });
+
+    // Mock that next 30 days have completed photos
+    mockGetPhotoForDate.mockImplementation((dateString: string) => {
+      const date = new Date(dateString);
+      const today = new Date('2025-07-01'); // Fixed date for test consistency
+      today.setHours(0, 0, 0, 0);
+      date.setHours(0, 0, 0, 0);
+
+      // Future dates (today and next 30 days) are complete
+      if (date >= today) {
+        return Promise.resolve({
+          id: dateString,
+          status: 'completed',
+          photo: mockPhoto,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
+
+      // Past dates from minDate onward need photos
+      const minDateObj = new Date(recentMinDate);
+      minDateObj.setHours(0, 0, 0, 0);
+
+      if (date >= minDateObj) {
+        return Promise.resolve(null); // Need photos
+      }
+
+      // Dates before minDate should not be checked
+      return Promise.resolve({
+        id: dateString,
+        status: 'completed',
+        photo: mockPhoto,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    });
+
+    await mockScheduleHandler();
+
+    // Should process photos for dates between minDate and today
+    expect(mockSavePhotoForDate).toHaveBeenCalled();
+
+    // Should log that it's working backwards
+    expect(mockLogger.log).toHaveBeenCalledWith(
+      'Next 30 days are filled, checking backwards to minDate'
+    );
+  });
+
+  it('should handle config retrieval errors', async () => {
+    // Mock config retrieval failure
+    mockGetConfig.mockRejectedValue(new Error('Config not found'));
+
+    // Should throw error and be caught by outer try-catch
+    await expect(() => mockScheduleHandler()).rejects.toThrow(
+      'Config not found'
+    );
+
+    // Should log the error
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'Error in process available photos task:',
+      expect.any(Error)
+    );
+  });
+
+  it('should handle missing processLimit in config by using default behavior', async () => {
+    // Mock config without processLimit (backward compatibility)
+    mockGetConfig.mockResolvedValue({
+      minDate: '2025-01-01',
+      importEnabled: true,
+      lastPage: '5',
+      importLimit: 10,
+      // processLimit is missing
+    } as any);
+
+    await mockScheduleHandler();
+
+    // Should still call getNextAvailablePhotoIds (with undefined, which should be handled gracefully)
+    expect(mockGetNextAvailablePhotoIds).toHaveBeenCalledOnce();
   });
 });

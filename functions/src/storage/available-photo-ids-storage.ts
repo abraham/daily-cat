@@ -16,8 +16,10 @@ const COLLECTION_NAME = 'available-photo-ids';
  * Get up to 10 available photo IDs
  * @returns Promise<string[]> - Array of up to 10 available photo IDs
  */
-export async function getNextAvailablePhotoIds(): Promise<string[]> {
-  const snapshot = await db.collection(COLLECTION_NAME).limit(10).get();
+export async function getNextAvailablePhotoIds(
+  limit: number
+): Promise<string[]> {
+  const snapshot = await db.collection(COLLECTION_NAME).limit(limit).get();
   return snapshot.docs.map((doc) => doc.id);
 }
 

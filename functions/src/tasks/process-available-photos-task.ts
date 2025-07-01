@@ -109,7 +109,9 @@ export const processAvailablePhotosScheduled = onSchedule(
       }
 
       // Get up to 10 available photo IDs
-      const availablePhotoIds = await getNextAvailablePhotoIds();
+      const availablePhotoIds = await getNextAvailablePhotoIds(
+        config.processLimit
+      );
       logger.log(`Retrieved ${availablePhotoIds.length} available photo IDs`);
 
       if (availablePhotoIds.length === 0) {
