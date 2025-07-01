@@ -459,7 +459,6 @@ function renderPage(
           }
           .share-button:active {
             background-color: #e0e0e0;
-            transform: translateY(-50%) scale(0.95);
           }
           .notifications-button:hover {
             background-color: #f0f0f0;
