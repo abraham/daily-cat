@@ -30,7 +30,7 @@ export const importPhotosScheduled = onSchedule(
       }
 
       let currentPage = Number(config.lastPage);
-      const clientId = process.env.UNSPLASH_CLIENT_ID;
+      const clientId = unsplashClientId.value();
 
       if (!clientId) {
         throw new Error('UNSPLASH_CLIENT_ID environment variable is not set');
