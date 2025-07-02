@@ -1,6 +1,17 @@
 /// <reference lib="webworker" />
 declare const self: ServiceWorkerGlobalScope;
 
+// This only seems to work in Chrome if it's before the Firebase imports
+self.addEventListener('notificationclick', (event) => {
+  console.log(
+    '[firebase-messaging-sw.js] Received notification click event',
+    event
+  );
+  console.log('[firebase-messaging-sw.js] Opening', self.location.origin);
+  event.notification.close();
+  event.waitUntil(self.clients.openWindow(self.location.origin));
+});
+
 import { initializeApp } from 'firebase/app';
 import {
   getMessaging,
@@ -28,12 +39,3 @@ const handleMessage = (payload: MessagePayload) => {
 };
 
 onBackgroundMessage(messaging, handleMessage);
-
-self.addEventListener('notificationclick', (event) => {
-  console.log(
-    '[firebase-messaging-sw.js] Received notification click event',
-    event
-  );
-  event.notification.close();
-  event.waitUntil(self.clients.openWindow(self.location.origin));
-});
