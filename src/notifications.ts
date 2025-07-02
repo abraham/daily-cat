@@ -56,11 +56,7 @@ export const initNotifications = async (app: FirebaseApp) => {
   if (notificationsButton) {
     notificationsButton.classList.remove('hidden');
 
-    if (granted) {
-      token = localStorage.getItem('notification_token');
-    }
-
-    if (token) {
+    if (await subscribed()) {
       notificationsOn?.classList.toggle('hidden');
       notificationsOff?.classList.toggle('hidden');
     }
@@ -80,18 +76,34 @@ export const initNotifications = async (app: FirebaseApp) => {
 const listen = (messaging: Messaging) => {
   console.log('Listening for messages...');
   onMessage(messaging, (payload) => {
-    console.log('Message received. ', payload);
+    console.log('[fg] Message received. ', payload);
     const notification = new Notification(payload.notification!.title!, {
       body: payload.notification?.body,
       icon: payload.notification?.icon,
     });
 
     notification.onclick = () => {
-      console.log('Notification clicked:', payload);
+      console.log('[fg] Notification clicked:', payload);
       window.focus();
       notification.close();
     };
   });
+};
+
+const subscribed = async (): Promise<boolean> => {
+  let enabled = false;
+  const permission = await Notification.requestPermission();
+  if (
+    permission === 'granted' &&
+    !!localStorage.getItem('notification_token')
+  ) {
+    const token = await getToken(messaging, { vapidKey });
+    console.log('token', token);
+    localStorage.setItem('notification_token', token);
+    enabled = !!token;
+  }
+  console.log('Notifications enabled:', enabled);
+  return enabled;
 };
 
 const subscribe = async () => {
