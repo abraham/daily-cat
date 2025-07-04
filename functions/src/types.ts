@@ -1,3 +1,18 @@
+// Custom error classes
+export class NotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'NotFoundError';
+  }
+}
+
+export class RateLimitedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'RateLimitedError';
+  }
+}
+
 // Unsplash API response types
 
 // Base photo interface for search results (subset of full photo data)
@@ -151,4 +166,5 @@ export interface Config {
   lastPage: string; // Last page processed for import
   importLimit: number; // Limit for import operations
   processLimit: number; // Limit for processing operations
+  processingMinDate: string; // Minimum date for processing operations
 }

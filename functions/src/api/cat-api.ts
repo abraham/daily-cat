@@ -1,5 +1,11 @@
 import { logger } from 'firebase-functions';
-import { CatApiOptions, UnsplashPhoto, UnsplashSearch } from '../types';
+import {
+  CatApiOptions,
+  UnsplashPhoto,
+  UnsplashSearch,
+  NotFoundError,
+  RateLimitedError,
+} from '../types';
 
 export async function list({
   clientId,
@@ -12,18 +18,7 @@ export async function list({
     page,
   });
   const url = `https://api.unsplash.com/search/photos?${params}`;
-  logger.log(`Fetching photos from Unsplash API: ${url}`);
-  const response: Response = await fetch(url, {
-    headers: {
-      Authorization: `Client-ID ${clientId}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch photos: ${response.status} ${response.statusText}`
-    );
-  }
+  const response = await unsplashFetch(url, clientId);
 
   return response.json() as Promise<UnsplashSearch>;
 }
@@ -33,17 +28,40 @@ export async function get(
   photoId: string
 ): Promise<UnsplashPhoto> {
   const url = `https://api.unsplash.com/photos/${photoId}`;
+  const response = await unsplashFetch(url, options.clientId);
+
+  return response.json() as Promise<UnsplashPhoto>;
+}
+
+async function unsplashFetch(url: string, clientId: string): Promise<Response> {
+  logger.log(`Fetching from Unsplash API: ${url}`);
   const response: Response = await fetch(url, {
     headers: {
-      Authorization: `Client-ID ${options.clientId}`,
+      Authorization: `Client-ID ${clientId}`,
     },
   });
 
   if (!response.ok) {
+    logger.error(
+      `Failed to fetch ${url}: ${response.status} ${response.statusText}`
+    );
+    const text = await response.text();
+    logger.error(text);
+
+    if (response.status === 404) {
+      throw new NotFoundError(text);
+    }
+
+    if (response.status === 403) {
+      if (text.includes('Rate Limit Exceeded')) {
+        throw new RateLimitedError(text);
+      }
+    }
+
     throw new Error(
-      `Failed to fetch photo ${photoId}: ${response.status} ${response.statusText}`
+      `Failed to fetch ${url}: ${response.status} ${response.statusText}`
     );
   }
 
-  return response.json() as Promise<UnsplashPhoto>;
+  return response;
 }
