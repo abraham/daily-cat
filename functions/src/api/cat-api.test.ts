@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { NotFoundError, RateLimitedError } from '../types';
 
 describe('Cat API', () => {
   let fetchMock: any;
@@ -51,6 +52,7 @@ describe('Cat API', () => {
       const mockFetchResponse = {
         ok: true,
         json: () => Promise.resolve(mockSearchResponse),
+        text: () => Promise.resolve(JSON.stringify(mockSearchResponse)),
       };
 
       fetchMock.mockResolvedValue(mockFetchResponse);
@@ -86,6 +88,7 @@ describe('Cat API', () => {
       const mockFetchResponse = {
         ok: true,
         json: () => Promise.resolve(mockSearchResponse),
+        text: () => Promise.resolve(JSON.stringify(mockSearchResponse)),
       };
 
       fetchMock.mockResolvedValue(mockFetchResponse);
@@ -112,6 +115,7 @@ describe('Cat API', () => {
       const mockFetchResponse = {
         ok: true,
         json: () => Promise.resolve(mockSearchResponse),
+        text: () => Promise.resolve(JSON.stringify(mockSearchResponse)),
       };
 
       fetchMock.mockResolvedValue(mockFetchResponse);
@@ -139,13 +143,16 @@ describe('Cat API', () => {
         ok: false,
         status: 403,
         statusText: 'Forbidden',
+        text: () => Promise.resolve('{"error": "Forbidden"}'),
       };
 
       fetchMock.mockResolvedValue(mockFetchResponse);
 
       await expect(
         catApi.list({ clientId: 'invalid-client-id', page: '1' })
-      ).rejects.toThrow('Failed to fetch photos: 403 Forbidden');
+      ).rejects.toThrow(
+        'Failed to fetch https://api.unsplash.com/search/photos?query=cat&per_page=30&order_by=relevant&page=1: 403 Forbidden'
+      );
     });
   });
 
@@ -176,6 +183,7 @@ describe('Cat API', () => {
         status: 200,
         statusText: 'OK',
         json: () => Promise.resolve(mockPhoto),
+        text: () => Promise.resolve(JSON.stringify(mockPhoto)),
       };
 
       fetchMock.mockResolvedValue(mockFetchResponse);
@@ -196,27 +204,45 @@ describe('Cat API', () => {
       expect(result).toEqual(mockPhoto);
     });
 
-    it('should throw error when photo is not found (404)', async () => {
+    it('should throw NotFoundError when photo is not found (404)', async () => {
       const mockFetchResponse = {
         ok: false,
         status: 404,
         statusText: 'Not Found',
         json: () => Promise.resolve({ error: 'Photo not found' }),
+        text: () => Promise.resolve('{"error": "Photo not found"}'),
       };
 
       fetchMock.mockResolvedValue(mockFetchResponse);
 
       await expect(
         catApi.get({ clientId: 'test-client-id' }, 'non-existent-id')
-      ).rejects.toThrow('Failed to fetch photo non-existent-id: 404 Not Found');
+      ).rejects.toThrow(NotFoundError);
     });
 
-    it('should throw error when rate limited (429)', async () => {
+    it('should throw RateLimitedError when rate limited (403)', async () => {
+      const mockFetchResponse = {
+        ok: false,
+        status: 403,
+        statusText: 'Forbidden',
+        json: () => Promise.resolve({ error: 'Rate limit exceeded' }),
+        text: () => Promise.resolve('Rate Limit Exceeded'),
+      };
+
+      fetchMock.mockResolvedValue(mockFetchResponse);
+
+      await expect(
+        catApi.get({ clientId: 'test-client-id' }, 'test-photo-id')
+      ).rejects.toThrow(RateLimitedError);
+    });
+
+    it('should throw generic error when rate limited (429)', async () => {
       const mockFetchResponse = {
         ok: false,
         status: 429,
         statusText: 'Too Many Requests',
         json: () => Promise.resolve({ error: 'Rate limit exceeded' }),
+        text: () => Promise.resolve('{"error": "Rate limit exceeded"}'),
       };
 
       fetchMock.mockResolvedValue(mockFetchResponse);
@@ -224,7 +250,7 @@ describe('Cat API', () => {
       await expect(
         catApi.get({ clientId: 'test-client-id' }, 'test-photo-id')
       ).rejects.toThrow(
-        'Failed to fetch photo test-photo-id: 429 Too Many Requests'
+        'Failed to fetch https://api.unsplash.com/photos/test-photo-id: 429 Too Many Requests'
       );
     });
 
@@ -234,6 +260,7 @@ describe('Cat API', () => {
         status: 401,
         statusText: 'Unauthorized',
         json: () => Promise.resolve({ error: 'Invalid client ID' }),
+        text: () => Promise.resolve('{"error": "Invalid client ID"}'),
       };
 
       fetchMock.mockResolvedValue(mockFetchResponse);
@@ -241,7 +268,7 @@ describe('Cat API', () => {
       await expect(
         catApi.get({ clientId: 'invalid-client-id' }, 'test-photo-id')
       ).rejects.toThrow(
-        'Failed to fetch photo test-photo-id: 401 Unauthorized'
+        'Failed to fetch https://api.unsplash.com/photos/test-photo-id: 401 Unauthorized'
       );
     });
 

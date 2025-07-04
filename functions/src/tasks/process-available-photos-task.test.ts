@@ -97,10 +97,15 @@ vi.mock('../storage/photo-id-storage', () => ({
 // Mock the day-storage module
 const mockGetPhotoForDate = vi.fn();
 const mockSavePhotoForDate = vi.fn();
+const mockGetPhotosForDateRange = vi.fn();
 vi.mock('../storage/day-storage', () => ({
   getPhotoForDate: mockGetPhotoForDate,
   savePhotoForDate: mockSavePhotoForDate,
+  getPhotosForDateRange: mockGetPhotosForDateRange,
 }));
+
+// Import NotFoundError for testing
+import { NotFoundError } from '../types';
 
 describe('Process Available Photos Task', () => {
   beforeEach(async () => {
@@ -127,6 +132,7 @@ describe('Process Available Photos Task', () => {
       lastPage: '5',
       importLimit: 10,
       processLimit: 10,
+      processingMinDate: '2025-01-01',
     });
 
     mockGetNextAvailablePhotoIds.mockResolvedValue([
@@ -138,6 +144,7 @@ describe('Process Available Photos Task', () => {
     mockIsPhotoIdUsed.mockResolvedValue(false);
     mockGet.mockResolvedValue(mockPhoto);
     mockGetPhotoForDate.mockResolvedValue(null); // No existing records by default
+    mockGetPhotosForDateRange.mockResolvedValue([]); // No existing records by default
     mockSavePhotoForDate.mockResolvedValue(undefined);
     mockRemoveAvailablePhotoId.mockResolvedValue(undefined);
 
@@ -239,43 +246,76 @@ describe('Process Available Photos Task', () => {
 
   it('should handle dates that already have completed photos', async () => {
     // Mock that future dates already have completed photos
-    mockGetPhotoForDate.mockResolvedValue({
-      id: '2025-06-30',
-      status: 'completed',
-      photo: mockPhoto,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+    // Create mock records for the next 30 days
+    const mockRecords = Array.from({ length: 30 }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() + i);
+      const dateString = date.toISOString().split('T')[0];
+      return {
+        id: dateString,
+        status: 'completed',
+        photo: mockPhoto,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
     });
+
+    mockGetPhotosForDateRange.mockResolvedValue(mockRecords);
 
     await mockScheduleHandler();
 
-    // Should check many dates to find ones that need photos
-    expect(mockGetPhotoForDate).toHaveBeenCalled();
+    // Should check date ranges to find ones that need photos
+    expect(mockGetPhotosForDateRange).toHaveBeenCalled();
 
     // Since all future dates are filled, might not process any photos
     // depending on whether backwards dates need photos
   });
 
-  it('should handle API errors gracefully', async () => {
-    // Mock API error for second photo
+  it('should handle NotFoundError gracefully and continue processing', async () => {
+    // Mock NotFoundError for second photo
     mockGet
       .mockResolvedValueOnce(mockPhoto) // First photo succeeds
-      .mockRejectedValueOnce(new Error('API Error')) // Second photo fails
+      .mockRejectedValueOnce(new NotFoundError('Photo not found')) // Second photo not found
       .mockResolvedValueOnce(mockPhoto); // Third photo succeeds
 
     await mockScheduleHandler();
 
-    // Verify that error was logged
-    expect(mockLogger.error).toHaveBeenCalledWith(
-      'Error processing photo ID photo-2:',
-      expect.any(Error)
+    // Verify that NotFoundError was logged
+    expect(mockLogger.log).toHaveBeenCalledWith(
+      'Photo photo-2 not found, removing from available list'
     );
 
-    // Verify that problematic photo was removed from available list
+    // Verify that the not found photo was removed from available list
     expect(mockRemoveAvailablePhotoId).toHaveBeenCalledWith('photo-2');
 
     // Verify that processing continued with other photos
     expect(mockSavePhotoForDate).toHaveBeenCalledTimes(2); // First and third photos
+  });
+
+  it('should propagate non-NotFoundError errors and stop processing', async () => {
+    // Mock non-NotFoundError for second photo
+    mockGet
+      .mockResolvedValueOnce(mockPhoto) // First photo succeeds
+      .mockRejectedValueOnce(new Error('API Error')) // Second photo fails with non-NotFoundError
+      .mockResolvedValueOnce(mockPhoto); // Third photo would succeed but won't be reached
+
+    // The function should throw the error
+    await expect(() => mockScheduleHandler()).rejects.toThrow('API Error');
+
+    // Verify that non-recoverable error was logged
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'Non-recoverable error processing photo ID photo-2:',
+      expect.any(Error)
+    );
+
+    // Verify that the outer error was also logged
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'Error in process available photos task:',
+      expect.any(Error)
+    );
+
+    // Verify that only the first photo was processed before the error
+    expect(mockSavePhotoForDate).toHaveBeenCalledTimes(1); // Only first photo
   });
 
   it('should work backwards to fill older dates when next 30 days are complete', async () => {
@@ -287,40 +327,42 @@ describe('Process Available Photos Task', () => {
     ]);
 
     // Mock that next 30 days have completed photos but past dates need photos
-    mockGetPhotoForDate.mockImplementation((dateString: string) => {
-      const date = new Date(dateString);
-      const today = new Date('2025-07-01'); // Fixed date for test consistency
-      today.setHours(0, 0, 0, 0);
-      date.setHours(0, 0, 0, 0);
+    mockGetPhotosForDateRange.mockImplementation(
+      (startDate: string, endDate: string) => {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
 
-      // For next 30 days from today (including today), all have completed photos
-      const thirtyDaysFromNow = new Date(today);
-      thirtyDaysFromNow.setDate(today.getDate() + 30);
+        const records = [];
 
-      if (date >= today && date < thirtyDaysFromNow) {
-        return Promise.resolve({
-          id: dateString,
-          status: 'completed',
-          photo: mockPhoto,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
+        // The function is called with the actual current date as start date for future range
+        // So we just check if this looks like a future range (starts with a current-ish date)
+        const startYear = start.getFullYear();
+        const daysDiff = Math.floor(
+          (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+        );
+
+        // If this looks like a ~30 day future range (around 29-30 days), return completed records
+        if (daysDiff >= 28 && daysDiff <= 31 && startYear === 2025) {
+          for (
+            let date = new Date(start);
+            date <= end;
+            date.setDate(date.getDate() + 1)
+          ) {
+            const dateString = date.toISOString().split('T')[0];
+            records.push({
+              id: dateString,
+              status: 'completed',
+              photo: mockPhoto,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+          }
+        }
+        // For past dates (backward search), return empty so some dates need photos
+
+        return Promise.resolve(records);
       }
-
-      // Past dates need photos
-      if (date < today) {
-        return Promise.resolve(null);
-      }
-
-      // Dates beyond 30 days also have photos (not relevant for this test)
-      return Promise.resolve({
-        id: dateString,
-        status: 'completed',
-        photo: mockPhoto,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-    });
+    );
 
     await mockScheduleHandler();
 
@@ -342,21 +384,37 @@ describe('Process Available Photos Task', () => {
       'photo-5',
     ]);
 
-    // Mock that only 2 dates need photos
-    let callCount = 0;
-    mockGetPhotoForDate.mockImplementation(() => {
-      callCount++;
-      if (callCount <= 2) {
-        return Promise.resolve(null); // Need photos
+    // Mock that only 2 dates need photos by returning records for most dates
+    mockGetPhotosForDateRange.mockImplementation(
+      (startDate: string, endDate: string) => {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const records = [];
+
+        // Create completed records for most dates, leaving only 2 without records
+        let dateCount = 0;
+        for (
+          let date = new Date(start);
+          date <= end;
+          date.setDate(date.getDate() + 1)
+        ) {
+          dateCount++;
+          if (dateCount > 2) {
+            // Only the first 2 dates need photos
+            const dateString = date.toISOString().split('T')[0];
+            records.push({
+              id: dateString,
+              status: 'completed',
+              photo: mockPhoto,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+          }
+        }
+
+        return Promise.resolve(records);
       }
-      // All other dates have photos
-      return Promise.resolve({
-        status: 'completed',
-        photo: mockPhoto,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-    });
+    );
 
     await mockScheduleHandler();
 
@@ -369,24 +427,26 @@ describe('Process Available Photos Task', () => {
     );
   });
 
-  it('should handle errors in removing problematic photo IDs', async () => {
-    // Mock API error and removal error
-    mockGet.mockRejectedValueOnce(new Error('API Error'));
+  it('should handle errors in removing not found photo IDs', async () => {
+    // Mock NotFoundError and removal error
+    mockGet.mockRejectedValueOnce(new NotFoundError('Photo not found'));
     mockRemoveAvailablePhotoId.mockRejectedValueOnce(
       new Error('Removal Error')
     );
 
     await mockScheduleHandler();
 
-    // Verify that both errors were logged
-    expect(mockLogger.error).toHaveBeenCalledWith(
-      'Error processing photo ID photo-1:',
-      expect.any(Error)
+    // Verify that both the NotFoundError and removal error were logged
+    expect(mockLogger.log).toHaveBeenCalledWith(
+      'Photo photo-1 not found, removing from available list'
     );
     expect(mockLogger.error).toHaveBeenCalledWith(
-      'Failed to remove problematic photo ID photo-1:',
+      'Failed to remove not found photo ID photo-1:',
       expect.any(Error)
     );
+
+    // The function should continue processing other photos despite the removal error
+    expect(mockSavePhotoForDate).toHaveBeenCalledTimes(2); // Should process photo-2 and photo-3
   });
 
   it('should use processLimit from config to determine how many photo IDs to retrieve', async () => {
@@ -397,6 +457,7 @@ describe('Process Available Photos Task', () => {
       lastPage: '5',
       importLimit: 10,
       processLimit: 5, // Different limit
+      processingMinDate: '2025-01-01',
     });
 
     await mockScheduleHandler();
@@ -428,50 +489,53 @@ describe('Process Available Photos Task', () => {
 
   it('should respect minDate from config when checking backwards', async () => {
     // Mock config with recent minDate
-    const recentMinDate = '2025-06-15'; // 2 weeks ago from July 1, 2025
+    const recentMinDate = '2025-06-15'; // 2 weeks ago from July 4, 2025
     mockGetConfig.mockResolvedValue({
       minDate: recentMinDate,
       importEnabled: true,
       lastPage: '5',
       importLimit: 10,
       processLimit: 3,
+      processingMinDate: recentMinDate,
     });
 
     // Mock that next 30 days have completed photos
-    mockGetPhotoForDate.mockImplementation((dateString: string) => {
-      const date = new Date(dateString);
-      const today = new Date('2025-07-01'); // Fixed date for test consistency
-      today.setHours(0, 0, 0, 0);
-      date.setHours(0, 0, 0, 0);
+    mockGetPhotosForDateRange.mockImplementation(
+      (startDate: string, endDate: string) => {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
 
-      // Future dates (today and next 30 days) are complete
-      if (date >= today) {
-        return Promise.resolve({
-          id: dateString,
-          status: 'completed',
-          photo: mockPhoto,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
+        const records = [];
+
+        // The function is called with the actual current date as start date for future range
+        // So we just check if this looks like a future range (starts with a current-ish date)
+        const startYear = start.getFullYear();
+        const daysDiff = Math.floor(
+          (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+        );
+
+        // If this looks like a ~30 day future range (around 29-30 days), return completed records
+        if (daysDiff >= 28 && daysDiff <= 31 && startYear === 2025) {
+          for (
+            let date = new Date(start);
+            date <= end;
+            date.setDate(date.getDate() + 1)
+          ) {
+            const dateString = date.toISOString().split('T')[0];
+            records.push({
+              id: dateString,
+              status: 'completed',
+              photo: mockPhoto,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+          }
+        }
+        // For backward dates, return empty (no existing records, so they need photos)
+
+        return Promise.resolve(records);
       }
-
-      // Past dates from minDate onward need photos
-      const minDateObj = new Date(recentMinDate);
-      minDateObj.setHours(0, 0, 0, 0);
-
-      if (date >= minDateObj) {
-        return Promise.resolve(null); // Need photos
-      }
-
-      // Dates before minDate should not be checked
-      return Promise.resolve({
-        id: dateString,
-        status: 'completed',
-        photo: mockPhoto,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-    });
+    );
 
     await mockScheduleHandler();
 
@@ -484,13 +548,29 @@ describe('Process Available Photos Task', () => {
     );
   });
 
-  it('should handle config retrieval errors', async () => {
+  it('should handle config retrieval errors and propagate them', async () => {
     // Mock config retrieval failure
     mockGetConfig.mockRejectedValue(new Error('Config not found'));
 
     // Should throw error and be caught by outer try-catch
     await expect(() => mockScheduleHandler()).rejects.toThrow(
       'Config not found'
+    );
+
+    // Should log the error
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'Error in process available photos task:',
+      expect.any(Error)
+    );
+  });
+
+  it('should handle missing client ID and propagate the error', async () => {
+    // Mock missing client ID
+    mockSecret.value.mockReturnValue('');
+
+    // Should throw error about missing client ID
+    await expect(() => mockScheduleHandler()).rejects.toThrow(
+      'UNSPLASH_CLIENT_ID environment variable is not set'
     );
 
     // Should log the error
@@ -507,12 +587,72 @@ describe('Process Available Photos Task', () => {
       importEnabled: true,
       lastPage: '5',
       importLimit: 10,
-      // processLimit is missing
+      processingMinDate: '2025-01-01',
     } as any);
+
+    // Ensure client ID is set
+    mockSecret.value.mockReturnValue('test-client-id');
 
     await mockScheduleHandler();
 
     // Should still call getNextAvailablePhotoIds (with undefined, which should be handled gracefully)
     expect(mockGetNextAvailablePhotoIds).toHaveBeenCalledOnce();
+  });
+
+  it('should handle errors during photo usage check and propagate them', async () => {
+    // Ensure client ID is set
+    mockSecret.value.mockReturnValue('test-client-id');
+
+    // Mock error during photo usage check
+    mockIsPhotoIdUsed.mockRejectedValueOnce(new Error('Usage check failed'));
+
+    // Should throw error and stop processing
+    await expect(() => mockScheduleHandler()).rejects.toThrow(
+      'Usage check failed'
+    );
+
+    // Should log the error
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'Error in process available photos task:',
+      expect.any(Error)
+    );
+  });
+
+  it('should handle errors during photo save and propagate them', async () => {
+    // Ensure client ID is set
+    mockSecret.value.mockReturnValue('test-client-id');
+
+    // Mock error during photo save
+    mockSavePhotoForDate.mockRejectedValueOnce(new Error('Save failed'));
+
+    // Should throw error and stop processing
+    await expect(() => mockScheduleHandler()).rejects.toThrow('Save failed');
+
+    // Should log the error
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'Error in process available photos task:',
+      expect.any(Error)
+    );
+  });
+
+  it('should handle errors during date range retrieval and propagate them', async () => {
+    // Ensure client ID is set
+    mockSecret.value.mockReturnValue('test-client-id');
+
+    // Mock error during date range retrieval
+    mockGetPhotosForDateRange.mockRejectedValueOnce(
+      new Error('Date range query failed')
+    );
+
+    // Should throw error and stop processing
+    await expect(() => mockScheduleHandler()).rejects.toThrow(
+      'Date range query failed'
+    );
+
+    // Should log the error
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'Error in process available photos task:',
+      expect.any(Error)
+    );
   });
 });
