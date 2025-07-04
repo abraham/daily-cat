@@ -75,18 +75,14 @@ export const initNotifications = async (app: FirebaseApp) => {
 
 const listen = (messaging: Messaging) => {
   console.log('Listening for messages...');
-  onMessage(messaging, (payload) => {
+  onMessage(messaging, async (payload) => {
     console.log('[fg] Message received. ', payload);
-    const notification = new Notification(payload.notification!.title!, {
+    const registration = await navigator.serviceWorker.ready;
+
+    registration.showNotification(payload.notification!.title!, {
       body: payload.notification?.body,
       icon: payload.notification?.icon,
     });
-
-    notification.onclick = () => {
-      console.log('[fg] Notification clicked:', payload);
-      window.focus();
-      notification.close();
-    };
   });
 };
 
