@@ -12,7 +12,8 @@ import {
   savePhotoForDate,
 } from '../storage/day-storage';
 import { isPhotoIdUsed } from '../storage/photo-id-storage';
-import { DayRecord, NotFoundError } from '../types';
+import { DayRecord } from '../types/day';
+import { NotFoundError } from '../types/errors';
 
 /**
  * Generate date string in YYYY-MM-DD format

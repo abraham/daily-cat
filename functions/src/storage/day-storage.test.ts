@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { UnsplashPhoto } from '../types';
+import { UnsplashPhoto } from '../types/unsplash';
 
 // Load the photo fixture for testing
 const photoFixturePath = path.join(__dirname, '..', 'fixtures', 'photo.json');

@@ -105,7 +105,7 @@ vi.mock('../storage/day-storage', () => ({
 }));
 
 // Import NotFoundError for testing
-import { NotFoundError } from '../types';
+import { NotFoundError } from '../types/errors';
 
 describe('Process Available Photos Task', () => {
   beforeEach(async () => {

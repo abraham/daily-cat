@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { UnsplashSearch } from '../types';
+import { UnsplashSearch } from '../types/unsplash';
 
 // Load the search fixture for testing
 const searchFixturePath = path.join(__dirname, '..', 'fixtures', 'search.json');

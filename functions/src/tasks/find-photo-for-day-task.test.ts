@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { DayRecord } from '../types';
+import { DayRecord } from '../types/day';
 
 // Load the photo fixture for testing
 const photoFixturePath = path.join(__dirname, '..', 'fixtures', 'photo.json');
