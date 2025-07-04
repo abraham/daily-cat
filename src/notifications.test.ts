@@ -6,6 +6,7 @@ vi.mock('firebase/messaging', () => ({
   getToken: vi.fn(),
   deleteToken: vi.fn(),
   onMessage: vi.fn(),
+  isSupported: vi.fn(),
 }));
 
 describe('Notifications', () => {

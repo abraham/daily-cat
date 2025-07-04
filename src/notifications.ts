@@ -5,6 +5,7 @@ import {
   getToken,
   Messaging,
   onMessage,
+  isSupported,
 } from 'firebase/messaging';
 import { showToast } from './toast';
 
@@ -26,98 +27,119 @@ const getHoursUntilNextNotification = (): number => {
   return Math.ceil(timeDiff / (1000 * 60 * 60)); // Convert to hours and round up
 };
 
-let token: string | null = null;
-const vapidKey =
-  'BNtBpdqelkS4eJuJ1crRVYaPEkf_Ksr11Nm_nKjNLMNl6L9aDsIALPyxNdzjdj4WKzrMjP1ChuNs3AMd_Sb8XzA';
-let messaging: Messaging;
+const localToken = () => {
+  console.log('Getting local token');
+  const value = localStorage.getItem('notification_token');
+  console.log(value);
+  return value;
+};
 
 const notificationsButton = document.getElementById('notifications-button');
 const notificationsOn = notificationsButton?.querySelector('.notifications-on');
 const notificationsOff =
   notificationsButton?.querySelector('.notifications-off');
 
+const isGranted = () => {
+  const value = Notification.permission === 'granted';
+  console.log('isGranted', value);
+  return value;
+};
+const hasLocalToken = () => {
+  const value = !!localToken();
+  console.log('hasLocalToken', value);
+  return value;
+};
+
+const showNotificationButton = () => {
+  if (notificationsButton) {
+    notificationsButton.classList.remove('hidden');
+  }
+};
+
+const showNotificationsOn = () => {
+  notificationsOn?.classList.remove('hidden');
+  notificationsOff?.classList.add('hidden');
+};
+const showNotificationsOff = () => {
+  notificationsOn?.classList.add('hidden');
+  notificationsOff?.classList.remove('hidden');
+};
+
+const vapidKey =
+  'BNtBpdqelkS4eJuJ1crRVYaPEkf_Ksr11Nm_nKjNLMNl6L9aDsIALPyxNdzjdj4WKzrMjP1ChuNs3AMd_Sb8XzA';
+let messaging: Messaging;
+
 export const initNotifications = async (app: FirebaseApp) => {
-  const browserSupportsNotifications = 'Notification' in window;
-  if (!browserSupportsNotifications) {
+  if (!isSupported()) {
     console.warn('This browser does not support notifications.');
+    return;
+  }
+
+  if (!notificationsButton) {
+    console.warn('Notifications button not found in the DOM.');
     return;
   }
 
   messaging = getMessaging(app);
   listen(messaging);
-  const granted = Notification.permission === 'granted';
-  console.log('granted', granted);
-  if (granted) {
-    console.log('Notifications are already granted.');
-    token = localStorage.getItem('notification_token');
-    console.log('token', token);
-  }
-  const notificationsButton = document.getElementById('notifications-button');
-  if (notificationsButton) {
-    notificationsButton.classList.remove('hidden');
 
-    if (await subscribed()) {
-      notificationsOn?.classList.toggle('hidden');
-      notificationsOff?.classList.toggle('hidden');
+  showNotificationButton();
+
+  if (await isSubscribed()) {
+    showNotificationsOn();
+  }
+
+  notificationsButton.addEventListener('click', async () => {
+    if (!isGranted() || !localToken()) {
+      await subscribe();
+    } else {
+      await unsubscribe();
     }
-
-    notificationsButton.addEventListener('click', async () => {
-      if (Notification.permission !== 'granted' || !token) {
-        await subscribe();
-      } else {
-        await unsubscribe();
-      }
-      console.log('Notifications button clicked');
-      console.log('permission', Notification.permission);
-    });
-  }
+    console.log('Notifications button clicked');
+    console.log('permission', Notification.permission);
+  });
 };
 
 const listen = (messaging: Messaging) => {
   console.log('Listening for messages...');
-  onMessage(messaging, (payload) => {
+  onMessage(messaging, async (payload) => {
     console.log('[fg] Message received. ', payload);
-    const notification = new Notification(payload.notification!.title!, {
+    const registration = await navigator.serviceWorker.ready;
+
+    registration.showNotification(payload.notification!.title!, {
       body: payload.notification?.body,
       icon: payload.notification?.icon,
     });
-
-    notification.onclick = () => {
-      console.log('[fg] Notification clicked:', payload);
-      window.focus();
-      notification.close();
-    };
   });
 };
 
-const subscribed = async (): Promise<boolean> => {
-  let enabled = false;
-  const permission = await Notification.requestPermission();
-  if (
-    permission === 'granted' &&
-    !!localStorage.getItem('notification_token')
-  ) {
-    const token = await getToken(messaging, { vapidKey });
-    console.log('token', token);
-    localStorage.setItem('notification_token', token);
-    enabled = !!token;
+const isSubscribed = async (): Promise<boolean> => {
+  console.log('Checking if subscribed to notifications...');
+  if (!isGranted()) {
+    return false;
   }
-  console.log('Notifications enabled:', enabled);
-  return enabled;
+
+  if (!hasLocalToken()) {
+    return false;
+  }
+
+  console.log('Updating token');
+  const token = await getToken(messaging, { vapidKey });
+  console.log(token);
+  localStorage.setItem('notification_token', token);
+
+  return true;
 };
 
 const subscribe = async () => {
   console.log('Subscribing to notifications...');
   try {
-    const permission = await Notification.requestPermission();
-    console.log('permission', permission);
-
-    if (permission === 'granted') {
-      token = await getToken(messaging, { vapidKey });
+    await Notification.requestPermission();
+    if (isGranted()) {
+      const token = await getToken(messaging, { vapidKey });
       console.log('token', token);
       localStorage.setItem('notification_token', token);
-      notificationsOn?.classList.remove('hidden');
-      notificationsOff?.classList.add('hidden');
+      showNotificationsOn();
 
       const hoursUntilNext = getHoursUntilNextNotification();
       const hoursText = hoursUntilNext === 1 ? 'hour' : 'hours';
@@ -136,20 +158,16 @@ const subscribe = async () => {
 
 const unsubscribe = async () => {
   console.log('Unsubscribing from notifications...');
-  if (token) {
-    try {
-      await deleteToken(messaging);
-      console.log('Token deleted successfully');
-      token = null;
-      localStorage.removeItem('notification_token');
-      notificationsOn?.classList.add('hidden');
-      notificationsOff?.classList.remove('hidden');
+  try {
+    await deleteToken(messaging);
+    console.log('Token deleted successfully');
+    localStorage.removeItem('notification_token');
+    showNotificationsOff();
 
-      showToast('Unsubscribed from daily notifications', 'info');
-    } catch (error) {
-      console.error('Error unsubscribing from notifications:', error);
-      showToast('Failed to unsubscribe from notifications', 'info');
-    }
+    showToast('Unsubscribed from daily notifications', 'info');
+  } catch (error) {
+    console.error('Error unsubscribing from notifications:', error);
+    showToast('Failed to unsubscribe from notifications', 'info');
   }
 };
 
