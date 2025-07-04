@@ -1,6 +1,6 @@
 import * as logger from 'firebase-functions/logger';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
-import { DayRecord } from '../types';
+import { DayRecord } from '../types/day';
 import { processPhotoForDay, unsplashClientId } from '../photo-processor';
 import { setDayRecordProcessing } from '../storage/day-storage';
 

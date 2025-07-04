@@ -1,6 +1,6 @@
 import { initializeApp, getApps, App } from 'firebase-admin/app';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
-import { Config } from '../types';
+import { Config } from '../types/config';
 
 // Initialize Firebase Admin if not already initialized
 let app: App;

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { NotFoundError, RateLimitedError } from '../types';
+import { NotFoundError, RateLimitedError } from '../types/errors';
 
 describe('Cat API', () => {
   let fetchMock: any;

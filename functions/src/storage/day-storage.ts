@@ -1,16 +1,12 @@
-import { initializeApp, getApps, App } from 'firebase-admin/app';
+import { App, getApps, initializeApp } from 'firebase-admin/app';
 import {
-  getFirestore,
-  Firestore,
   DocumentData,
+  Firestore,
+  getFirestore,
   QueryDocumentSnapshot,
 } from 'firebase-admin/firestore';
-import {
-  UnsplashPhoto,
-  DayRecord,
-  NewDayRecord,
-  CompletedDayRecord,
-} from '../types';
+import { CompletedDayRecord, DayRecord, NewDayRecord } from '../types/day';
+import { UnsplashPhoto } from '../types/unsplash';
 
 // Initialize Firebase Admin if not already initialized
 let app: App;

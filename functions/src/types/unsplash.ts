@@ -1,20 +1,3 @@
-// Custom error classes
-export class NotFoundError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'NotFoundError';
-  }
-}
-
-export class RateLimitedError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'RateLimitedError';
-  }
-}
-
-// Unsplash API response types
-
 // Base photo interface for search results (subset of full photo data)
 export interface UnsplashSearchPhoto {
   id: string;
@@ -141,30 +124,4 @@ export type UnsplashRandom = UnsplashRandomPhoto[];
 export interface CatApiOptions {
   clientId: string;
   page: string;
-}
-
-export interface DayRecord {
-  id: string; // ISO date string (YYYY-MM-DD)
-  photo: UnsplashPhoto | null;
-  status: 'created' | 'processing' | 'completed';
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface NewDayRecord extends DayRecord {
-  photo: null;
-  status: 'created';
-}
-export interface CompletedDayRecord extends DayRecord {
-  photo: UnsplashPhoto;
-  status: 'completed';
-}
-
-export interface Config {
-  minDate: string; // ISO date string (YYYY-MM-DD)
-  importEnabled: boolean; // Whether to enable import functionality
-  lastPage: string; // Last page processed for import
-  importLimit: number; // Limit for import operations
-  processLimit: number; // Limit for processing operations
-  processingMinDate: string; // Minimum date for processing operations
 }

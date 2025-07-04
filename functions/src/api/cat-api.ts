@@ -3,9 +3,8 @@ import {
   CatApiOptions,
   UnsplashPhoto,
   UnsplashSearch,
-  NotFoundError,
-  RateLimitedError,
-} from '../types';
+} from '../types/unsplash';
+import { NotFoundError, RateLimitedError } from '../types/errors';
 
 export async function list({
   clientId,
