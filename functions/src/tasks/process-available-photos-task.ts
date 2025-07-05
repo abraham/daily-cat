@@ -105,10 +105,7 @@ async function getDatesNeedingPhotos(minDate: string): Promise<string[]> {
   // If next 30 days are filled, work backwards from today to minDate
   logger.log('Next 30 days are filled, checking backwards to minDate');
 
-  // Calculate one year back from today or minDate, whichever is more recent
-  const oneYearBack = addDays(today, -365);
-  const searchStartDate = oneYearBack > minDateObj ? oneYearBack : minDateObj;
-  const searchStartDateString = formatDateString(searchStartDate);
+  const searchStartDateString = formatDateString(minDateObj);
 
   // Get yesterday's date (don't include today since we already checked forward)
   const yesterday = addDays(today, -1);
