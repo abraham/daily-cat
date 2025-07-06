@@ -34,6 +34,19 @@ const localToken = () => {
   return value;
 };
 
+const hasTopic = (): boolean => {
+  const value = localStorage.getItem('notification_topic');
+  console.log('hasTopic', value);
+  return !!value;
+};
+
+// TODO: Delete this after July 2025
+const shouldUpgradeToTopic = () => {
+  const value = hasLocalToken() && !hasTopic();
+  console.log('shouldUpgradeToTopic', value);
+  return value;
+};
+
 const notificationsButton = document.getElementById('notifications-button');
 const notificationsOn = notificationsButton?.querySelector('.notifications-on');
 const notificationsOff =
@@ -88,6 +101,10 @@ export const initNotifications = async (app: FirebaseApp) => {
 
   if (await isSubscribed()) {
     showNotificationsOn();
+    if (shouldUpgradeToTopic()) {
+      await subscribe();
+      console.log('Upgraded to topic subscription');
+    }
   } else {
     setTimeout(async () => {
       // Chrome mobile randomly shows default instead of granted.
@@ -99,10 +116,11 @@ export const initNotifications = async (app: FirebaseApp) => {
   }
 
   notificationsButton.addEventListener('click', async () => {
+    const token = localToken();
     if (!isGranted() || !localToken()) {
       await subscribe();
     } else {
-      await unsubscribe();
+      await unsubscribe(token!);
     }
     console.log('Notifications button clicked');
     console.log('permission', Notification.permission);
@@ -142,34 +160,65 @@ const isSubscribed = async (): Promise<boolean> => {
   return true;
 };
 
+const utcHourPadded = (date: Date): string => {
+  return date.getUTCHours().toString().padStart(2, '0');
+};
+
+const subscribeToTopics = async (token: string) => {
+  console.log(`Subscribing to topic`);
+  const response = await fetch(`/topics?${new URLSearchParams({ token })}`, {
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to subscribe to topic`);
+  }
+
+  console.log(`Subscribed to topic successfully`);
+};
+
+const unsubscribeFromTopics = async (token: string) => {
+  console.log(`Unsubscribing from topic`);
+  const response = await fetch(`/topics?${new URLSearchParams({ token })}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to unsubscribe from topic`);
+  }
+
+  console.log(`Unsubscribed from topic successfully`);
+};
+
 const subscribe = async () => {
   console.log('Subscribing to notifications...');
   try {
     await Notification.requestPermission();
     if (isGranted()) {
       const token = await getToken(messaging, { vapidKey });
+      await subscribeToTopics(token);
       console.log('token', token);
       localStorage.setItem('notification_token', token);
+      localStorage.setItem(
+        'notification_topic',
+        `hour-${utcHourPadded(new Date())}`
+      );
       showNotificationsOn();
 
-      const hoursUntilNext = getHoursUntilNextNotification();
-      const hoursText = hoursUntilNext === 1 ? 'hour' : 'hours';
-      showToast(
-        `Subscribed to daily notifications. Next push in ${hoursUntilNext} ${hoursText}`,
-        'success'
-      );
+      showToast(`Subscribed to daily notifications.`, 'success');
     } else {
       showToast('Notifications permission denied', 'info');
     }
   } catch (error) {
-    console.error('Error requesting notification permission:', error);
+    console.error('Error:', error);
     showToast('Failed to subscribe to notifications', 'info');
   }
 };
 
-const unsubscribe = async () => {
+const unsubscribe = async (token: string) => {
   console.log('Unsubscribing from notifications...');
   try {
+    await unsubscribeFromTopics(token);
     await deleteToken(messaging);
     console.log('Token deleted successfully');
     localStorage.removeItem('notification_token');
@@ -183,4 +232,14 @@ const unsubscribe = async () => {
 };
 
 // Export internal functions for testing
-export { subscribe, unsubscribe, listen, getHoursUntilNextNotification };
+export {
+  subscribe,
+  unsubscribe,
+  listen,
+  getHoursUntilNextNotification,
+  subscribeToTopics,
+  unsubscribeFromTopics,
+  utcHourPadded,
+  hasTopic,
+  shouldUpgradeToTopic,
+};
