@@ -37,9 +37,13 @@ vi.mock('firebase-admin/app', () => ({
   getApps: vi.fn(() => []),
 }));
 
-vi.mock('firebase-admin/firestore', () => ({
-  getFirestore: vi.fn(() => mockFirestore),
-}));
+vi.mock('firebase-admin/firestore', async () => {
+  const actual = await vi.importActual('firebase-admin/firestore');
+  return {
+    Timestamp: actual.Timestamp,
+    getFirestore: vi.fn(() => mockFirestore),
+  };
+});
 
 // Mock the scheduler function
 let mockScheduleHandler: any;
@@ -106,6 +110,7 @@ vi.mock('../storage/day-storage', () => ({
 
 // Import NotFoundError for testing
 import { NotFoundError } from '../types/errors';
+import { Timestamp } from 'firebase-admin/firestore';
 
 describe('Process Available Photos Task', () => {
   beforeEach(async () => {
@@ -255,8 +260,8 @@ describe('Process Available Photos Task', () => {
         id: dateString,
         status: 'completed',
         photo: mockPhoto,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
     });
 
@@ -353,8 +358,8 @@ describe('Process Available Photos Task', () => {
               id: dateString,
               status: 'completed',
               photo: mockPhoto,
-              createdAt: new Date(),
-              updatedAt: new Date(),
+              createdAt: Timestamp.now(),
+              updatedAt: Timestamp.now(),
             });
           }
         }
@@ -406,8 +411,8 @@ describe('Process Available Photos Task', () => {
               id: dateString,
               status: 'completed',
               photo: mockPhoto,
-              createdAt: new Date(),
-              updatedAt: new Date(),
+              createdAt: Timestamp.now(),
+              updatedAt: Timestamp.now(),
             });
           }
         }
@@ -526,8 +531,8 @@ describe('Process Available Photos Task', () => {
               id: dateString,
               status: 'completed',
               photo: mockPhoto,
-              createdAt: new Date(),
-              updatedAt: new Date(),
+              createdAt: Timestamp.now(),
+              updatedAt: Timestamp.now(),
             });
           }
         }

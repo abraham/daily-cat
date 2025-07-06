@@ -1,13 +1,13 @@
 import * as logger from 'firebase-functions/logger';
 import { onRequest } from 'firebase-functions/v2/https';
 import { getMessaging } from 'firebase-admin/messaging';
-import { firestore } from 'firebase-admin';
 import {
   getTokenDocument,
   saveTokenDocument,
   deleteTokenDocument,
 } from '../storage/token-storage';
 import { Token } from '../types/token';
+import { Timestamp } from 'firebase-admin/firestore';
 
 /**
  * Firebase Function for managing FCM topic subscriptions
@@ -87,7 +87,7 @@ async function handleSubscription(token: string, response: any) {
     }
 
     // Save token document
-    const timestampNow = firestore.Timestamp.now();
+    const timestampNow = Timestamp.now();
     const tokenData: Token = {
       token,
       topics,

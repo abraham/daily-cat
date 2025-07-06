@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
+import { Timestamp } from 'firebase-admin/firestore';
 
 // Load the actual photo.json fixture
 const photoFixturePath = path.join(__dirname, '..', 'fixtures', 'photo.json');
@@ -37,9 +38,13 @@ vi.mock('firebase-admin/app', () => ({
   getApps: vi.fn(() => []),
 }));
 
-vi.mock('firebase-admin/firestore', () => ({
-  getFirestore: vi.fn(() => mockFirestore),
-}));
+vi.mock('firebase-admin/firestore', async () => {
+  const actual = await vi.importActual('firebase-admin/firestore');
+  return {
+    Timestamp: actual.Timestamp,
+    getFirestore: vi.fn(() => mockFirestore),
+  };
+});
 
 // Mock the storage modules
 vi.mock('../storage/day-storage', () => ({
@@ -90,8 +95,8 @@ describe('Cat Function', () => {
       id: 'test-date',
       status: 'created',
       photo: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
     });
     configStorageMock.getConfig.mockResolvedValue({
       minDate: '2025-01-01',

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { topics } from './topics-task';
-import { firestore } from 'firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 
 // Mock Firebase functions
 vi.mock('firebase-functions/logger', () => ({
@@ -104,8 +104,8 @@ describe('topics task', () => {
     );
     expect(mockSaveTokenDocument).toHaveBeenCalledWith('test-token-123456789', {
       token: 'test-token-123456789',
-      createdAt: expect.any(firestore.Timestamp),
-      updatedAt: expect.any(firestore.Timestamp),
+      createdAt: expect.any(Timestamp),
+      updatedAt: expect.any(Timestamp),
       topics: ['hour-12'],
     });
     expect(mockResponse.status).toHaveBeenCalledWith(200);

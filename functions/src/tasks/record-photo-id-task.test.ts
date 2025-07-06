@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import { DayRecord } from '../types/day';
+import { Timestamp } from 'firebase-admin/firestore';
 
 // Load the photo fixture for testing
 const photoFixturePath = path.join(__dirname, '..', 'fixtures', 'photo.json');
@@ -40,6 +41,13 @@ vi.mock('firebase-admin/app', () => ({
 
 vi.mock('firebase-admin/firestore', () => ({
   getFirestore: vi.fn(() => mockFirestore),
+  Timestamp: {
+    now: vi.fn(() => ({ seconds: 1640995200, nanoseconds: 0 })),
+    fromDate: vi.fn((date) => ({
+      seconds: Math.floor(date.getTime() / 1000),
+      nanoseconds: 0,
+    })),
+  },
 }));
 
 // Mock the photo-id-storage module
@@ -95,8 +103,8 @@ describe('Record Photo ID Task', () => {
         id: dayId,
         photo: mockPhoto,
         status: 'completed',
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
 
       const eventData = {
@@ -125,16 +133,16 @@ describe('Record Photo ID Task', () => {
         id: dayId,
         photo: null,
         status: 'created',
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
 
       const afterRecord: DayRecord = {
         id: dayId,
         photo: mockPhoto,
         status: 'completed',
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
 
       const eventData = {
@@ -165,16 +173,16 @@ describe('Record Photo ID Task', () => {
         id: dayId,
         photo: oldPhoto,
         status: 'completed',
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
 
       const afterRecord: DayRecord = {
         id: dayId,
         photo: newPhoto,
         status: 'completed',
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
 
       const eventData = {
@@ -202,16 +210,16 @@ describe('Record Photo ID Task', () => {
         id: dayId,
         photo: mockPhoto,
         status: 'completed',
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
 
       const afterRecord: DayRecord = {
         id: dayId,
         photo: mockPhoto,
         status: 'completed',
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
 
       const eventData = {
@@ -239,8 +247,8 @@ describe('Record Photo ID Task', () => {
         id: dayId,
         photo: null,
         status: 'created',
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
 
       const eventData = {
@@ -266,8 +274,8 @@ describe('Record Photo ID Task', () => {
               id: dayId,
               photo: mockPhoto,
               status: 'completed',
-              createdAt: new Date(),
-              updatedAt: new Date(),
+              createdAt: Timestamp.now(),
+              updatedAt: Timestamp.now(),
             }),
           },
           after: undefined,
@@ -291,8 +299,8 @@ describe('Record Photo ID Task', () => {
         id: dayId,
         photo: mockPhoto,
         status: 'completed',
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
 
       const eventData = {
@@ -320,8 +328,8 @@ describe('Record Photo ID Task', () => {
         id: dayId,
         photo: photoWithoutId as any,
         status: 'completed',
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
 
       const eventData = {

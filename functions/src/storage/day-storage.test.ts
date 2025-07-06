@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UnsplashPhoto } from '../types/unsplash';
+import { Timestamp } from 'firebase-admin/firestore';
 
 // Load the photo fixture for testing
 const photoFixturePath = path.join(__dirname, '..', 'fixtures', 'photo.json');
@@ -41,11 +42,15 @@ vi.mock('firebase-admin/app', () => ({
   getApps: vi.fn(() => []),
 }));
 
-vi.mock('firebase-admin/firestore', () => ({
-  getFirestore: vi.fn(() => mockFirestore),
-  DocumentData: {},
-  QueryDocumentSnapshot: {},
-}));
+vi.mock('firebase-admin/firestore', async () => {
+  const actual = await vi.importActual('firebase-admin/firestore');
+  return {
+    Timestamp: actual.Timestamp,
+    getFirestore: vi.fn(() => mockFirestore),
+    DocumentData: {},
+    QueryDocumentSnapshot: {},
+  };
+});
 
 describe('Day Storage Functions', () => {
   let dayStorage: typeof import('./day-storage');
@@ -86,34 +91,34 @@ describe('Day Storage Functions', () => {
       expect(mockDoc.set).toHaveBeenCalledWith({
         status: 'completed',
         photo: mockPhoto,
-        createdAt: expect.any(Date),
-        updatedAt: expect.any(Date),
+        createdAt: expect.any(Timestamp),
+        updatedAt: expect.any(Timestamp),
       });
       expect(result).toBe(testDate);
     });
 
     it('should use the current timestamp for createdAt and updatedAt', async () => {
       const testDate = '2025-06-27';
-      const beforeTime = new Date();
+      const beforeTime = Timestamp.now();
 
       await dayStorage.savePhotoForDate(testDate, mockPhoto);
 
-      const afterTime = new Date();
+      const afterTime = Timestamp.now();
       const callArgs = mockDoc.set.mock.calls[0][0];
 
-      expect(callArgs.createdAt).toBeInstanceOf(Date);
-      expect(callArgs.updatedAt).toBeInstanceOf(Date);
-      expect(callArgs.createdAt.getTime()).toBeGreaterThanOrEqual(
-        beforeTime.getTime()
+      expect(callArgs.createdAt).toBeInstanceOf(Timestamp);
+      expect(callArgs.updatedAt).toBeInstanceOf(Timestamp);
+      expect(callArgs.createdAt.toMillis()).toBeGreaterThanOrEqual(
+        beforeTime.toMillis()
       );
-      expect(callArgs.createdAt.getTime()).toBeLessThanOrEqual(
-        afterTime.getTime()
+      expect(callArgs.createdAt.toMillis()).toBeLessThanOrEqual(
+        afterTime.toMillis()
       );
-      expect(callArgs.updatedAt.getTime()).toBeGreaterThanOrEqual(
-        beforeTime.getTime()
+      expect(callArgs.updatedAt.toMillis()).toBeGreaterThanOrEqual(
+        beforeTime.toMillis()
       );
-      expect(callArgs.updatedAt.getTime()).toBeLessThanOrEqual(
-        afterTime.getTime()
+      expect(callArgs.updatedAt.toMillis()).toBeLessThanOrEqual(
+        afterTime.toMillis()
       );
     });
   });
@@ -129,41 +134,41 @@ describe('Day Storage Functions', () => {
       expect(mockDoc.set).toHaveBeenCalledWith({
         status: 'created',
         photo: null,
-        createdAt: expect.any(Date),
-        updatedAt: expect.any(Date),
+        createdAt: expect.any(Timestamp),
+        updatedAt: expect.any(Timestamp),
       });
 
       expect(result).toEqual({
         id: testDate,
         status: 'created',
         photo: null,
-        createdAt: expect.any(Date),
-        updatedAt: expect.any(Date),
+        createdAt: expect.any(Timestamp),
+        updatedAt: expect.any(Timestamp),
       });
     });
 
     it('should use the current timestamp for createdAt and updatedAt', async () => {
       const testDate = '2025-06-27';
-      const beforeTime = new Date();
+      const beforeTime = Timestamp.now();
 
       const result = await dayStorage.createNewDayRecord(testDate);
 
-      const afterTime = new Date();
+      const afterTime = Timestamp.now();
       const callArgs = mockDoc.set.mock.calls[0][0];
 
-      expect(callArgs.createdAt).toBeInstanceOf(Date);
-      expect(callArgs.updatedAt).toBeInstanceOf(Date);
-      expect(callArgs.createdAt.getTime()).toBeGreaterThanOrEqual(
-        beforeTime.getTime()
+      expect(callArgs.createdAt).toBeInstanceOf(Timestamp);
+      expect(callArgs.updatedAt).toBeInstanceOf(Timestamp);
+      expect(callArgs.createdAt.toMillis()).toBeGreaterThanOrEqual(
+        beforeTime.toMillis()
       );
-      expect(callArgs.createdAt.getTime()).toBeLessThanOrEqual(
-        afterTime.getTime()
+      expect(callArgs.createdAt.toMillis()).toBeLessThanOrEqual(
+        afterTime.toMillis()
       );
-      expect(callArgs.updatedAt.getTime()).toBeGreaterThanOrEqual(
-        beforeTime.getTime()
+      expect(callArgs.updatedAt.toMillis()).toBeGreaterThanOrEqual(
+        beforeTime.toMillis()
       );
-      expect(callArgs.updatedAt.getTime()).toBeLessThanOrEqual(
-        afterTime.getTime()
+      expect(callArgs.updatedAt.toMillis()).toBeLessThanOrEqual(
+        afterTime.toMillis()
       );
 
       expect(result.createdAt).toBe(callArgs.createdAt);
@@ -177,8 +182,8 @@ describe('Day Storage Functions', () => {
       const mockData = {
         photo: mockPhoto,
         status: 'completed' as const,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
 
       mockDoc.exists = true;
@@ -204,8 +209,8 @@ describe('Day Storage Functions', () => {
       const mockData = {
         photo: null,
         status: 'created' as const,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
 
       mockDoc.exists = true;
@@ -231,8 +236,8 @@ describe('Day Storage Functions', () => {
       const mockData = {
         photo: null,
         status: 'processing' as const,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
 
       mockDoc.exists = true;
@@ -268,23 +273,23 @@ describe('Day Storage Functions', () => {
       const testDate = '2025-06-27';
       const newPhoto = { ...mockPhoto, id: 'new-photo-id' };
 
-      const beforeTime = new Date();
+      const beforeTime = Timestamp.now();
       await dayStorage.updatePhotoForDay(testDate, newPhoto);
-      const afterTime = new Date();
+      const afterTime = Timestamp.now();
 
       expect(mockFirestore.collection).toHaveBeenCalledWith('days');
       expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
       expect(mockDoc.update).toHaveBeenCalledWith({
         photo: newPhoto,
-        updatedAt: expect.any(Date),
+        updatedAt: expect.any(Timestamp),
       });
 
       const callArgs = mockDoc.update.mock.calls[0][0];
-      expect(callArgs.updatedAt.getTime()).toBeGreaterThanOrEqual(
-        beforeTime.getTime()
+      expect(callArgs.updatedAt.toMillis()).toBeGreaterThanOrEqual(
+        beforeTime.toMillis()
       );
-      expect(callArgs.updatedAt.getTime()).toBeLessThanOrEqual(
-        afterTime.getTime()
+      expect(callArgs.updatedAt.toMillis()).toBeLessThanOrEqual(
+        afterTime.toMillis()
       );
     });
   });
@@ -298,16 +303,16 @@ describe('Day Storage Functions', () => {
           id: '2025-06-25',
           data: () => ({
             photo: mockPhoto,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
           }),
         },
         {
           id: '2025-06-27',
           data: () => ({
             photo: mockPhoto,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
           }),
         },
       ];
@@ -364,8 +369,8 @@ describe('Day Storage Functions', () => {
       const mockData = {
         date: '2025-06-27',
         photo: mockPhoto,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
 
       const mockDocs = [
@@ -469,7 +474,7 @@ describe('Day Storage Functions', () => {
       expect(mockDoc.update).toHaveBeenCalledWith({
         photo: mockRandomPhoto,
         status: 'completed',
-        updatedAt: expect.any(Date),
+        updatedAt: expect.any(Timestamp),
       });
     });
 
@@ -497,7 +502,7 @@ describe('Day Storage Functions', () => {
       expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
       expect(mockDoc.update).toHaveBeenCalledWith({
         status: 'processing',
-        updatedAt: expect.any(Date),
+        updatedAt: expect.any(Timestamp),
       });
     });
 

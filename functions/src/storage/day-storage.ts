@@ -7,6 +7,7 @@ import {
 } from 'firebase-admin/firestore';
 import { CompletedDayRecord, DayRecord, NewDayRecord } from '../types/day';
 import { UnsplashPhoto } from '../types/unsplash';
+import { Timestamp } from 'firebase-admin/firestore';
 
 // Initialize Firebase Admin if not already initialized
 let app: App;
@@ -29,12 +30,11 @@ export async function savePhotoForDate(
   id: string,
   photo: UnsplashPhoto
 ): Promise<string> {
-  const now = new Date();
   const dayRecord: Omit<DayRecord, 'id'> = {
     status: 'completed',
     photo,
-    createdAt: now,
-    updatedAt: now,
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
   };
 
   await db.collection(COLLECTION_NAME).doc(id).set(dayRecord);
@@ -82,10 +82,9 @@ export async function updatePhotoForDay(
   id: string,
   photo: UnsplashPhoto
 ): Promise<void> {
-  const now = new Date();
   await db.collection(COLLECTION_NAME).doc(id).update({
     photo,
-    updatedAt: now,
+    updatedAt: Timestamp.now(),
   });
 }
 
@@ -99,12 +98,10 @@ export async function completePhotoForDay(
   id: string,
   photo: UnsplashPhoto
 ): Promise<void> {
-  const now = new Date();
-
   await db.collection(COLLECTION_NAME).doc(id).update({
     photo: photo,
     status: 'completed',
-    updatedAt: now,
+    updatedAt: Timestamp.now(),
   });
 }
 
@@ -114,10 +111,9 @@ export async function completePhotoForDay(
  * @returns Promise<void>
  */
 export async function setDayRecordProcessing(id: string): Promise<void> {
-  const now = new Date();
   await db.collection(COLLECTION_NAME).doc(id).update({
     status: 'processing',
-    updatedAt: now,
+    updatedAt: Timestamp.now(),
   });
 }
 
@@ -181,12 +177,11 @@ export async function getMostRecentPhoto(): Promise<DayRecord | null> {
  * @returns Promise<NewDayRecord> - The created day record
  */
 export async function createNewDayRecord(id: string): Promise<NewDayRecord> {
-  const now = new Date();
   const newRecord: Omit<NewDayRecord, 'id'> = {
     status: 'created',
     photo: null,
-    createdAt: now,
-    updatedAt: now,
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
   };
 
   await db.collection(COLLECTION_NAME).doc(id).set(newRecord);
