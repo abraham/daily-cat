@@ -26,7 +26,7 @@ export const sendNotificationsScheduled = onSchedule(
         topic,
         notification: {
           title: 'Daily Cat',
-          body: 'New cat is ready for you!',
+          body: "Today's cat is ready to pounce!",
         },
         webpush: { fcmOptions: { link: 'https://daily.cat' } },
       };
