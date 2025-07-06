@@ -132,6 +132,7 @@ export const processAvailablePhotosScheduled = onSchedule(
     schedule: 'every 1 hours',
     timeZone: 'UTC',
     secrets: [unsplashClientId],
+    memory: '512MiB',
   },
   async () => {
     try {

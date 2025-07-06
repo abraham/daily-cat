@@ -8,6 +8,7 @@ import {
 import { CompletedDayRecord, DayRecord, NewDayRecord } from '../types/day';
 import { UnsplashPhoto } from '../types/unsplash';
 import { Timestamp } from 'firebase-admin/firestore';
+import { logger } from 'firebase-functions';
 
 // Initialize Firebase Admin if not already initialized
 let app: App;
@@ -127,11 +128,12 @@ export async function getPhotosForDateRange(
   startDate: string,
   endDate: string
 ): Promise<DayRecord[]> {
+  logger.info(`Fetching photo records from ${startDate} to ${endDate}`);
   const snapshot = await db
     .collection(COLLECTION_NAME)
     .where('__name__', '>=', startDate)
     .where('__name__', '<=', endDate)
-    .orderBy('__name__', 'asc')
+    .orderBy('__name__', 'desc')
     .get();
 
   return snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({

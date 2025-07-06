@@ -333,7 +333,7 @@ describe('Day Storage Functions', () => {
         '<=',
         endDate
       );
-      expect(mockCollection.orderBy).toHaveBeenCalledWith('__name__', 'asc');
+      expect(mockCollection.orderBy).toHaveBeenCalledWith('__name__', 'desc');
       expect(result).toHaveLength(2);
       expect(result[0].id).toBe('2025-06-25');
       expect(result[1].id).toBe('2025-06-27');
