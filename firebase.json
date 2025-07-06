@@ -25,6 +25,10 @@
       {
         "source": "/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]",
         "function": "cat"
+      },
+      {
+        "source": "/topics",
+        "function": "topics"
       }
     ],
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
