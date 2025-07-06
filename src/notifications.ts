@@ -41,7 +41,8 @@ const notificationsOff =
 
 const isGranted = () => {
   const value = Notification.permission === 'granted';
-  console.log('isGranted', value);
+  console.log(`isGranted on ${location.host}`, value);
+  console.log('Notification permission:', Notification.permission);
   return value;
 };
 const hasLocalToken = () => {
@@ -87,6 +88,14 @@ export const initNotifications = async (app: FirebaseApp) => {
 
   if (await isSubscribed()) {
     showNotificationsOn();
+  } else {
+    setTimeout(async () => {
+      // Chrome mobile randomly shows default instead of granted.
+      console.log('Checking subscription status after 100ms');
+      if (await isSubscribed()) {
+        showNotificationsOn();
+      }
+    }, 100);
   }
 
   notificationsButton.addEventListener('click', async () => {
@@ -104,11 +113,13 @@ const listen = (messaging: Messaging) => {
   console.log('Listening for messages...');
   onMessage(messaging, async (payload) => {
     console.log('[fg] Message received. ', payload);
-    const registration = await navigator.serviceWorker.ready;
-
-    registration.showNotification(payload.notification!.title!, {
-      body: payload.notification?.body,
-      icon: payload.notification?.icon,
+    navigator.serviceWorker.ready.then((registration) => {
+      console.log('Notification displaying');
+      registration.showNotification(payload.notification!.title!, {
+        body: payload.notification?.body,
+        icon: payload.notification?.icon,
+      });
+      console.log('Notification displayed');
     });
   });
 };
