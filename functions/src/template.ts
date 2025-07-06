@@ -245,6 +245,7 @@ function renderPage(
             display: flex;
             width: 100%;
             height: 100vh;
+            justify-content: center;
           }
           .left-column,
           .right-column {
@@ -263,7 +264,9 @@ function renderPage(
             }
           }
           .center-column {
-            flex: 2;
+            flex: 0 0 auto;
+            width: 100%;
+            max-width: 1024px;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
