@@ -133,7 +133,7 @@ export async function getPhotosForDateRange(
     .collection(COLLECTION_NAME)
     .where('__name__', '>=', startDate)
     .where('__name__', '<=', endDate)
-    .orderBy('__name__', 'desc')
+    .orderBy('__name__', 'asc')
     .get();
 
   return snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
