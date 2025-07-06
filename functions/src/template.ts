@@ -250,7 +250,7 @@ function renderPage(
           .right-column {
             flex: 1;
           }
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             .left-column,
             .right-column {
               display: none;
@@ -268,7 +268,7 @@ function renderPage(
             flex-direction: column;
             min-height: 100vh;
           }
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             .center-column {
               min-height: 100dvh;
             }
@@ -285,7 +285,7 @@ function renderPage(
             -webkit-backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(0, 0, 0, 0.1);
           }
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             .header {
               padding: 15px 10px;
               min-height: 44px; /* iOS touch target size */
@@ -298,7 +298,7 @@ function renderPage(
             font-size: 24px;
             font-weight: 600;
           }
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             .header h1 {
               font-size: 20px;
             }
@@ -336,7 +336,7 @@ function renderPage(
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
           }
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             .nav-arrow {
               width: 48px;
               height: 48px;
@@ -368,7 +368,7 @@ function renderPage(
             position: static;
             transform: none;
           }
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             .nav-arrows-left {
               left: 10px;
             }
@@ -437,7 +437,7 @@ function renderPage(
             position: static;
             transform: none;
           }
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             .share-button {
               width: 48px;
               height: 48px;
@@ -480,7 +480,7 @@ function renderPage(
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
           }
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             .user-profile {
               padding: 12px 15px;
             }
@@ -491,7 +491,7 @@ function renderPage(
             justify-content: space-between;
             gap: 12px;
           }
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             .user-row {
               flex-direction: column;
               align-items: stretch;
@@ -513,7 +513,7 @@ function renderPage(
             border-radius: 50%;
             object-fit: cover;
           }
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             .user-profile img {
               width: 36px;
               height: 36px;
@@ -532,7 +532,7 @@ function renderPage(
             margin: 0;
             line-height: 1.2;
           }
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             .user-name {
               font-size: 15px;
             }
@@ -546,7 +546,7 @@ function renderPage(
             line-height: 1.2;
             -webkit-tap-highlight-color: transparent;
           }
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             .user-username {
               font-size: 13px;
             }
@@ -571,7 +571,7 @@ function renderPage(
           .likes-count span {
             vertical-align: middle;
           }
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             .likes-count {
               font-size: 16px;
             }
@@ -585,7 +585,7 @@ function renderPage(
             flex-wrap: wrap;
             gap: 6px;
           }
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             .tags {
               gap: 4px;
             }
@@ -604,7 +604,7 @@ function renderPage(
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
           }
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             .tag {
               font-size: 11px;
               padding: 3px 6px;
@@ -651,7 +651,7 @@ function renderPage(
             -moz-user-drag: none;
             -o-user-drag: none;
           }
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             .cat-image {
               /* Better image handling for mobile */
               width: auto;
@@ -668,7 +668,7 @@ function renderPage(
           }
 
           /* Prevent zoom on double tap for iOS */
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             * {
               touch-action: manipulation;
             }
@@ -701,7 +701,7 @@ function renderPage(
             color: #ccc;
           }
 
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             .footer {
               padding: 10px 5px;
               font-size: 13px;
@@ -736,7 +736,7 @@ function renderPage(
             transform: translateX(-50%) translateY(0);
           }
 
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             .toast {
               top: 70px;
               font-size: 13px;
@@ -750,7 +750,7 @@ function renderPage(
             .toast {
               top: max(80px, calc(env(safe-area-inset-top) + 20px));
             }
-            @media (max-width: 768px) {
+            @media (max-width: 1024px) {
               .toast {
                 top: max(70px, calc(env(safe-area-inset-top) + 15px));
               }
@@ -769,7 +769,7 @@ function renderPage(
               padding-right: max(20px, env(safe-area-inset-right));
               padding-bottom: max(15px, env(safe-area-inset-bottom));
             }
-            @media (max-width: 768px) {
+            @media (max-width: 1024px) {
               .header {
                 padding-left: max(15px, env(safe-area-inset-left));
                 padding-right: max(15px, env(safe-area-inset-right));
@@ -851,7 +851,7 @@ function renderLoadingAnimation(): TemplateResult {
         line-height: 1.4;
       }
 
-      @media (max-width: 768px) {
+      @media (max-width: 1024px) {
         .loading-container {
           gap: 16px;
           padding: 30px 15px;
