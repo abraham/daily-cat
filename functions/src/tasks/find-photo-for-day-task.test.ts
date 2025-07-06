@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import { DayRecord } from '../types/day';
+import { Timestamp } from 'firebase-admin/firestore';
 
 // Load the photo fixture for testing
 const photoFixturePath = path.join(__dirname, '..', 'fixtures', 'photo.json');
@@ -38,9 +39,13 @@ vi.mock('firebase-admin/app', () => ({
   getApps: vi.fn(() => []),
 }));
 
-vi.mock('firebase-admin/firestore', () => ({
-  getFirestore: vi.fn(() => mockFirestore),
-}));
+vi.mock('firebase-admin/firestore', async () => {
+  const actual = await vi.importActual('firebase-admin/firestore');
+  return {
+    Timestamp: actual.Timestamp,
+    getFirestore: vi.fn(() => mockFirestore),
+  };
+});
 
 // Mock the storage modules
 const mockSetDayRecordProcessing = vi.fn();
@@ -104,8 +109,8 @@ describe('Find Photo for Day Task', () => {
         id: dayId,
         photo: null,
         status: 'created',
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
 
       const mockEvent = {
@@ -136,8 +141,8 @@ describe('Find Photo for Day Task', () => {
         id: dayId,
         photo: null,
         status: 'processing',
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
 
       const mockEvent = {
@@ -182,8 +187,8 @@ describe('Find Photo for Day Task', () => {
         id: dayId,
         photo: null,
         status: 'created',
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
 
       const mockEvent = {
@@ -209,8 +214,8 @@ describe('Find Photo for Day Task', () => {
         id: dayId,
         photo: null,
         status: 'created',
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
 
       const mockEvent = {
@@ -236,8 +241,8 @@ describe('Find Photo for Day Task', () => {
         id: dayId,
         photo: null,
         status: 'created',
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
 
       const mockEvent = {
@@ -262,8 +267,8 @@ describe('Find Photo for Day Task', () => {
         id: dayId,
         photo: mockPhoto,
         status: 'completed',
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
 
       const mockEvent = {

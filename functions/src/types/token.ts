@@ -1,4 +1,4 @@
-import { firestore } from 'firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 
 export interface Token {
   /** The FCM token */
@@ -6,7 +6,7 @@ export interface Token {
   /** Array of topics the token is subscribed to */
   topics: string[];
   /** Timestamp when the token was created */
-  createdAt: firestore.Timestamp;
+  createdAt: Timestamp;
   /** Timestamp when the token was last updated */
-  updatedAt: firestore.Timestamp;
+  updatedAt: Timestamp;
 }

@@ -4,8 +4,8 @@ import {
   saveTokenDocument,
   deleteTokenDocument,
 } from './token-storage';
-import { firestore } from 'firebase-admin';
 import { Token } from '../types/token';
+import { Timestamp } from 'firebase-admin/firestore';
 
 // Mock Firebase Admin
 vi.mock('firebase-admin/app', () => ({
@@ -15,13 +15,17 @@ vi.mock('firebase-admin/app', () => ({
 
 let mockDoc: any;
 
-vi.mock('firebase-admin/firestore', () => ({
-  getFirestore: vi.fn(() => ({
-    collection: vi.fn(() => ({
-      doc: vi.fn(() => mockDoc),
+vi.mock('firebase-admin/firestore', async () => {
+  const actual = await vi.importActual('firebase-admin/firestore');
+  return {
+    Timestamp: actual.Timestamp,
+    getFirestore: vi.fn(() => ({
+      collection: vi.fn(() => ({
+        doc: vi.fn(() => mockDoc),
+      })),
     })),
-  })),
-}));
+  };
+});
 
 describe('token storage', () => {
   beforeEach(() => {
@@ -69,8 +73,8 @@ describe('token storage', () => {
     it('should save token document', async () => {
       const tokenData: Token = {
         token: 'test-token',
-        createdAt: firestore.Timestamp.now(),
-        updatedAt: firestore.Timestamp.now(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
         topics: ['hour-12'],
       };
 

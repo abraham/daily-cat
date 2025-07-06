@@ -1,11 +1,12 @@
+import { Timestamp } from 'firebase-admin/firestore';
 import { UnsplashPhoto } from './unsplash';
 
 export interface DayRecord {
   id: string; // ISO date string (YYYY-MM-DD)
   photo: UnsplashPhoto | null;
   status: 'created' | 'processing' | 'completed';
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 
 export interface NewDayRecord extends DayRecord {
