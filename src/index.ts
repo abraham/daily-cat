@@ -6,7 +6,4 @@ import { firebaseConfig } from './config';
 
 const app = initializeApp(firebaseConfig);
 
-addEventListener('DOMContentLoaded', (_event) => {
-  console.log('DOMContentLoaded');
-  initNotifications(app);
-});
+initNotifications(app);
