@@ -64,7 +64,7 @@ describe('Cat API', () => {
 
       expect(fetchMock).toHaveBeenCalledOnce();
       expect(fetchMock).toHaveBeenCalledWith(
-        'https://api.unsplash.com/search/photos?query=cat&per_page=30&order_by=relevant&page=1',
+        'https://api.unsplash.com/search/photos?query=cat&per_page=100&order_by=relevant&page=1',
         {
           headers: {
             Authorization: 'Client-ID test-client-id',
@@ -96,7 +96,7 @@ describe('Cat API', () => {
       await catApi.list({ clientId: 'my-client-id-123', page: '2' });
 
       expect(fetchMock).toHaveBeenCalledWith(
-        'https://api.unsplash.com/search/photos?query=cat&per_page=30&order_by=relevant&page=2',
+        'https://api.unsplash.com/search/photos?query=cat&per_page=100&order_by=relevant&page=2',
         {
           headers: {
             Authorization: 'Client-ID my-client-id-123',
@@ -151,7 +151,7 @@ describe('Cat API', () => {
       await expect(
         catApi.list({ clientId: 'invalid-client-id', page: '1' })
       ).rejects.toThrow(
-        'Failed to fetch https://api.unsplash.com/search/photos?query=cat&per_page=30&order_by=relevant&page=1: 403 Forbidden'
+        'Failed to fetch https://api.unsplash.com/search/photos?query=cat&per_page=100&order_by=relevant&page=1: 403 Forbidden'
       );
     });
   });

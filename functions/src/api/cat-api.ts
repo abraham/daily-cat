@@ -12,7 +12,7 @@ export async function list({
 }: CatApiOptions): Promise<UnsplashSearch> {
   const params = new URLSearchParams({
     query: 'cat',
-    per_page: '30',
+    per_page: '100',
     order_by: 'relevant',
     page,
   });
