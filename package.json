@@ -33,6 +33,6 @@
     "node": ">=18"
   },
   "dependencies": {
-    "firebase": "^11.9.1"
+    "firebase": "^11.10.0"
   }
 }
