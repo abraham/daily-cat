@@ -7,7 +7,7 @@
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-typescript": "^11.1.6",
-    "@types/node": "^22.0.7",
+    "@types/node": "^22.16.0",
     "@vitest/ui": "^3.2.4",
     "firebase-tools": "^14.9.0",
     "jsdom": "^26.0.1",
