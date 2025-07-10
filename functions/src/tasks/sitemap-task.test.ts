@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { sitemap } from './sitemap-task';
 
-// Mock Firebase Admin
+// Mock Firebase Admin before importing the module
+const mockGet = vi.fn();
+
 vi.mock('firebase-admin/app', () => ({
-  getApps: vi.fn(() => []),
+  getApps: vi.fn(() => [{}]), // Return existing app
   initializeApp: vi.fn(() => ({})),
 }));
 
@@ -12,7 +13,7 @@ vi.mock('firebase-admin/firestore', () => ({
     collection: vi.fn(() => ({
       where: vi.fn(() => ({
         orderBy: vi.fn(() => ({
-          get: vi.fn(),
+          get: mockGet,
         })),
       })),
     })),
@@ -28,6 +29,9 @@ vi.mock('firebase-functions/logger', () => ({
 vi.mock('firebase-functions/v2/https', () => ({
   onRequest: vi.fn((handler) => handler),
 }));
+
+// Import after mocking
+import { sitemap } from './sitemap-task';
 
 describe('sitemap function', () => {
   let mockRequest: any;
@@ -86,9 +90,7 @@ describe('sitemap function', () => {
       ],
     };
 
-    const { getFirestore } = await import('firebase-admin/firestore');
-    const mockFirestore = getFirestore as any;
-    mockFirestore().collection().where().orderBy().get.mockResolvedValue(mockSnapshot);
+    mockGet.mockResolvedValue(mockSnapshot);
 
     await sitemap(mockRequest, mockResponse);
 
@@ -119,9 +121,7 @@ describe('sitemap function', () => {
       docs: [],
     };
 
-    const { getFirestore } = await import('firebase-admin/firestore');
-    const mockFirestore = getFirestore as any;
-    mockFirestore().collection().where().orderBy().get.mockResolvedValue(mockSnapshot);
+    mockGet.mockResolvedValue(mockSnapshot);
 
     await sitemap(mockRequest, mockResponse);
 
@@ -136,9 +136,7 @@ describe('sitemap function', () => {
 
   it('should handle database errors', async () => {
     // Mock Firestore error
-    const { getFirestore } = await import('firebase-admin/firestore');
-    const mockFirestore = getFirestore as any;
-    mockFirestore().collection().where().orderBy().get.mockRejectedValue(new Error('Database error'));
+    mockGet.mockRejectedValue(new Error('Database error'));
 
     await sitemap(mockRequest, mockResponse);
 
