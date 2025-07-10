@@ -12,8 +12,10 @@ vi.mock('firebase-admin/firestore', () => ({
   getFirestore: vi.fn(() => ({
     collection: vi.fn(() => ({
       where: vi.fn(() => ({
-        orderBy: vi.fn(() => ({
-          get: mockGet,
+        where: vi.fn(() => ({
+          orderBy: vi.fn(() => ({
+            get: mockGet,
+          })),
         })),
       })),
     })),
@@ -27,21 +29,39 @@ vi.mock('firebase-functions/logger', () => ({
 }));
 
 vi.mock('firebase-functions/v2/https', () => ({
-  onRequest: vi.fn((handler) => handler),
+  onRequest: vi.fn((options, handler) => handler),
 }));
 
-// Import after mocking
-import { sitemap } from './sitemap-task';
+// Mock config storage
+vi.mock('../storage/config-storage', () => ({
+  getConfig: vi.fn(),
+}));
 
 describe('sitemap function', () => {
   let mockRequest: any;
   let mockResponse: any;
+  let configStorageMock: any;
+  let myFunctions: any;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    // Reset all mocks
+    vi.clearAllMocks();
+
+    // Clear module cache first
+    vi.resetModules();
+
+    // Get the mocked modules after reset
+    configStorageMock = await import('../storage/config-storage.js');
+
+    // Set up default config mock
+    configStorageMock.getConfig.mockResolvedValue({
+      minDate: '2024-01-01',
+    });
+
     mockRequest = {
       method: 'GET',
       get: vi.fn((header) => {
-        if (header === 'host') return 'example.com';
+        if (header === 'x-forwarded-host') return 'example.com';
         if (header === 'x-forwarded-proto') return 'https';
         return null;
       }),
@@ -53,13 +73,14 @@ describe('sitemap function', () => {
       set: vi.fn(),
     };
 
-    vi.clearAllMocks();
+    // Import the module after all mocks are set up
+    myFunctions = await import('./sitemap-task.js');
   });
 
   it('should reject non-GET requests', async () => {
     mockRequest.method = 'POST';
 
-    await sitemap(mockRequest, mockResponse);
+    await myFunctions.sitemap(mockRequest, mockResponse);
 
     expect(mockResponse.status).toHaveBeenCalledWith(405);
     expect(mockResponse.send).toHaveBeenCalledWith(
@@ -94,7 +115,7 @@ describe('sitemap function', () => {
 
     mockGet.mockResolvedValue(mockSnapshot);
 
-    await sitemap(mockRequest, mockResponse);
+    await myFunctions.sitemap(mockRequest, mockResponse);
 
     expect(mockResponse.set).toHaveBeenCalledWith(
       'Content-Type',
@@ -133,7 +154,7 @@ describe('sitemap function', () => {
 
     mockGet.mockResolvedValue(mockSnapshot);
 
-    await sitemap(mockRequest, mockResponse);
+    await myFunctions.sitemap(mockRequest, mockResponse);
 
     expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -148,7 +169,7 @@ describe('sitemap function', () => {
     // Mock Firestore error
     mockGet.mockRejectedValue(new Error('Database error'));
 
-    await sitemap(mockRequest, mockResponse);
+    await myFunctions.sitemap(mockRequest, mockResponse);
 
     expect(mockResponse.status).toHaveBeenCalledWith(500);
     expect(mockResponse.send).toHaveBeenCalledWith('Error generating sitemap');
