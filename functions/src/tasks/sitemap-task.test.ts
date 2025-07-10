@@ -62,7 +62,9 @@ describe('sitemap function', () => {
     await sitemap(mockRequest, mockResponse);
 
     expect(mockResponse.status).toHaveBeenCalledWith(405);
-    expect(mockResponse.send).toHaveBeenCalledWith('Method not allowed. Use GET.');
+    expect(mockResponse.send).toHaveBeenCalledWith(
+      'Method not allowed. Use GET.'
+    );
   });
 
   it('should generate valid XML sitemap format', async () => {
@@ -94,20 +96,28 @@ describe('sitemap function', () => {
 
     await sitemap(mockRequest, mockResponse);
 
-    expect(mockResponse.set).toHaveBeenCalledWith('Content-Type', 'application/xml');
-    expect(mockResponse.set).toHaveBeenCalledWith('Cache-Control', 'public, max-age=3600');
+    expect(mockResponse.set).toHaveBeenCalledWith(
+      'Content-Type',
+      'application/xml'
+    );
+    expect(mockResponse.set).toHaveBeenCalledWith(
+      'Cache-Control',
+      'public, max-age=3600'
+    );
     expect(mockResponse.status).toHaveBeenCalledWith(200);
 
     const sentXml = mockResponse.send.mock.calls[0][0];
-    
+
     // Check XML structure
     expect(sentXml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
-    expect(sentXml).toContain('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
+    expect(sentXml).toContain(
+      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+    );
     expect(sentXml).toContain('</urlset>');
-    
+
     // Check homepage entry
     expect(sentXml).toContain('<loc>https://example.com/</loc>');
-    
+
     // Check day entries
     expect(sentXml).toContain('<loc>https://example.com/2024-01-01</loc>');
     expect(sentXml).toContain('<loc>https://example.com/2024-01-02</loc>');
@@ -126,9 +136,9 @@ describe('sitemap function', () => {
     await sitemap(mockRequest, mockResponse);
 
     expect(mockResponse.status).toHaveBeenCalledWith(200);
-    
+
     const sentXml = mockResponse.send.mock.calls[0][0];
-    
+
     // Should still contain valid XML structure with just homepage
     expect(sentXml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
     expect(sentXml).toContain('<loc>https://example.com/</loc>');

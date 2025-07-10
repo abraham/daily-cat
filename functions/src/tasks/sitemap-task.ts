@@ -73,7 +73,7 @@ function generateSitemapXml(dayRecords: DayRecord[], baseUrl: string): string {
     .map((day) => {
       const url = `${baseUrl}/${day.id}`;
       const lastmod = day.updatedAt.toDate().toISOString().split('T')[0];
-      
+
       return `  <url>
     <loc>${url}</loc>
     <lastmod>${lastmod}</lastmod>
