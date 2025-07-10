@@ -29,6 +29,10 @@
       {
         "source": "/topics",
         "function": "topics"
+      },
+      {
+        "source": "/sitemap.xml",
+        "function": "sitemap"
       }
     ],
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
