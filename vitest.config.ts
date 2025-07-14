@@ -7,9 +7,10 @@ export default defineConfig({
     setupFiles: ['./src/test-setup.ts'],
     exclude: ['**/lib/**', '**/node_modules/**'],
   },
-  build: {
-    rollupOptions: {
-      external: ['rollup']
-    }
+  define: {
+    'import.meta.vitest': 'undefined',
+  },
+  esbuild: {
+    target: 'node14'
   }
 });
