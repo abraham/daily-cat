@@ -7,4 +7,9 @@ export default defineConfig({
     setupFiles: ['./src/test-setup.ts'],
     exclude: ['**/lib/**', '**/node_modules/**'],
   },
+  build: {
+    rollupOptions: {
+      external: ['rollup']
+    }
+  }
 });
