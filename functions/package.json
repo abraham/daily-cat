@@ -6,7 +6,7 @@
     "@lit-labs/ssr": "^3.3.1",
     "firebase-admin": "^13.4.0",
     "firebase-functions": "^6.3.2",
-    "lit-html": "^3.3.0"
+    "lit-html": "^3.3.1"
   },
   "private": true,
   "devDependencies": {
