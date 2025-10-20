@@ -9,7 +9,7 @@
     "@rollup/plugin-typescript": "^12.1.4",
     "@types/node": "^22.18.6",
     "@vitest/ui": "^3.2.4",
-    "firebase-tools": "^14.17.0",
+    "firebase-tools": "^14.20.0",
     "jsdom": "^27.0.0",
     "prettier": "^3.6.2",
     "rollup": "^4.52.3",
