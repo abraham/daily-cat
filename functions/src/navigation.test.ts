@@ -3,26 +3,17 @@ import { calculateNavigationUrls } from './navigation';
 
 describe('Navigation Utils', () => {
   describe('calculateNavigationUrls', () => {
-    let originalDate: DateConstructor;
-
     beforeEach(() => {
-      originalDate = Date;
+      vi.useFakeTimers();
     });
 
     afterEach(() => {
-      global.Date = originalDate;
+      vi.useRealTimers();
     });
 
     it('should calculate correct navigation URLs for a past date', () => {
       // Mock current date to be 2025-06-27
-      const mockDate = vi.fn((dateString?: string) => {
-        if (dateString) {
-          return new originalDate(dateString);
-        }
-        return new originalDate('2025-06-27T12:00:00.000Z');
-      });
-      mockDate.prototype = originalDate.prototype;
-      global.Date = mockDate as any;
+      vi.setSystemTime(new Date('2025-06-27T12:00:00.000Z'));
 
       const result = calculateNavigationUrls('2025-06-25');
 
@@ -33,14 +24,7 @@ describe('Navigation Utils', () => {
 
     it('should hide next arrow for today', () => {
       // Mock current date to be 2025-06-27
-      const mockDate = vi.fn((dateString?: string) => {
-        if (dateString) {
-          return new originalDate(dateString);
-        }
-        return new originalDate('2025-06-27T12:00:00.000Z');
-      });
-      mockDate.prototype = originalDate.prototype;
-      global.Date = mockDate as any;
+      vi.setSystemTime(new Date('2025-06-27T12:00:00.000Z'));
 
       const result = calculateNavigationUrls('2025-06-27');
 
@@ -51,14 +35,7 @@ describe('Navigation Utils', () => {
 
     it('should calculate correct navigation URLs for yesterday', () => {
       // Mock current date to be 2025-06-27
-      const mockDate = vi.fn((dateString?: string) => {
-        if (dateString) {
-          return new originalDate(dateString);
-        }
-        return new originalDate('2025-06-27T12:00:00.000Z');
-      });
-      mockDate.prototype = originalDate.prototype;
-      global.Date = mockDate as any;
+      vi.setSystemTime(new Date('2025-06-27T12:00:00.000Z'));
 
       const result = calculateNavigationUrls('2025-06-26');
 
@@ -69,14 +46,7 @@ describe('Navigation Utils', () => {
 
     it('should handle month boundaries correctly', () => {
       // Mock current date to be 2025-07-01
-      const mockDate = vi.fn((dateString?: string) => {
-        if (dateString) {
-          return new originalDate(dateString);
-        }
-        return new originalDate('2025-07-01T12:00:00.000Z');
-      });
-      mockDate.prototype = originalDate.prototype;
-      global.Date = mockDate as any;
+      vi.setSystemTime(new Date('2025-07-01T12:00:00.000Z'));
 
       const result = calculateNavigationUrls('2025-06-30');
 
@@ -87,14 +57,7 @@ describe('Navigation Utils', () => {
 
     it('should handle year boundaries correctly', () => {
       // Mock current date to be 2026-01-01
-      const mockDate = vi.fn((dateString?: string) => {
-        if (dateString) {
-          return new originalDate(dateString);
-        }
-        return new originalDate('2026-01-01T12:00:00.000Z');
-      });
-      mockDate.prototype = originalDate.prototype;
-      global.Date = mockDate as any;
+      vi.setSystemTime(new Date('2026-01-01T12:00:00.000Z'));
 
       const result = calculateNavigationUrls('2025-12-31');
 
@@ -105,14 +68,7 @@ describe('Navigation Utils', () => {
 
     it('should handle leap year dates correctly', () => {
       // Mock current date to be 2024-03-01
-      const mockDate = vi.fn((dateString?: string) => {
-        if (dateString) {
-          return new originalDate(dateString);
-        }
-        return new originalDate('2024-03-01T12:00:00.000Z');
-      });
-      mockDate.prototype = originalDate.prototype;
-      global.Date = mockDate as any;
+      vi.setSystemTime(new Date('2024-03-01T12:00:00.000Z'));
 
       const result = calculateNavigationUrls('2024-02-29');
 

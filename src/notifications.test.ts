@@ -365,14 +365,16 @@ describe('Notifications', () => {
       };
 
       // Create a spy for the Notification constructor
-      const NotificationSpy = vi
-        .fn()
-        .mockImplementation((title: string, options?: any) => ({
-          title,
-          options,
-          onclick: null,
-          close: vi.fn(),
-        }));
+      const NotificationSpy = vi.fn(function (
+        this: any,
+        title: string,
+        options?: any
+      ) {
+        this.title = title;
+        this.options = options;
+        this.onclick = null;
+        this.close = vi.fn();
+      });
 
       // Temporarily replace the global Notification
       const originalNotification = global.Notification;
