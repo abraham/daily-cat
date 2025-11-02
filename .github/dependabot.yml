@@ -10,3 +10,7 @@ updates:
       - '/functions'
     schedule:
       interval: weekly
+    groups:
+      vitest:
+        patterns:
+          - '*vitest*'
