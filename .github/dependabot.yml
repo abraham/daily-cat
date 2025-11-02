@@ -14,3 +14,12 @@ updates:
       vitest:
         patterns:
           - '*vitest*'
+      firebase:
+        patterns:
+          - '*firebase*'
+      typescript:
+        patterns:
+          - '*typescript*'
+      node:
+        patterns:
+          - '*node*'
