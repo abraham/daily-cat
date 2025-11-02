@@ -78,6 +78,9 @@ describe('Firebase Messaging Service Worker', () => {
 
     // Setup default mock returns
     mockGetMessaging.mockReturnValue({});
+
+    // Reset showNotification to default implementation
+    mockRegistration.showNotification.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
