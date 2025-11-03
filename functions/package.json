@@ -10,7 +10,7 @@
   },
   "private": true,
   "devDependencies": {
-    "@types/node": "^22.18.13",
+    "@types/node": "^22.19.0",
     "@vitest/ui": "^4.0.6",
     "firebase-functions-test": "^3.1.0",
     "ts-node": "^10.9.2",
