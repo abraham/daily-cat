@@ -8,7 +8,7 @@
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-typescript": "^12.3.0",
     "@types/node": "^22.19.0",
-    "@vitest/ui": "^4.0.6",
+    "@vitest/ui": "^4.0.8",
     "firebase-tools": "^14.23.0",
     "jsdom": "^27.1.0",
     "prettier": "^3.6.2",
