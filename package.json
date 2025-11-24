@@ -10,7 +10,7 @@
     "@types/node": "^22.19.0",
     "@vitest/ui": "^4.0.8",
     "firebase-tools": "^14.24.1",
-    "jsdom": "^27.1.0",
+    "jsdom": "^27.2.0",
     "prettier": "^3.6.2",
     "rollup": "^4.53.1",
     "rollup-plugin-copy": "^3.5.0",
