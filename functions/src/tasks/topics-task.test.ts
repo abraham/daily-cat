@@ -85,9 +85,8 @@ describe('topics task', () => {
   });
 
   it('should handle POST request for subscription', async () => {
-    const { getTokenDocument, saveTokenDocument } = await import(
-      '../storage/token-storage.js'
-    );
+    const { getTokenDocument, saveTokenDocument } =
+      await import('../storage/token-storage.js');
 
     const mockGetTokenDocument = getTokenDocument as any;
     const mockSaveTokenDocument = saveTokenDocument as any;
@@ -117,9 +116,8 @@ describe('topics task', () => {
   });
 
   it('should handle subscription failure when subscribeToTopic fails', async () => {
-    const { getTokenDocument, saveTokenDocument } = await import(
-      '../storage/token-storage.js'
-    );
+    const { getTokenDocument, saveTokenDocument } =
+      await import('../storage/token-storage.js');
 
     const mockGetTokenDocument = getTokenDocument as any;
     const mockSaveTokenDocument = saveTokenDocument as any;
@@ -150,9 +148,8 @@ describe('topics task', () => {
   it('should handle DELETE request for unsubscription', async () => {
     mockRequest.method = 'DELETE';
 
-    const { getTokenDocument, deleteTokenDocument } = await import(
-      '../storage/token-storage.js'
-    );
+    const { getTokenDocument, deleteTokenDocument } =
+      await import('../storage/token-storage.js');
 
     const mockGetTokenDocument = getTokenDocument as any;
     const mockDeleteTokenDocument = deleteTokenDocument as any;

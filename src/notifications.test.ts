@@ -189,9 +189,8 @@ describe('Notifications', () => {
 
   describe('Firebase messaging mock setup', () => {
     it('should have Firebase messaging mocks available', async () => {
-      const { getMessaging, getToken, deleteToken, onMessage } = await import(
-        'firebase/messaging'
-      );
+      const { getMessaging, getToken, deleteToken, onMessage } =
+        await import('firebase/messaging');
 
       expect(vi.isMockFunction(getMessaging)).toBe(true);
       expect(vi.isMockFunction(getToken)).toBe(true);
@@ -468,9 +467,8 @@ describe('Notifications', () => {
 
         // Re-import the module to get fresh function with mocked time
         vi.resetModules();
-        const { getHoursUntilNextNotification } = await import(
-          './notifications'
-        );
+        const { getHoursUntilNextNotification } =
+          await import('./notifications');
         const result = getHoursUntilNextNotification();
         expect(result).toBe(expectedHours);
       });
