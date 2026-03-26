@@ -347,7 +347,11 @@ describe('Process Available Photos Task', () => {
         );
 
         // If this looks like a ~30 day future range (around 29-30 days), return completed records
-        if (daysDiff >= 28 && daysDiff <= 31 && startYear === 2025) {
+        if (
+          daysDiff >= 28 &&
+          daysDiff <= 31 &&
+          startYear === new Date().getFullYear()
+        ) {
           for (
             let date = new Date(start);
             date <= end;
@@ -520,7 +524,11 @@ describe('Process Available Photos Task', () => {
         );
 
         // If this looks like a ~30 day future range (around 29-30 days), return completed records
-        if (daysDiff >= 28 && daysDiff <= 31 && startYear === 2025) {
+        if (
+          daysDiff >= 28 &&
+          daysDiff <= 31 &&
+          startYear === new Date().getFullYear()
+        ) {
           for (
             let date = new Date(start);
             date <= end;
