@@ -4,7 +4,7 @@
   "main": "lib/index.js",
   "dependencies": {
     "@lit-labs/ssr": "^4.1.0",
-    "firebase-admin": "^13.10.0",
+    "firebase-admin": "^14.0.0",
     "firebase-functions": "^7.2.5",
     "lit-html": "^3.3.3"
   },
