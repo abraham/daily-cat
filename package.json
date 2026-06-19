@@ -33,6 +33,6 @@
     "node": ">=18"
   },
   "dependencies": {
-    "firebase": "^12.14.0"
+    "firebase": "^12.15.0"
   }
 }
