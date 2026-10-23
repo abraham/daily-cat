@@ -10,6 +10,10 @@ updates:
       - '/functions'
     schedule:
       interval: weekly
+    ignore:
+      # @rollup/plugin-typescript needs the TypeScript JS API, which TS 7 removed.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
     groups:
       vitest:
         patterns:

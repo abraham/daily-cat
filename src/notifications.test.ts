@@ -10,7 +10,7 @@ vi.mock('firebase/messaging', () => ({
 }));
 
 // Mock fetch for topic subscription tests
-global.fetch = vi.fn();
+globalThis.fetch = vi.fn();
 
 describe('Notifications', () => {
   const mockApp = {} as any;
@@ -33,7 +33,7 @@ describe('Notifications', () => {
     `;
 
     // Mock Notification API
-    Object.defineProperty(global, 'Notification', {
+    Object.defineProperty(globalThis, 'Notification', {
       value: class MockNotification {
         static permission = 'default';
         static requestPermission = vi.fn(() => Promise.resolve('granted'));
@@ -53,7 +53,7 @@ describe('Notifications', () => {
     });
 
     // Mock window.focus
-    Object.defineProperty(global, 'window', {
+    Object.defineProperty(globalThis, 'window', {
       value: {
         focus: vi.fn(),
       },
@@ -75,7 +75,7 @@ describe('Notifications', () => {
 
   afterEach(() => {
     // Restore original localStorage
-    Object.defineProperty(global, 'localStorage', {
+    Object.defineProperty(globalThis, 'localStorage', {
       value: {
         getItem: originalGetItem,
         setItem: localStorage.setItem,
@@ -140,31 +140,32 @@ describe('Notifications', () => {
 
   describe('Notification API compatibility', () => {
     it('should detect browser notification support', () => {
-      expect('Notification' in global).toBe(true);
+      expect('Notification' in globalThis).toBe(true);
     });
 
     it('should handle notification API without permission support', () => {
       // Test that we can check for missing permission property
-      const hasPermissionProperty = 'permission' in global.Notification;
+      const hasPermissionProperty = 'permission' in globalThis.Notification;
       expect(hasPermissionProperty).toBe(true);
 
       // Test that we can check for missing requestPermission method
       const hasRequestPermission =
-        typeof (global.Notification as any).requestPermission === 'function';
+        typeof (globalThis.Notification as any).requestPermission ===
+        'function';
       expect(hasRequestPermission).toBe(true);
 
       // Verify we can handle cases where permission is undefined
-      const originalPermission = (global.Notification as any).permission;
-      (global.Notification as any).permission = undefined;
-      expect((global.Notification as any).permission).toBe(undefined);
+      const originalPermission = (globalThis.Notification as any).permission;
+      (globalThis.Notification as any).permission = undefined;
+      expect((globalThis.Notification as any).permission).toBe(undefined);
 
       // Restore
-      (global.Notification as any).permission = originalPermission;
+      (globalThis.Notification as any).permission = originalPermission;
     });
 
     it('should mock notification permissions correctly', () => {
-      expect((global.Notification as any).permission).toBe('default');
-      expect(typeof (global.Notification as any).requestPermission).toBe(
+      expect((globalThis.Notification as any).permission).toBe('default');
+      expect(typeof (globalThis.Notification as any).requestPermission).toBe(
         'function'
       );
     });
@@ -203,8 +204,8 @@ describe('Notifications', () => {
     it('should have all required dependencies mocked', () => {
       // Check that we have all the basic building blocks for integration tests
       expect(document.getElementById('notifications-button')).toBeTruthy();
-      expect(global.Notification).toBeTruthy();
-      expect(global.localStorage).toBeTruthy();
+      expect(globalThis.Notification).toBeTruthy();
+      expect(globalThis.localStorage).toBeTruthy();
       expect(mockGetItem).toBeTruthy();
       expect(mockSetItem).toBeTruthy();
       expect(mockRemoveItem).toBeTruthy();
@@ -220,7 +221,7 @@ describe('Notifications', () => {
     });
 
     it('should be able to test notification creation', () => {
-      const notification = new (global.Notification as any)('Test Title', {
+      const notification = new (globalThis.Notification as any)('Test Title', {
         body: 'Test Body',
         icon: 'test-icon.png',
       });
@@ -272,7 +273,8 @@ describe('Notifications', () => {
 
   describe('Async operation testing', () => {
     it('should be able to test async permission requests', async () => {
-      const requestPermission = (global.Notification as any).requestPermission;
+      const requestPermission = (globalThis.Notification as any)
+        .requestPermission;
       requestPermission.mockResolvedValue('granted');
 
       const result = await requestPermission();
@@ -376,12 +378,12 @@ describe('Notifications', () => {
       });
 
       // Temporarily replace the global Notification
-      const originalNotification = global.Notification;
-      (global as any).Notification = NotificationSpy;
+      const originalNotification = globalThis.Notification;
+      (globalThis as any).Notification = NotificationSpy;
 
       try {
         // Simulate what the message handler does
-        new global.Notification(mockPayload.notification?.title, {
+        new globalThis.Notification(mockPayload.notification?.title, {
           body: mockPayload.notification?.body,
           icon: mockPayload.notification?.icon,
         });
@@ -393,7 +395,7 @@ describe('Notifications', () => {
         });
       } finally {
         // Restore original Notification
-        (global as any).Notification = originalNotification;
+        (globalThis as any).Notification = originalNotification;
       }
     });
 
@@ -788,7 +790,7 @@ describe('Notifications', () => {
   describe('Updated subscribe/unsubscribe flow with topics', () => {
     beforeEach(() => {
       // Mock successful notification permission
-      Object.defineProperty(global, 'Notification', {
+      Object.defineProperty(globalThis, 'Notification', {
         value: class MockNotification {
           static permission = 'granted';
           static requestPermission = vi.fn(() => Promise.resolve('granted'));
@@ -926,7 +928,7 @@ describe('Notifications', () => {
       }));
 
       // Mock successful notification permission
-      Object.defineProperty(global, 'Notification', {
+      Object.defineProperty(globalThis, 'Notification', {
         value: class MockNotification {
           static permission = 'granted';
           static requestPermission = vi.fn(() => Promise.resolve('granted'));

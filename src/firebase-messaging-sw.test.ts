@@ -71,7 +71,7 @@ describe('Firebase Messaging Service Worker', () => {
     vi.clearAllMocks();
 
     // Mock global self as ServiceWorkerGlobalScope
-    (global as any).self = mockSelf;
+    (globalThis as any).self = mockSelf;
 
     // Mock console methods
     vi.spyOn(console, 'log').mockImplementation(() => {});

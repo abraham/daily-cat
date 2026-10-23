@@ -30,7 +30,7 @@ jobs:
         run: npm run format:check
 
       - name: Build
-        run: npm run build --prefix functions
+        run: npm run build
 
       - name: Run tests
         run: |
