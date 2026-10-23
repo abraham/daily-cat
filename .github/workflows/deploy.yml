@@ -8,6 +8,15 @@ name: Deploy
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://daily.cat
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v7
@@ -25,7 +34,11 @@ jobs:
       - name: Build
         run: npm run build --prefix functions
 
+      - id: wif
+        uses: abraham/firebase-wif@v0.2.1
+        with:
+          workload_identity_provider: ${{ vars.FIREBASE_WIF_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_WIF_SERVICE_ACCOUNT }}
+
       - name: Deploy to Firebase
-        run: npx firebase deploy --project daily-cat --token "$FIREBASE_TOKEN"
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: npx firebase deploy --project daily-cat --non-interactive
