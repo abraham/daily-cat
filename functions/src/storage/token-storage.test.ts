@@ -8,9 +8,8 @@ import { Token } from '../types/token';
 import { Timestamp } from 'firebase-admin/firestore';
 
 // Mock Firebase Admin
-vi.mock('firebase-admin/app', () => ({
-  initializeApp: vi.fn(),
-  getApps: vi.fn(() => []),
+vi.mock('../platform/firebase', () => ({
+  getApp: vi.fn(),
 }));
 
 let mockDoc: any;

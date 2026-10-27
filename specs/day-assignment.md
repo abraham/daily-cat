@@ -13,7 +13,7 @@ Decides which photo each day shows. Day records are moved to `completed` by one 
 | `onDayRecordCreated`              | Firestore `onDocumentCreated` on `days/{dayId}`. Uses the secret `UNSPLASH_CLIENT_ID`. | [find-photo-for-day-task.ts](../functions/src/tasks/find-photo-for-day-task.ts)             |
 | `processAvailablePhotosScheduled` | Cloud Scheduler, `every 1 hours`, UTC, 512 MiB. Uses the secret `UNSPLASH_CLIENT_ID`.  | [process-available-photos-task.ts](../functions/src/tasks/process-available-photos-task.ts) |
 | `recordPhotoIdOnDayWrite`         | Firestore `onDocumentWritten` on `days/{dayId}`                                        | [record-photo-id-task.ts](../functions/src/tasks/record-photo-id-task.ts)                   |
-| `processPhotoForDay()`            | Library code. This module also defines the `UNSPLASH_CLIENT_ID` secret.                | [photo-processor.ts](../functions/src/photo-processor.ts)                                   |
+| `processPhotoForDay()`            | Library code                                                                           | [photo-processor.ts](../functions/src/photo-processor.ts)                                   |
 
 ## Data
 

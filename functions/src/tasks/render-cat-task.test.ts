@@ -33,9 +33,8 @@ const mockFirestore = {
 
 const mockApp = {};
 
-vi.mock('firebase-admin/app', () => ({
-  initializeApp: vi.fn(() => mockApp),
-  getApps: vi.fn(() => []),
+vi.mock('../platform/firebase', () => ({
+  getApp: vi.fn(() => mockApp),
 }));
 
 vi.mock('firebase-admin/firestore', async () => {
@@ -53,7 +52,7 @@ vi.mock('../storage/day-storage', () => ({
   setDayRecordProcessing: vi.fn(),
 }));
 
-vi.mock('../storage/config-storage', () => ({
+vi.mock('../platform/config-storage', () => ({
   getConfig: vi.fn(),
 }));
 
@@ -87,7 +86,7 @@ describe('Cat Function', () => {
 
     // Get the mocked modules after reset
     dayStorageMock = await import('../storage/day-storage.js');
-    configStorageMock = await import('../storage/config-storage.js');
+    configStorageMock = await import('../platform/config-storage.js');
     templateMock = await import('../template.js');
 
     dayStorageMock.getPhotoForDate.mockResolvedValue(null); // Default: no existing photo

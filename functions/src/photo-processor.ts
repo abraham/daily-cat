@@ -1,12 +1,8 @@
 import * as logger from 'firebase-functions/logger';
-import { defineSecret } from 'firebase-functions/params';
 import * as catApi from './api/cat-api';
 import { completePhotoForDay } from './storage/day-storage';
 import { isPhotoIdUsed } from './storage/photo-id-storage';
-import { getConfig, updateConfig } from './storage/config-storage';
-
-// Define the Unsplash client ID secret
-const unsplashClientId = defineSecret('UNSPLASH_CLIENT_ID');
+import { getConfig, unsplashClientId, updateConfig } from './platform';
 
 /**
  * Process a day record by finding and assigning an unused cat photo
@@ -101,6 +97,3 @@ export async function processPhotoForDay(
   );
   return false;
 }
-
-// Export the secret so it can be used in Firebase Functions
-export { unsplashClientId };

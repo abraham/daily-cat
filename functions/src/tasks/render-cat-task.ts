@@ -3,7 +3,7 @@ import * as logger from 'firebase-functions/logger';
 import { onRequest } from 'firebase-functions/v2/https';
 import { TemplateResult } from 'lit-html';
 import { calculateNavigationUrls } from '../navigation';
-import { getConfig } from '../storage/config-storage';
+import { getConfig } from '../platform';
 import { createNewDayRecord, getPhotoForDate } from '../storage/day-storage';
 import { renderPhotoPage, renderProcessingPage } from '../template';
 

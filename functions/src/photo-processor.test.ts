@@ -42,7 +42,7 @@ const mockConfigStorage = {
   updateConfig: vi.fn(),
 };
 
-vi.mock('../src/storage/config-storage', () => mockConfigStorage);
+vi.mock('./platform/config-storage', () => mockConfigStorage);
 
 // Mock photo ID storage module
 const mockPhotoIdStorage = {
@@ -355,13 +355,6 @@ describe('Photo Processor', () => {
       expect(lastDelay).toBeLessThanOrEqual(10000);
 
       vi.restoreAllMocks();
-    });
-  });
-
-  describe('unsplashClientId export', () => {
-    it('should export the unsplashClientId secret', () => {
-      expect(photoProcessor.unsplashClientId).toBeDefined();
-      expect(photoProcessor.unsplashClientId).toBe(mockSecret);
     });
   });
 });

@@ -34,9 +34,8 @@ const mockFirestore = {
 
 const mockApp = {};
 
-vi.mock('firebase-admin/app', () => ({
-  initializeApp: vi.fn(() => mockApp),
-  getApps: vi.fn(() => []),
+vi.mock('../platform/firebase', () => ({
+  getApp: vi.fn(() => mockApp),
 }));
 
 vi.mock('firebase-admin/firestore', async () => {
@@ -58,6 +57,8 @@ const mockProcessPhotoForDay = vi.fn();
 const mockUnsplashClientId = 'mock-unsplash-client-id';
 vi.mock('../photo-processor', () => ({
   processPhotoForDay: mockProcessPhotoForDay,
+}));
+vi.mock('../platform/secrets', () => ({
   unsplashClientId: mockUnsplashClientId,
 }));
 

@@ -1,16 +1,8 @@
-import { initializeApp, getApps, App } from 'firebase-admin/app';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
+import { getApp } from '../platform';
 import { Token } from '../types/token';
 
-// Initialize Firebase Admin if not already initialized
-let app: App;
-if (getApps().length === 0) {
-  app = initializeApp();
-} else {
-  app = getApps()[0];
-}
-
-const db: Firestore = getFirestore(app);
+const db: Firestore = getFirestore(getApp());
 
 /**
  * Get a token document from Firestore

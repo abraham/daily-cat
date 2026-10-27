@@ -25,7 +25,10 @@ The infrastructure every slice depends on: Firebase Hosting routing, Firestore s
 
 - [functions/](../functions/) is a separate npm package (`main: lib/index.js`, `engines.node: 22`). Firebase deploys it with runtime `nodejs22`, and its `predeploy` hook runs `npm --prefix functions run build`.
 - [functions/src/index.ts](../functions/src/index.ts) only re-exports the eight functions from `src/tasks/`. Each task file defines exactly one function. [index.test.ts](../functions/src/index.test.ts) fails if that list of names changes, because Firebase deploys a renamed function as a delete plus a create.
-- Every storage module, and `sitemap-task.ts`, initializes `firebase-admin` itself with a `getApps().length === 0` guard.
+- [functions/src/platform/](../functions/src/platform/) holds the shared runtime pieces. Other code imports them only through its `index.ts`:
+  - `getApp()` in [firebase.ts](../functions/src/platform/firebase.ts) returns the `firebase-admin` app, initializing it on first use. Every module that talks to Firestore calls it, and tests mock this one module.
+  - `getConfig()` and `updateConfig()` (see below).
+  - The `UNSPLASH_CLIENT_ID` secret (see below).
 
 ## Firestore
 
@@ -43,7 +46,7 @@ The infrastructure every slice depends on: Firebase Hosting routing, Firestore s
 
 ## `config/config`
 
-[config-storage.ts](../functions/src/storage/config-storage.ts) provides `getConfig()` and `updateConfig(partial)`. Nothing creates the document.
+[config-storage.ts](../functions/src/platform/config-storage.ts) provides `getConfig()` and `updateConfig(partial)`, typed by `Config` in [config.ts](../functions/src/platform/config.ts). Nothing creates the document.
 
 - If it is missing, `getConfig()` throws. Every page then returns 500, and every scheduled job fails.
 - It has to be provisioned by hand in production. Locally it comes from `seed/`.
@@ -59,7 +62,7 @@ The infrastructure every slice depends on: Firebase Hosting routing, Firestore s
 
 ## Secrets
 
-`UNSPLASH_CLIENT_ID` is declared with `defineSecret()` in [photo-processor.ts](../functions/src/photo-processor.ts). It is bound to `onDayRecordCreated`, `importPhotosScheduled`, and `processAvailablePhotosScheduled`.
+`UNSPLASH_CLIENT_ID` is declared with `defineSecret()` in [secrets.ts](../functions/src/platform/secrets.ts). It is bound to `onDayRecordCreated`, `importPhotosScheduled`, and `processAvailablePhotosScheduled`.
 
 | Environment | How to set it                                       |
 | ----------- | --------------------------------------------------- |

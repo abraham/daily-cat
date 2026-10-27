@@ -1,12 +1,11 @@
 import * as logger from 'firebase-functions/logger';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { get } from '../api/cat-api';
-import { unsplashClientId } from '../photo-processor';
+import { getConfig, unsplashClientId } from '../platform';
 import {
   getNextAvailablePhotoIds,
   removeAvailablePhotoId,
 } from '../storage/available-photo-ids-storage';
-import { getConfig } from '../storage/config-storage';
 import {
   getPhotosForDateRange,
   savePhotoForDate,
