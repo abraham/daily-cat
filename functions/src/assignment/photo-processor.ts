@@ -1,8 +1,8 @@
 import * as logger from 'firebase-functions/logger';
-import * as catApi from './ingestion';
-import { completePhotoForDay } from './storage/day-storage';
-import { isPhotoIdUsed } from './storage/photo-id-storage';
-import { getConfig, unsplashClientId, updateConfig } from './platform';
+import * as catApi from '../ingestion';
+import { completePhotoForDay } from './day-storage';
+import { isPhotoIdUsed } from './photo-id-storage';
+import { getConfig, unsplashClientId, updateConfig } from '../platform';
 
 /**
  * Process a day record by finding and assigning an unused cat photo

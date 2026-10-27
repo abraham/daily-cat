@@ -8,12 +8,12 @@ Decides which photo each day shows. Day records are moved to `completed` by one 
 
 ## Entry points
 
-| Entry                             | Trigger                                                                                | Code                                                                                        |
-| --------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `onDayRecordCreated`              | Firestore `onDocumentCreated` on `days/{dayId}`. Uses the secret `UNSPLASH_CLIENT_ID`. | [find-photo-for-day-task.ts](../functions/src/tasks/find-photo-for-day-task.ts)             |
-| `processAvailablePhotosScheduled` | Cloud Scheduler, `every 1 hours`, UTC, 512 MiB. Uses the secret `UNSPLASH_CLIENT_ID`.  | [process-available-photos-task.ts](../functions/src/tasks/process-available-photos-task.ts) |
-| `recordPhotoIdOnDayWrite`         | Firestore `onDocumentWritten` on `days/{dayId}`                                        | [record-photo-id-task.ts](../functions/src/tasks/record-photo-id-task.ts)                   |
-| `processPhotoForDay()`            | Library code                                                                           | [photo-processor.ts](../functions/src/photo-processor.ts)                                   |
+| Entry                             | Trigger                                                                                | Code                                                                                             |
+| --------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `onDayRecordCreated`              | Firestore `onDocumentCreated` on `days/{dayId}`. Uses the secret `UNSPLASH_CLIENT_ID`. | [find-photo-for-day-task.ts](../functions/src/assignment/find-photo-for-day-task.ts)             |
+| `processAvailablePhotosScheduled` | Cloud Scheduler, `every 1 hours`, UTC, 512 MiB. Uses the secret `UNSPLASH_CLIENT_ID`.  | [process-available-photos-task.ts](../functions/src/assignment/process-available-photos-task.ts) |
+| `recordPhotoIdOnDayWrite`         | Firestore `onDocumentWritten` on `days/{dayId}`                                        | [record-photo-id-task.ts](../functions/src/assignment/record-photo-id-task.ts)                   |
+| `processPhotoForDay()`            | Library code                                                                           | [photo-processor.ts](../functions/src/assignment/photo-processor.ts)                             |
 
 ## Data
 
@@ -25,7 +25,7 @@ Decides which photo each day shows. Day records are moved to `completed` by one 
 | `config/config`: `lastPage`                          | Reads, writes  | Shared with Photo ingestion                                                        |
 | `config/config`: `processLimit`, `processingMinDate` | Reads          | IDs taken from the queue per run, and the earliest date to backfill                |
 
-`DayRecord` ([types/day.ts](../functions/src/types/day.ts)):
+`DayRecord` ([day.ts](../functions/src/assignment/day.ts)):
 
 | Field       | Type                                       |
 | ----------- | ------------------------------------------ |
@@ -48,7 +48,7 @@ stateDiagram-v2
   processing --> created: createNewDayRecord overwrite (see Day page known issues)
 ```
 
-Functions that write `days` ([day-storage.ts](../functions/src/storage/day-storage.ts)):
+Functions that write `days` ([day-storage.ts](../functions/src/assignment/day-storage.ts)):
 
 | Function                 | Write              | Effect                                                                                       |
 | ------------------------ | ------------------ | -------------------------------------------------------------------------------------------- |
@@ -105,10 +105,12 @@ When `savePhotoForDate` creates a document, `onDayRecordCreated` fires. It does 
 
 ## Code and tests
 
-- [photo-processor.ts](../functions/src/photo-processor.ts), [photo-processor.test.ts](../functions/src/photo-processor.test.ts)
-- [find-photo-for-day-task.ts](../functions/src/tasks/find-photo-for-day-task.ts), [find-photo-for-day-task.test.ts](../functions/src/tasks/find-photo-for-day-task.test.ts)
-- [process-available-photos-task.ts](../functions/src/tasks/process-available-photos-task.ts), [process-available-photos-task.test.ts](../functions/src/tasks/process-available-photos-task.test.ts)
-- [record-photo-id-task.ts](../functions/src/tasks/record-photo-id-task.ts), [record-photo-id-task.test.ts](../functions/src/tasks/record-photo-id-task.test.ts)
-- [day-storage.ts](../functions/src/storage/day-storage.ts), [day-storage.test.ts](../functions/src/storage/day-storage.test.ts)
-- [photo-id-storage.ts](../functions/src/storage/photo-id-storage.ts) (no direct tests)
-- Types: [day.ts](../functions/src/types/day.ts)
+Everything is in [functions/src/assignment/](../functions/src/assignment/). Other slices import it only through [index.ts](../functions/src/assignment/index.ts), which exports `getPhotoForDate()`, `createNewDayRecord()`, `isPhotoIdUsed()`, and the `DayRecord` type.
+
+- [photo-processor.ts](../functions/src/assignment/photo-processor.ts), [photo-processor.test.ts](../functions/src/assignment/photo-processor.test.ts)
+- [find-photo-for-day-task.ts](../functions/src/assignment/find-photo-for-day-task.ts), [find-photo-for-day-task.test.ts](../functions/src/assignment/find-photo-for-day-task.test.ts)
+- [process-available-photos-task.ts](../functions/src/assignment/process-available-photos-task.ts), [process-available-photos-task.test.ts](../functions/src/assignment/process-available-photos-task.test.ts)
+- [record-photo-id-task.ts](../functions/src/assignment/record-photo-id-task.ts), [record-photo-id-task.test.ts](../functions/src/assignment/record-photo-id-task.test.ts)
+- [day-storage.ts](../functions/src/assignment/day-storage.ts), [day-storage.test.ts](../functions/src/assignment/day-storage.test.ts)
+- [photo-id-storage.ts](../functions/src/assignment/photo-id-storage.ts), [photo-id-storage.test.ts](../functions/src/assignment/photo-id-storage.test.ts)
+- Types: [day.ts](../functions/src/assignment/day.ts)

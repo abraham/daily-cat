@@ -1,7 +1,7 @@
 import * as logger from 'firebase-functions/logger';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
-import { storePhotoId } from '../storage/photo-id-storage';
-import { DayRecord } from '../types/day';
+import { storePhotoId } from './photo-id-storage';
+import { DayRecord } from './day';
 
 /**
  * Firebase Function that triggers when a document is written (created or updated) in the 'days' collection.

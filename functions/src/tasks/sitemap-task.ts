@@ -1,7 +1,7 @@
 import * as logger from 'firebase-functions/logger';
 import { onRequest } from 'firebase-functions/v2/https';
 import { Firestore, getFirestore } from 'firebase-admin/firestore';
-import { DayRecord } from '../types/day';
+import { DayRecord } from '../assignment';
 import { getApp, getConfig } from '../platform';
 
 const db: Firestore = getFirestore(getApp());

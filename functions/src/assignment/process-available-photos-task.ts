@@ -7,12 +7,9 @@ import {
   removeAvailablePhotoId,
 } from '../ingestion';
 import { getConfig, unsplashClientId } from '../platform';
-import {
-  getPhotosForDateRange,
-  savePhotoForDate,
-} from '../storage/day-storage';
-import { isPhotoIdUsed } from '../storage/photo-id-storage';
-import { DayRecord } from '../types/day';
+import { getPhotosForDateRange, savePhotoForDate } from './day-storage';
+import { isPhotoIdUsed } from './photo-id-storage';
+import { DayRecord } from './day';
 
 /**
  * Generate date string in YYYY-MM-DD format

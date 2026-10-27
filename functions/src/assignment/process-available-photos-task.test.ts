@@ -104,7 +104,7 @@ vi.mock('../ingestion/available-photo-ids-storage', () => ({
 
 // Mock the photo-id-storage module
 const mockIsPhotoIdUsed = vi.fn();
-vi.mock('../storage/photo-id-storage', () => ({
+vi.mock('./photo-id-storage', () => ({
   isPhotoIdUsed: mockIsPhotoIdUsed,
 }));
 
@@ -112,7 +112,7 @@ vi.mock('../storage/photo-id-storage', () => ({
 const mockGetPhotoForDate = vi.fn();
 const mockSavePhotoForDate = vi.fn();
 const mockGetPhotosForDateRange = vi.fn();
-vi.mock('../storage/day-storage', () => ({
+vi.mock('./day-storage', () => ({
   getPhotoForDate: mockGetPhotoForDate,
   savePhotoForDate: mockSavePhotoForDate,
   getPhotosForDateRange: mockGetPhotosForDateRange,

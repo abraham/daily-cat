@@ -52,7 +52,7 @@ vi.mock('firebase-admin/firestore', async () => {
 });
 
 // Mock the storage modules
-vi.mock('../storage/day-storage', () => ({
+vi.mock('../assignment/day-storage', () => ({
   getPhotoForDate: vi.fn(),
   createNewDayRecord: vi.fn(),
   setDayRecordProcessing: vi.fn(),
@@ -91,7 +91,7 @@ describe('Cat Function', () => {
     vi.resetModules();
 
     // Get the mocked modules after reset
-    dayStorageMock = await import('../storage/day-storage.js');
+    dayStorageMock = await import('../assignment/day-storage.js');
     configStorageMock = await import('../platform/config-storage.js');
     templateMock = await import('../template.js');
 

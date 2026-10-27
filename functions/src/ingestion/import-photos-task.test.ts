@@ -66,7 +66,7 @@ vi.mock('../platform/config-storage', () => ({
 
 // Mock the photo-id-storage module
 const mockIsPhotoIdUsed = vi.fn();
-vi.mock('../storage/photo-id-storage', () => ({
+vi.mock('../assignment/photo-id-storage', () => ({
   isPhotoIdUsed: mockIsPhotoIdUsed,
 }));
 

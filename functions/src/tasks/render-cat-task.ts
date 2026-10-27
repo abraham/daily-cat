@@ -4,7 +4,7 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { TemplateResult } from 'lit-html';
 import { calculateNavigationUrls } from '../navigation';
 import { getConfig } from '../platform';
-import { createNewDayRecord, getPhotoForDate } from '../storage/day-storage';
+import { createNewDayRecord, getPhotoForDate } from '../assignment';
 import { renderPhotoPage, renderProcessingPage } from '../template';
 
 export const cat = onRequest(async (request, response) => {
