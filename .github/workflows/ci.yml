@@ -25,6 +25,9 @@ jobs:
       - name: Check formatting
         run: npm run format:check
 
+      - name: Check dependency versions match
+        run: npm run deps:check
+
       - name: Build
         run: npm run build
 
