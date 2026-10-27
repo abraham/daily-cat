@@ -1,6 +1,6 @@
 # Styling and dark theme
 
-Part of the [architecture overview](README.md). Status: **proposed**. Nothing here is implemented yet.
+Part of the [architecture overview](README.md). Status: milestone T1 is **done**; T2 to T5 are **proposed**.
 
 ## Purpose
 
@@ -24,8 +24,8 @@ Non-goals:
 
 ## Current state
 
-- About 550 lines of CSS sit inside the `renderPage()` template literal in [template.ts](../functions/src/day-page/template.ts). Every response inlines it, and the day pages are cached for 1 s, so it is re-sent on almost every request.
-- The processing page emits a second `<style>` block inside `<body>` for the spinner.
+- Since T1, all day-page CSS lives in [assets/styles.css](../assets/styles.css), which every day page links from `<head>`. Its rules are exactly the ones that were inlined before, so everything below still describes them. `404.html` doesn't use it yet.
+- Before T1, about 550 lines of CSS sat inside the `renderPage()` template literal in [template.ts](../functions/src/day-page/template.ts) and were re-sent with almost every request. The processing page also emitted a second `<style>` block inside `<body>` for the spinner.
 - [svg.ts](../functions/src/day-page/svg.ts) hard-codes icon fills (`#333` and `#1f1f1f`). The buttons change `color` on hover, but the icons don't follow.
 - There are 11 hard-coded colors and no custom properties. `#666` appears 9 times and `#333` 7 times.
 - There are 23 separate `@media (max-width: 1024px)` blocks, written desktop-first. One `!important` exists only to win against a rule that comes later in the file.
@@ -38,7 +38,7 @@ Non-goals:
   - Every `env(safe-area-inset-*)` value is 0, because the viewport tag lacks `viewport-fit=cover`.
   - There is no `:focus-visible` style and no `prefers-reduced-motion` handling.
 - [404.html](../assets/404.html) is the default Firebase page, with its own palette and text about the Firebase CLI.
-- [template.test.ts](../functions/src/day-page/template.test.ts) checks for CSS text such as `.notifications-button {` and `width: 48px`, so any refactor of the CSS breaks it.
+- Before T1, [template.test.ts](../functions/src/day-page/template.test.ts) checked for CSS text such as `.notifications-button {` and `width: 48px`. It now checks markup only.
 
 ## Design
 
@@ -150,13 +150,13 @@ The light `--link` (today's `#007acc`) passes with no margin, at 4.51:1. Any cha
 
 Each one is a separate PR with `npm run build`, `npm test`, and `npm test --prefix functions` passing.
 
-### T1. Move the CSS into a stylesheet
+### T1. Move the CSS into a stylesheet (done)
 
 1. Create `assets/styles.css` with the current rules, unchanged, including the spinner rules.
 2. Replace both `<style>` blocks in `template.ts` with the stylesheet link.
 3. Replace the CSS-text assertions in `template.test.ts` with markup checks.
 
-No visual change.
+No visual change. A whitespace-insensitive comparison confirmed the stylesheet holds exactly the old rules, in the old order.
 
 ### T2. Clean up
 
