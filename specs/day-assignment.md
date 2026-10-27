@@ -99,7 +99,7 @@ When `savePhotoForDate` creates a document, `onDayRecordCreated` fires. It does 
 | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Path A fails all 10 attempts, or throws         | The error is logged. The day stays in `processing` and is never retried by Path A. Path B fills it later, once the date is inside its search window. |
 | Path B hits an error other than `NotFoundError` | The rest of the run is aborted. Photos already assigned in that run stay assigned.                                                                   |
-| `config/config` is missing                      | Both paths throw.                                                                                                                                    |
+| `config/config` is missing or fails the schema  | Both paths throw.                                                                                                                                    |
 | The queue is empty, or no dates need photos     | Path B logs this and returns.                                                                                                                        |
 
 ## Code and tests

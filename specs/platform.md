@@ -49,17 +49,18 @@ The infrastructure every slice depends on: Firebase Hosting routing, Firestore s
 [config-storage.ts](../functions/src/platform/config-storage.ts) provides `getConfig()`, `updateConfig(partial)`, and `advanceLastPage(page)`, typed by `Config` in [config.ts](../functions/src/platform/config.ts). Nothing creates the document.
 
 - `advanceLastPage(page)` is the only writer of `lastPage`; `updateConfig()` doesn't accept it. In a transaction, it sets `lastPage` to the larger of its current value and `page + 1`, and returns the result as the next page to fetch.
-- If it is missing, `getConfig()` throws. Every page then returns 500, and every scheduled job fails.
+- Every read goes through `parseConfig()` in [config.ts](../functions/src/platform/config.ts), which checks the document against the schema below. It throws one error that lists every missing or mistyped field. There are no defaults. Fields the schema doesn't know about are allowed and ignored.
+- If the document is missing or fails the schema, `getConfig()` throws. Every page then returns 500, and every scheduled job fails.
 - It has to be provisioned by hand in production. Locally it comes from `seed/`.
 
-| Field               | Type           | Used by                                     |
-| ------------------- | -------------- | ------------------------------------------- |
-| `minDate`           | `YYYY-MM-DD`   | Day page                                    |
-| `importEnabled`     | boolean        | Photo ingestion                             |
-| `importLimit`       | number         | Photo ingestion                             |
-| `lastPage`          | numeric string | Photo ingestion and Day assignment (shared) |
-| `processLimit`      | number         | Day assignment                              |
-| `processingMinDate` | `YYYY-MM-DD`   | Day assignment                              |
+| Field               | Schema                                      | Used by                                     |
+| ------------------- | ------------------------------------------- | ------------------------------------------- |
+| `minDate`           | `YYYY-MM-DD` string, a real date            | Day page                                    |
+| `importEnabled`     | boolean                                     | Photo ingestion                             |
+| `importLimit`       | integer, 0 or more                          | Photo ingestion                             |
+| `lastPage`          | string of a positive integer, such as `"1"` | Photo ingestion and Day assignment (shared) |
+| `processLimit`      | integer, 0 or more                          | Day assignment                              |
+| `processingMinDate` | `YYYY-MM-DD` string, a real date            | Day assignment                              |
 
 ## Secrets
 
@@ -133,4 +134,4 @@ Emulator ports:
 
 ## Known issues
 
-1. **`config/config` has no schema check or defaults.** A missing field causes failures at runtime, for example `Number(undefined)` for `lastPage`.
+None at the moment.

@@ -34,6 +34,15 @@ const mockFirestore = {
 
 const mockApp = {};
 
+const validConfig = {
+  minDate: '2025-01-01',
+  importEnabled: true,
+  lastPage: '5',
+  importLimit: 10,
+  processLimit: 5,
+  processingMinDate: '2025-01-01',
+};
+
 // Mock Firebase Admin
 vi.mock('./firebase', () => ({
   getApp: vi.fn(() => mockApp),
@@ -75,14 +84,7 @@ describe('Config Storage Functions', () => {
 
   describe('getConfig', () => {
     it('should return config data when document exists', async () => {
-      const mockConfigData = {
-        apiUrl: 'https://api.example.com',
-        maxRetries: 3,
-        features: {
-          enableNotifications: true,
-          enableAnalytics: false,
-        },
-      };
+      const mockConfigData = { ...validConfig };
 
       mockDoc.exists = true;
       mockDoc.data.mockReturnValue(mockConfigData);
@@ -94,6 +96,16 @@ describe('Config Storage Functions', () => {
       expect(mockCollection.doc).toHaveBeenCalledWith('config');
       expect(mockDoc.get).toHaveBeenCalled();
       expect(result).toEqual(mockConfigData);
+    });
+
+    it('should throw when the document fails the schema', async () => {
+      mockDoc.exists = true;
+      mockDoc.data.mockReturnValue({ ...validConfig, lastPage: undefined });
+      mockDoc.get.mockResolvedValue(mockDoc);
+
+      await expect(configStorage.getConfig()).rejects.toThrow(
+        'Invalid config/config: lastPage must be a positive integer string'
+      );
     });
 
     it('should throw error when document does not exist', async () => {
@@ -183,7 +195,7 @@ describe('Config Storage Functions', () => {
     it('should move lastPage past the fetched page inside a transaction', async () => {
       mockTransaction.get.mockResolvedValue({
         exists: true,
-        data: () => ({ lastPage: '5' }),
+        data: () => ({ ...validConfig, lastPage: '5' }),
       });
 
       const next = await configStorage.advanceLastPage('5');
@@ -200,7 +212,7 @@ describe('Config Storage Functions', () => {
     it('should never move lastPage backwards when another caller got further', async () => {
       mockTransaction.get.mockResolvedValue({
         exists: true,
-        data: () => ({ lastPage: '9' }),
+        data: () => ({ ...validConfig, lastPage: '9' }),
       });
 
       const next = await configStorage.advanceLastPage('5');
@@ -216,6 +228,18 @@ describe('Config Storage Functions', () => {
 
       await expect(configStorage.advanceLastPage('5')).rejects.toThrow(
         'Configuration document not found at config/config'
+      );
+      expect(mockTransaction.update).not.toHaveBeenCalled();
+    });
+
+    it('should not write NaN when the stored lastPage is invalid', async () => {
+      mockTransaction.get.mockResolvedValue({
+        exists: true,
+        data: () => ({ ...validConfig, lastPage: undefined }),
+      });
+
+      await expect(configStorage.advanceLastPage('5')).rejects.toThrow(
+        'Invalid config/config'
       );
       expect(mockTransaction.update).not.toHaveBeenCalled();
     });

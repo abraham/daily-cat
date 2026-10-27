@@ -23,16 +23,16 @@ Everything a visitor or crawler fetches: the server-rendered page for each date,
 
 ## `cat` request handling
 
-| Condition                                                | Status | Body                                                           |
-| -------------------------------------------------------- | ------ | -------------------------------------------------------------- |
-| Method is not GET                                        | 403    | `Forbidden!`                                                   |
-| Path is not `/` and doesn't match `^/\d{4}-\d{2}-\d{2}$` | 404    | `Invalid date format. Use YYYY-MM-DD.`                         |
-| Not a real calendar date (for example `2025-02-30`)      | 404    | `Invalid date.`                                                |
-| Date is before `config.minDate`                          | 403    | `Forbidden! Dates before <minDate> are not allowed.`           |
-| Date is after today (UTC)                                | 404    | `Future dates are not available.`                              |
-| Record is `completed`                                    | 200    | Photo page                                                     |
-| Anything else                                            | 200    | Processing page. If no record was found, one is created first. |
-| An exception, including a missing `config/config`        | 500    | `Error fetching cat image`                                     |
+| Condition                                                    | Status | Body                                                           |
+| ------------------------------------------------------------ | ------ | -------------------------------------------------------------- |
+| Method is not GET                                            | 403    | `Forbidden!`                                                   |
+| Path is not `/` and doesn't match `^/\d{4}-\d{2}-\d{2}$`     | 404    | `Invalid date format. Use YYYY-MM-DD.`                         |
+| Not a real calendar date (for example `2025-02-30`)          | 404    | `Invalid date.`                                                |
+| Date is before `config.minDate`                              | 403    | `Forbidden! Dates before <minDate> are not allowed.`           |
+| Date is after today (UTC)                                    | 404    | `Future dates are not available.`                              |
+| Record is `completed`                                        | 200    | Photo page                                                     |
+| Anything else                                                | 200    | Processing page. If no record was found, one is created first. |
+| An exception, including a missing or invalid `config/config` | 500    | `Error fetching cat image`                                     |
 
 - `/` means today in UTC. The `minDate` and future-date checks are skipped for `/`.
 - The query string is ignored when matching the path.

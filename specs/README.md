@@ -73,7 +73,7 @@ flowchart LR
 
 - **All dates are in UTC.** That includes "today", day IDs, schedules, and `hour-HH` topics.
 - **Only Cloud Functions touch Firestore.** The rules deny all client access.
-- **Every function needs `config/config`.** If the document is missing, every page and job fails. See [Platform](platform.md).
+- **Every function needs `config/config`.** If the document is missing or fails its schema, every page and job fails. See [Platform](platform.md).
 - **Each photo should be used at most once.** This is enforced after the fact through `photo-ids`, so it is best effort. See [Day assignment](day-assignment.md).
 - **Unsplash links carry attribution parameters** (`utm_source=daily.cat&utm_medium=referral`).
 
