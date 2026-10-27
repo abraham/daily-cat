@@ -1,6 +1,6 @@
 # Styling and dark theme
 
-Part of the [architecture overview](README.md). Status: milestones T1 and T2 are **done**; T3 to T5 are **proposed**.
+Part of the [architecture overview](README.md). Status: milestones T1 to T3 are **done**; T4 and T5 are **proposed**.
 
 ## Purpose
 
@@ -27,8 +27,8 @@ Non-goals:
 - Since T1, all day-page CSS lives in [assets/styles.css](../assets/styles.css), which every day page links from `<head>`. `404.html` doesn't use it yet.
 - Before T1, about 550 lines of CSS sat inside the `renderPage()` template literal in [template.ts](../functions/src/day-page/template.ts) and were re-sent with almost every request. The processing page also emitted a second `<style>` block inside `<body>` for the spinner.
 - Since T2, the stylesheet is organized by section and mobile-first, with one `@media (min-width: 1025px)` block and no `!important`. The header, footer, and profile are solid white, the icon buttons share `.icon-button`, and the dead code is gone. It went from 625 to 458 lines. The bullets below that describe the old structure are kept for the record and marked as fixed.
-- [svg.ts](../functions/src/day-page/svg.ts) hard-codes icon fills (`#333` and `#1f1f1f`). The buttons change `color` on hover, but the icons don't follow.
-- There are 11 hard-coded colors and no custom properties. `#666` appears 9 times and `#333` 7 times.
+- Fixed in T3: [svg.ts](../functions/src/day-page/svg.ts) hard-coded icon fills (`#333` and `#1f1f1f`), so the icons didn't follow the buttons' hover color. They now use `currentColor`.
+- Fixed in T3: there were 11 hard-coded colors and no custom properties. Every color is now a token defined in `:root`.
 - Fixed in T2: there were 23 separate `@media (max-width: 1024px)` blocks, written desktop-first, and one `!important` that only existed to win against a rule later in the file.
 - Fixed in T2: `.nav-arrow`, `.share-button`, and `.notifications-button` repeated about 15 declarations each, and the arrows and share button were given `position: absolute`, then reset to `static`.
 - Fixed in T2: the header, profile, and footer used a translucent white background with `backdrop-filter: blur(10px)`, though nothing ever scrolls behind them. The toast keeps its blur, because it floats over the page.
@@ -63,26 +63,29 @@ File order, one section per component:
 
 Every color in `styles.css` is a `var(--…)`. Hex and `rgb()` values appear only where tokens are defined.
 
-| Token             | Light                 | Dark                     | Used for                                  |
-| ----------------- | --------------------- | ------------------------ | ----------------------------------------- |
-| `--bg`            | `#ffffff`             | `#121212`                | Page background                           |
-| `--surface`       | `#ffffff`             | `#1e1e1e`                | Header, profile, footer                   |
-| `--text`          | `#333333`             | `#e6e6e6`                | Title, names, icons on hover              |
-| `--text-muted`    | `#666666`             | `#a3a3a3`                | Usernames, likes, footer text, icons      |
-| `--border`        | `rgb(0 0 0 / 10%)`    | `rgb(255 255 255 / 12%)` | Header bottom border                      |
-| `--hover`         | `#f0f0f0`             | `#2a2a2a`                | Icon button and tag hover, tag background |
-| `--active`        | `#e0e0e0`             | `#333333`                | Icon button and tag pressed               |
-| `--link`          | `#007acc`             | `#4db3ff`                | Footer links                              |
-| `--link-hover`    | `#005599`             | `#80c8ff`                | Footer links on hover                     |
-| `--focus`         | `#007acc`             | `#4db3ff`                | Focus outline                             |
-| `--toast-bg`      | `rgb(64 64 64 / 95%)` | `rgb(235 235 235 / 95%)` | Toast background                          |
-| `--toast-text`    | `#f5f5f5`             | `#1f1f1f`                | Toast text                                |
-| `--success`       | `#81c784`             | `#2e7d32`                | Success toast accent                      |
-| `--error`         | `#ef9a9a`             | `#c62828`                | Error toast accent                        |
-| `--spinner-track` | `#f0f0f0`             | `#2a2a2a`                | Spinner ring                              |
-| `--spinner-head`  | `#666666`             | `#a3a3a3`                | Spinner moving segment                    |
+| Token             | Light                 | Dark                     | Used for                             |
+| ----------------- | --------------------- | ------------------------ | ------------------------------------ |
+| `--bg`            | `#ffffff`             | `#121212`                | Page background                      |
+| `--surface`       | `#ffffff`             | `#1e1e1e`                | Header, profile, footer              |
+| `--text`          | `#333333`             | `#e6e6e6`                | Title, names, icons on hover         |
+| `--text-muted`    | `#666666`             | `#a3a3a3`                | Usernames, likes, footer text, icons |
+| `--border`        | `rgb(0 0 0 / 10%)`    | `rgb(255 255 255 / 12%)` | Header bottom border                 |
+| `--hover`         | `#f0f0f0`             | `#2a2a2a`                | Icon button hover, tag background    |
+| `--active`        | `#e0e0e0`             | `#333333`                | Icon button pressed, tag hover       |
+| `--pressed`       | `#d0d0d0`             | `#3d3d3d`                | Tag pressed                          |
+| `--link`          | `#007acc`             | `#4db3ff`                | Footer links                         |
+| `--link-hover`    | `#005599`             | `#80c8ff`                | Footer links on hover                |
+| `--focus`         | `#007acc`             | `#4db3ff`                | Focus outline                        |
+| `--toast-bg`      | `rgb(64 64 64 / 95%)` | `rgb(235 235 235 / 95%)` | Toast background                     |
+| `--toast-text`    | `#f5f5f5`             | `#1f1f1f`                | Toast text                           |
+| `--success`       | `#81c784`             | `#2e7d32`                | Success toast accent                 |
+| `--error`         | `#ef9a9a`             | `#c62828`                | Error toast accent                   |
+| `--spinner-track` | `#f0f0f0`             | `#2a2a2a`                | Spinner ring                         |
+| `--spinner-head`  | `#666666`             | `#a3a3a3`                | Spinner moving segment               |
 
-The light values are today's colors, so moving to tokens changes nothing visible. The tag pressed state (`#d0d0d0` today) uses `--active`. The toast is dark in the light theme and light in the dark theme, so its accents are the light colors in the light theme and the reverse.
+The light values are today's colors, so moving to tokens changes nothing visible. Tags rest one step darker than icon buttons, so they use three tokens: `--hover` at rest, `--active` on hover, and `--pressed` when pressed. The toast is dark in the light theme and light in the dark theme, so its accents are the light colors in the light theme and the reverse.
+
+Tokens are added when something first uses them: `--focus`, `--success`, and `--error` arrive with the styles that use them in T5.
 
 Contrast, computed with the WCAG formula. Text needs 4.5:1, and the toast accent borders need 3:1 (WCAG 1.4.11). Translucent toast backgrounds are blended over `--bg` first.
 
@@ -139,11 +142,12 @@ The light `--link` (today's `#007acc`) passes with no margin, at 4.51:1. Any cha
 
 ## Testing
 
-- A unit test reads `assets/styles.css` and fails if:
-  - a hex or `rgb()` color appears outside the token blocks;
+- [styles.test.ts](../functions/src/day-page/styles.test.ts) reads `assets/styles.css` and fails if:
+  - a hex, `rgb()`, or `hsl()` color appears outside `:root`;
   - a `var(--x)` is used but not defined;
-  - a token is defined in `:root` but missing from the dark block.
-- A unit test checks that the SVGs in `svg.ts` use `currentColor`.
+  - a token is defined but never used;
+  - a token is defined in `:root` but missing from the dark block (added in T4).
+- The same file checks that every SVG in `svg.ts` uses `fill="currentColor"`.
 - [template.test.ts](../functions/src/day-page/template.test.ts) stops checking CSS text. It checks markup instead: the stylesheet link, the `color-scheme` and `theme-color` tags, and the classes that `src/notifications.ts` and `src/toast.ts` depend on (`hidden`, `show`, `notifications-on`, `notifications-off`, `toast`).
 - Manual check for each milestone: in the emulator (`npm start`), open a photo page, a processing page, and the 404 page, with the browser's developer tools set to light, dark, and reduced motion, at widths 375 px and 1280 px.
 
@@ -177,13 +181,15 @@ What the rewrite had to preserve, because the old rules overrode each other:
 
 How it was checked: a script rendered the photo and processing pages from T1 and T2 with the same data, in headless Chromium at widths 375, 768, 1024, 1025, 1100, 1280, and 1281 px. It compared the position and size of every key element, the hover colors, and full-page screenshots. The photo page matched pixel for pixel at every width. The processing page matched except for 24 pixels of anti-aliasing in the title text, at widths where the 1024 px column is centered on a half pixel (1025, 1027, 1281). The title's position is identical to 1/64 px in both versions; the difference comes from the new markup, not the CSS.
 
-### T3. Tokens
+### T3. Tokens (done)
 
 1. Add the token blocks with the light values only, and replace every color with a token.
 2. Switch the icons to `fill="currentColor"`.
 3. Add the stylesheet and icon tests.
 
-The only visual change is that icons now follow hover colors.
+The only visual change is the icons. They take the button's color: `--text-muted` (`#666`) at rest and `--text` (`#333`) on hover. Before T3 they were always `#333`, or `#1f1f1f` for the notification bells and the likes heart, so at rest they are now lighter and they darken on hover. `#666` on white is 5.7:1, well above the 3:1 that icons need.
+
+How it was checked: the same comparison as T2, between T2 and T3. With the icons hidden in both versions, every page matched pixel for pixel at all seven widths, including the tags' rest, hover, and pressed colors. A second script measured each icon's fill at rest and on hover in both versions to confirm the change above.
 
 ### T4. Dark theme
 

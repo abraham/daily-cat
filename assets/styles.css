@@ -1,4 +1,27 @@
+/* Tokens. The only place colors are written; everything else uses var(). */
+
+:root {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --text: #333333;
+  --text-muted: #666666;
+  --border: rgb(0 0 0 / 10%);
+  --hover: #f0f0f0;
+  --active: #e0e0e0;
+  --pressed: #d0d0d0;
+  --link: #007acc;
+  --link-hover: #005599;
+  --toast-bg: rgb(64 64 64 / 95%);
+  --toast-text: #f5f5f5;
+  --spinner-track: #f0f0f0;
+  --spinner-head: #666666;
+}
+
 /* Base */
+
+html {
+  background-color: var(--bg);
+}
 
 html,
 body {
@@ -44,13 +67,13 @@ body {
     max(10px, env(safe-area-inset-right)) 15px
     max(10px, env(safe-area-inset-left));
   text-align: center;
-  background-color: #fff;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--border);
 }
 
 .header h1 {
   margin: 0;
-  color: #333;
+  color: var(--text);
   font-size: 20px;
   font-weight: 600;
 }
@@ -92,19 +115,19 @@ body {
     max(15px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
   text-align: center;
   font-size: 13px;
-  color: #666;
-  background-color: #fff;
+  color: var(--text-muted);
+  background-color: var(--surface);
 }
 
 .footer a {
   margin: 0 4px;
-  color: #007acc;
+  color: var(--link);
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
 .footer a:hover {
-  color: #005599;
+  color: var(--link-hover);
   text-decoration: underline;
 }
 
@@ -119,7 +142,7 @@ body {
   border: none;
   border-radius: 50%;
   background: none;
-  color: #666;
+  color: var(--text-muted);
   text-decoration: none;
   cursor: pointer;
   transition:
@@ -129,12 +152,12 @@ body {
 }
 
 .icon-button:hover {
-  background-color: #f0f0f0;
-  color: #333;
+  background-color: var(--hover);
+  color: var(--text);
 }
 
 .icon-button:active {
-  background-color: #e0e0e0;
+  background-color: var(--active);
   transform: scale(0.95);
 }
 
@@ -158,7 +181,7 @@ body {
   gap: 8px;
   padding: 12px max(15px, env(safe-area-inset-right)) 12px
     max(15px, env(safe-area-inset-left));
-  background-color: #fff;
+  background-color: var(--surface);
 }
 
 .user-row {
@@ -191,20 +214,20 @@ body {
   font-size: 15px;
   font-weight: 600;
   line-height: 1.2;
-  color: #333;
+  color: var(--text);
 }
 
 .user-username {
   margin: 0;
   font-size: 13px;
   line-height: 1.2;
-  color: #666;
+  color: var(--text-muted);
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
 }
 
 .user-username:hover {
-  color: #333;
+  color: var(--text);
   text-decoration: underline;
 }
 
@@ -221,7 +244,7 @@ body {
   gap: 4px;
   font-size: 16px;
   line-height: 1.2;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .likes-count svg {
@@ -242,19 +265,19 @@ body {
   font-size: 11px;
   line-height: 1.2;
   white-space: nowrap;
-  color: #666;
+  color: var(--text-muted);
   text-decoration: none;
-  background-color: #f0f0f0;
+  background-color: var(--hover);
   -webkit-tap-highlight-color: transparent;
 }
 
 .tag:hover {
-  background-color: #e0e0e0;
-  color: #333;
+  background-color: var(--active);
+  color: var(--text);
 }
 
 .tag:active {
-  background-color: #d0d0d0;
+  background-color: var(--pressed);
   transform: scale(0.95);
 }
 
@@ -294,8 +317,8 @@ body {
   border-radius: 8px;
   font-size: 13px;
   text-align: center;
-  color: #f5f5f5;
-  background-color: rgba(64, 64, 64, 0.95);
+  color: var(--toast-text);
+  background-color: var(--toast-bg);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   opacity: 0;
@@ -332,8 +355,8 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  border: 4px solid #f0f0f0;
-  border-top-color: #666;
+  border: 4px solid var(--spinner-track);
+  border-top-color: var(--spinner-head);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -348,7 +371,7 @@ body {
   font-size: 15px;
   line-height: 1.4;
   text-align: center;
-  color: #666;
+  color: var(--text-muted);
 }
 
 /* Larger screens */
