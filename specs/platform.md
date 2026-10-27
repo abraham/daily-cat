@@ -30,6 +30,7 @@ The infrastructure every slice depends on: Firebase Hosting routing, Firestore s
   - `getConfig()` and `updateConfig()` (see below).
   - The `UNSPLASH_CLIENT_ID` secret (see below).
   - `SITE_URL` in [site.ts](../functions/src/platform/site.ts), the public origin `https://daily.cat`. The Day page uses it for absolute URLs instead of trusting request headers.
+  - `toDateString(date)` and `addDays(date, days)` in [dates.ts](../functions/src/platform/dates.ts), which work on `YYYY-MM-DD` strings in UTC.
 
 ## Firestore
 

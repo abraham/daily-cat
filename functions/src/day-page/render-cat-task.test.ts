@@ -143,6 +143,36 @@ describe('Cat Function', () => {
     });
   });
 
+  describe('parseRequestedDate', () => {
+    const parse = (path: string) =>
+      myFunctions.parseRequestedDate(path, '2026-10-27', '2025-01-01');
+
+    it('maps / to today without the minDate check', () => {
+      expect(
+        myFunctions.parseRequestedDate('/', '2026-10-27', '2030-01-01')
+      ).toEqual({ date: '2026-10-27' });
+    });
+
+    it('accepts minDate, today, and the days between', () => {
+      expect(parse('/2025-01-01')).toEqual({ date: '2025-01-01' });
+      expect(parse('/2026-10-27')).toEqual({ date: '2026-10-27' });
+    });
+
+    it.each([
+      ['/2026-1-5', 404, 'Invalid date format. Use YYYY-MM-DD.'],
+      ['/2026-10-27/', 404, 'Invalid date format. Use YYYY-MM-DD.'],
+      ['/2025-02-30', 404, 'Invalid date.'],
+      [
+        '/2024-12-31',
+        403,
+        'Forbidden! Dates before 2025-01-01 are not allowed.',
+      ],
+      ['/2026-10-28', 404, 'Future dates are not available.'],
+    ])('rejects %s with %i', (path, status, body) => {
+      expect(parse(path)).toEqual({ status, body });
+    });
+  });
+
   describe('cat function', () => {
     it('should handle GET requests for root path with completed record', async () => {
       // Mock a completed record

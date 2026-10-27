@@ -1,12 +1,17 @@
 import * as logger from 'firebase-functions/logger';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { getMessaging } from 'firebase-admin/messaging';
+import {
+  getMessaging,
+  Messaging,
+  SendResponse,
+} from 'firebase-admin/messaging';
 import { Timestamp } from 'firebase-admin/firestore';
 import {
   deleteTokenDocuments,
   getTokensUpdatedBefore,
   touchTokenDocuments,
 } from './token-storage';
+import { Token } from './token';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const CHECK_AFTER_DAYS = 30;
@@ -16,6 +21,34 @@ const DEAD_TOKEN_CODES = new Set([
   'messaging/registration-token-not-registered',
   'messaging/invalid-registration-token',
 ]);
+
+/** Tokens whose dry-run send failed with a code that means FCM dropped them. */
+function findDeadTokens(tokens: Token[], responses: SendResponse[]): Token[] {
+  return tokens.filter((_, i) => {
+    const code = responses[i].error?.code;
+    return code !== undefined && DEAD_TOKEN_CODES.has(code);
+  });
+}
+
+/** One call per topic; a failure is logged and the other topics still run. */
+async function unsubscribeDeadTokens(
+  messaging: Messaging,
+  dead: Token[]
+): Promise<void> {
+  const deadByTopic = new Map<string, string[]>();
+  for (const { token, topics } of dead) {
+    for (const topic of topics) {
+      deadByTopic.set(topic, [...(deadByTopic.get(topic) ?? []), token]);
+    }
+  }
+  for (const [topic, topicTokens] of deadByTopic) {
+    try {
+      await messaging.unsubscribeFromTopic(topicTokens, topic);
+    } catch (error) {
+      logger.error(`Error unsubscribing dead tokens from ${topic}:`, error);
+    }
+  }
+}
 
 /**
  * Firebase Function that runs daily to prune tokens FCM no longer accepts.
@@ -42,29 +75,12 @@ export const pruneTokensScheduled = onSchedule(
       true
     );
 
-    const dead = tokens.filter((_, i) => {
-      const code = result.responses[i].error?.code;
-      return code !== undefined && DEAD_TOKEN_CODES.has(code);
-    });
-    const deadIds = new Set(dead.map(({ token }) => token));
+    const dead = findDeadTokens(tokens, result.responses);
     // Other failures may be transient; checking them again in 30 days is enough.
-    const kept = tokens.filter(({ token }) => !deadIds.has(token));
+    const kept = tokens.filter((token) => !dead.includes(token));
 
-    const deadByTopic = new Map<string, string[]>();
-    for (const { token, topics } of dead) {
-      for (const topic of topics) {
-        deadByTopic.set(topic, [...(deadByTopic.get(topic) ?? []), token]);
-      }
-    }
-    for (const [topic, topicTokens] of deadByTopic) {
-      try {
-        await messaging.unsubscribeFromTopic(topicTokens, topic);
-      } catch (error) {
-        logger.error(`Error unsubscribing dead tokens from ${topic}:`, error);
-      }
-    }
-
-    await deleteTokenDocuments([...deadIds]);
+    await unsubscribeDeadTokens(messaging, dead);
+    await deleteTokenDocuments(dead.map(({ token }) => token));
     await touchTokenDocuments(kept.map(({ token }) => token));
 
     logger.log(

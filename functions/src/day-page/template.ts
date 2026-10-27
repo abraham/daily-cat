@@ -17,7 +17,7 @@ export interface PageMeta {
   imageAlt: string;
 }
 
-interface TemplateData {
+export interface TemplateData {
   meta: PageMeta;
   linkUrl: string;
   imageUrl: string;
@@ -205,6 +205,28 @@ function renderBody(
   `;
 }
 
+function renderMetaTags(meta: PageMeta): TemplateResult {
+  return html`
+    <link rel="canonical" href="${meta.url}" />
+
+    <!-- Open Graph tags for social media sharing -->
+    <meta property="og:title" content="${meta.title}" />
+    <meta property="og:description" content="${meta.description}" />
+    <meta property="og:url" content="${meta.url}" />
+    <meta property="og:image" content="${meta.imageUrl}" />
+    <meta property="og:image:alt" content="${meta.imageAlt}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Daily Cat" />
+
+    <!-- Twitter Card tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${meta.title}" />
+    <meta name="twitter:description" content="${meta.description}" />
+    <meta name="twitter:image" content="${meta.imageUrl}" />
+    <meta name="twitter:image:alt" content="${meta.imageAlt}" />
+  `;
+}
+
 function renderPage(
   data: TemplateData,
   children: TemplateResult
@@ -233,23 +255,7 @@ function renderPage(
         <!-- Static: lit can't bind inside raw-text elements like <title>. -->
         <title>Daily Cat</title>
         <link rel="icon" type="image/png" href="/images/cat-face-small.png" />
-        <link rel="canonical" href="${data.meta.url}" />
-
-        <!-- Open Graph tags for social media sharing -->
-        <meta property="og:title" content="${data.meta.title}" />
-        <meta property="og:description" content="${data.meta.description}" />
-        <meta property="og:url" content="${data.meta.url}" />
-        <meta property="og:image" content="${data.meta.imageUrl}" />
-        <meta property="og:image:alt" content="${data.meta.imageAlt}" />
-        <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="Daily Cat" />
-
-        <!-- Twitter Card tags -->
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="${data.meta.title}" />
-        <meta name="twitter:description" content="${data.meta.description}" />
-        <meta name="twitter:image" content="${data.meta.imageUrl}" />
-        <meta name="twitter:image:alt" content="${data.meta.imageAlt}" />
+        ${renderMetaTags(data.meta)}
         <script src="/index.js" defer></script>
         <link rel="stylesheet" href="/styles.css" />
       </head>

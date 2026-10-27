@@ -32,25 +32,24 @@ export const onDayRecordCreated = onDocumentCreated(
     });
 
     try {
-      // Handle the newly created day record
       if (dayRecord.status === 'created') {
-        logger.log(`Processing new day record for date: ${dayId}`);
-
-        // Set status to processing to prevent duplicate processing
-        await setDayRecordProcessing(dayId);
-
-        // Process the photo for the day record with retries
-        const success = await processPhotoForDay(dayId, 10);
-        if (!success) {
-          logger.error(
-            `Failed to assign photo to day record ${dayId} after 10 retry attempts`
-          );
-          // Optionally, you could set the record back to 'created' status to allow retry
-        }
+        await startAssignment(dayId);
       }
     } catch (error) {
       logger.error(`Error processing day record creation for ${dayId}:`, error);
-      // Optionally, you could set the record back to 'created' status to allow retry
     }
   }
 );
+
+/** Marks the day as processing so it's handled once, then finds it a photo. */
+async function startAssignment(dayId: string): Promise<void> {
+  logger.log(`Processing new day record for date: ${dayId}`);
+  await setDayRecordProcessing(dayId);
+
+  const success = await processPhotoForDay(dayId, 10);
+  if (!success) {
+    logger.error(
+      `Failed to assign photo to day record ${dayId} after 10 retry attempts`
+    );
+  }
+}

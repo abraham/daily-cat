@@ -4,6 +4,38 @@ import { completePhotoForDay } from './day-storage';
 import { isPhotoIdUsed } from './photo-id-storage';
 import { advanceLastPage, getConfig, unsplashClientId } from '../platform';
 
+/** Waits 1 s, 2 s, 4 s, … up to 10 s before the next attempt. */
+function backoff(attempt: number): Promise<void> {
+  const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
+  logger.log(`Waiting ${delay}ms before retry...`);
+  return new Promise((resolve) => setTimeout(resolve, delay));
+}
+
+/**
+ * Returns the full details of the first search result that isn't used yet.
+ * A result whose details can't be fetched is skipped.
+ */
+async function findUnusedPhoto(
+  results: catApi.UnsplashSearchPhoto[],
+  clientId: string
+): Promise<catApi.UnsplashPhoto | null> {
+  for (const result of results) {
+    if (await isPhotoIdUsed(result.id)) {
+      logger.log(`Photo ${result.id} already used, skipping...`);
+      continue;
+    }
+    try {
+      return await catApi.get({ clientId }, result.id);
+    } catch (error) {
+      logger.error(
+        `Failed to fetch complete photo details for ${result.id}:`,
+        error
+      );
+    }
+  }
+  return null;
+}
+
 /**
  * Process a day record by finding and assigning an unused cat photo
  * @param dayId - The day ID to process
@@ -20,74 +52,33 @@ export async function processPhotoForDay(
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     logger.log(
-      `Attempt ${attempt}/${maxRetries}: Fetching cat photos from Unsplash API for day ${dayId}...`
+      `Attempt ${attempt}/${maxRetries}: Fetching cat photos for day ${dayId}`
     );
 
     try {
-      const catPhotos = await catApi.list({ clientId, page });
+      const { results } = await catApi.list({ clientId, page });
       page = await advanceLastPage(page);
-      logger.log(
-        `Received ${catPhotos.results.length} cat photos from API on attempt ${attempt}`
-      );
 
-      // Find the first photo that hasn't been used yet
-      let selectedPhoto = null;
-      for (const photo of catPhotos.results) {
-        const isUsed = await isPhotoIdUsed(photo.id);
-        if (!isUsed) {
-          // Get the complete photo details using the photo ID
-          logger.log(`Fetching complete photo details for ${photo.id}...`);
-          try {
-            selectedPhoto = await catApi.get({ clientId }, photo.id);
-            logger.log(`Retrieved complete photo details for ${photo.id}`);
-            logger.log(
-              `Selected unused photo: ${photo.id} on attempt ${attempt}`
-            );
-            break;
-          } catch (photoError) {
-            logger.error(
-              `Failed to fetch complete photo details for ${photo.id}:`,
-              photoError
-            );
-            // Continue to next photo
-            continue;
-          }
-        } else {
-          logger.log(`Photo ${photo.id} already used, skipping...`);
-        }
-      }
-
-      if (selectedPhoto) {
-        // Update the day record with the complete photo data
-        await completePhotoForDay(dayId, selectedPhoto);
+      const photo = await findUnusedPhoto(results, clientId);
+      if (photo) {
+        await completePhotoForDay(dayId, photo);
         logger.log(
-          `Successfully updated day record ${dayId} with photo ${selectedPhoto.id} on attempt ${attempt}`
+          `Successfully updated day record ${dayId} with photo ${photo.id} on attempt ${attempt}`
         );
         return true;
-      } else {
-        logger.warn(
-          `Attempt ${attempt}/${maxRetries}: No unused photos found for day ${dayId}. All ${catPhotos.results.length} photos from API are already used.`
-        );
-
-        if (attempt < maxRetries) {
-          // Wait a bit before retrying to get potentially different photos
-          const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000); // Exponential backoff, max 10s
-          logger.log(`Waiting ${delay}ms before retry...`);
-          await new Promise((resolve) => setTimeout(resolve, delay));
-        }
       }
+      logger.warn(
+        `Attempt ${attempt}/${maxRetries}: No unused photos found for day ${dayId} among ${results.length} results.`
+      );
     } catch (error) {
       logger.error(
         `Error on attempt ${attempt}/${maxRetries} for day ${dayId}:`,
         error
       );
+    }
 
-      if (attempt < maxRetries) {
-        // Wait before retrying on error
-        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
-        logger.log(`Waiting ${delay}ms before retry due to error...`);
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      }
+    if (attempt < maxRetries) {
+      await backoff(attempt);
     }
   }
 

@@ -365,7 +365,7 @@ describe('Process Available Photos Task', () => {
           for (
             let date = new Date(start);
             date <= end;
-            date.setDate(date.getDate() + 1)
+            date.setUTCDate(date.getUTCDate() + 1)
           ) {
             const dateString = date.toISOString().split('T')[0];
             records.push({
@@ -415,7 +415,7 @@ describe('Process Available Photos Task', () => {
         for (
           let date = new Date(start);
           date <= end;
-          date.setDate(date.getDate() + 1)
+          date.setUTCDate(date.getUTCDate() + 1)
         ) {
           dateCount++;
           if (dateCount > 2) {
@@ -542,7 +542,7 @@ describe('Process Available Photos Task', () => {
           for (
             let date = new Date(start);
             date <= end;
-            date.setDate(date.getDate() + 1)
+            date.setUTCDate(date.getUTCDate() + 1)
           ) {
             const dateString = date.toISOString().split('T')[0];
             records.push({

@@ -2,10 +2,15 @@ import { render } from '@lit-labs/ssr';
 import * as logger from 'firebase-functions/logger';
 import { onRequest } from 'firebase-functions/v2/https';
 import { TemplateResult } from 'lit-html';
-import { calculateNavigationUrls } from './navigation';
-import { getConfig, SITE_URL } from '../platform';
+import { calculateNavigationUrls, NavigationUrls } from './navigation';
+import { getConfig, SITE_URL, toDateString } from '../platform';
 import { createNewDayRecord, getPhotoForDate } from '../assignment';
-import { renderPhotoPage, renderProcessingPage } from './template';
+import type { UnsplashPhoto } from '../ingestion';
+import {
+  renderPhotoPage,
+  renderProcessingPage,
+  TemplateData,
+} from './template';
 
 const DEFAULT_DESCRIPTION = 'Your daily dose of adorable cat photos';
 const HOUR = 60 * 60;
@@ -17,7 +22,7 @@ const PROCESSING_CACHE_CONTROL = 'public, max-age=1, s-maxage=1';
  * changes at the next UTC midnight: `/` moves on and the next-day arrow appears.
  */
 export function photoPageCacheControl(date: string, now: Date): string {
-  if (date < now.toISOString().split('T')[0]) {
+  if (date < toDateString(now)) {
     return `public, max-age=${HOUR}, s-maxage=${DAY}`;
   }
   const nextMidnight = Date.UTC(
@@ -40,6 +45,152 @@ function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
+type ParsedDate = { date: string } | { status: number; body: string };
+
+/** Maps a request path to the day it shows, or to the error response to send. */
+export function parseRequestedDate(
+  path: string,
+  today: string,
+  minDate: string
+): ParsedDate {
+  if (path === '/') {
+    return { date: today };
+  }
+
+  const dateMatch = path.match(/^\/(\d{4}-\d{2}-\d{2})$/);
+  if (!dateMatch) {
+    return { status: 404, body: 'Invalid date format. Use YYYY-MM-DD.' };
+  }
+
+  const date = dateMatch[1];
+  // Rejects dates like 2025-02-30, which Date silently rolls over.
+  const dateObj = new Date(`${date}T00:00:00.000Z`);
+  if (isNaN(dateObj.getTime()) || toDateString(dateObj) !== date) {
+    return { status: 404, body: 'Invalid date.' };
+  }
+
+  if (date < minDate) {
+    return {
+      status: 403,
+      body: `Forbidden! Dates before ${minDate} are not allowed.`,
+    };
+  }
+
+  if (date > today) {
+    return { status: 404, body: 'Future dates are not available.' };
+  }
+
+  return { date };
+}
+
+interface PageContext {
+  title: string;
+  url: string;
+  navigation: NavigationUrls;
+}
+
+function photoPageData(
+  photo: UnsplashPhoto,
+  { title, url, navigation }: PageContext
+): TemplateData {
+  return {
+    meta: {
+      title,
+      description: photo.alt_description
+        ? `${capitalize(photo.alt_description)}. Photo by ${photo.user.name} on Unsplash.`
+        : `A cat photo by ${photo.user.name} on Unsplash.`,
+      url,
+      imageUrl: photo.urls.regular,
+      imageAlt: photo.alt_description || 'Cat photo',
+    },
+    linkUrl: photo.links.html,
+    imageUrl: photo.urls.regular,
+    userProfileImage: photo.user.profile_image.medium,
+    userName: photo.user.name,
+    userUsername: photo.user.username,
+    userProfileUrl: photo.user.links.html,
+    likesCount: photo.likes.toLocaleString(),
+    altDescription: photo.alt_description || 'Cat photo',
+    tags: photo.tags,
+    ...navigation,
+  };
+}
+
+function processingPageData({
+  title,
+  url,
+  navigation,
+}: PageContext): TemplateData {
+  return {
+    meta: {
+      title,
+      description: DEFAULT_DESCRIPTION,
+      url,
+      imageUrl: `${SITE_URL}/images/cat.png`,
+      imageAlt: 'Daily Cat - Adorable cat photo',
+    },
+    linkUrl: '',
+    imageUrl: '',
+    userProfileImage: '',
+    userName: '',
+    userUsername: '',
+    userProfileUrl: '',
+    likesCount: '',
+    altDescription: '',
+    tags: [],
+    ...navigation,
+  };
+}
+
+function renderToString(templateResult: TemplateResult): string {
+  let html = '';
+  for (const chunk of render(templateResult)) {
+    html += chunk;
+  }
+  return html;
+}
+
+/**
+ * Renders the photo page if the day is finished. Otherwise renders the
+ * processing page, first creating the day's record if there isn't one.
+ */
+async function renderDayPage(
+  date: string,
+  path: string,
+  now: Date,
+  minDate: string
+): Promise<{ html: string; cacheControl: string }> {
+  const dayRecord = await getPhotoForDate(date);
+  const context: PageContext = {
+    title: `Daily Cat: ${formatDate(date)}`,
+    url: path === '/' ? `${SITE_URL}/` : `${SITE_URL}/${date}`,
+    navigation: calculateNavigationUrls(date, minDate),
+  };
+
+  if (dayRecord?.status === 'completed') {
+    logger.log('Using existing cat photo for date:', date, {
+      id: dayRecord.photo.id,
+      alt_description: dayRecord.photo.alt_description,
+    });
+    return {
+      html: renderToString(
+        renderPhotoPage(photoPageData(dayRecord.photo, context))
+      ),
+      cacheControl: photoPageCacheControl(date, now),
+    };
+  }
+
+  logger.log('No completed record found for date:', date);
+  if (!dayRecord) {
+    logger.log('Creating new day record for date:', date);
+    await createNewDayRecord(date);
+  }
+  return {
+    html: renderToString(renderProcessingPage(processingPageData(context))),
+    cacheControl: PROCESSING_CACHE_CONTROL,
+  };
+}
+
 export const cat = onRequest(async (request, response) => {
   if (request.method !== 'GET') {
     response.status(403).send('Forbidden!');
@@ -49,144 +200,18 @@ export const cat = onRequest(async (request, response) => {
   try {
     const now = new Date();
     const config = await getConfig();
-    // Extract date from URL path
-    const path = request.url.split('?')[0]; // Remove query params
-    let requestedDate: string;
+    const path = request.url.split('?')[0];
 
-    if (path === '/') {
-      // Root path - use current date
-      requestedDate = now.toISOString().split('T')[0];
-    } else {
-      // Extract date from path (format: /yyyy-mm-dd)
-      const dateMatch = path.match(/^\/(\d{4}-\d{2}-\d{2})$/);
-
-      if (!dateMatch) {
-        response.status(404).send('Invalid date format. Use YYYY-MM-DD.');
-        return;
-      }
-
-      requestedDate = dateMatch[1];
-
-      // Validate date format and check if it's a valid date
-      const dateObj = new Date(requestedDate + 'T00:00:00.000Z');
-      if (
-        isNaN(dateObj.getTime()) ||
-        dateObj.toISOString().split('T')[0] !== requestedDate
-      ) {
-        response.status(404).send('Invalid date.');
-        return;
-      }
-
-      // Check if the requested date is before the minimum allowed date
-      if (requestedDate < config.minDate) {
-        response
-          .status(403)
-          .send(`Forbidden! Dates before ${config.minDate} are not allowed.`);
-        return;
-      }
-
-      // Check if the requested date is in the future
-      const currentDate = now.toISOString().split('T')[0];
-      if (requestedDate > currentDate) {
-        response.status(404).send('Future dates are not available.');
-        return;
-      }
+    const parsed = parseRequestedDate(path, toDateString(now), config.minDate);
+    if ('status' in parsed) {
+      response.status(parsed.status).send(parsed.body);
+      return;
     }
 
-    // Try to get existing cat photo for the requested date
-    let dayRecord = await getPhotoForDate(requestedDate);
-
-    // Calculate navigation dates
-    const { prevDateUrl, showPrevArrow, nextDateUrl, showNextArrow } =
-      calculateNavigationUrls(requestedDate, config.minDate);
-    const pageUrl =
-      path === '/' ? `${SITE_URL}/` : `${SITE_URL}/${requestedDate}`;
-    const title = `Daily Cat: ${formatDate(requestedDate)}`;
-
-    let templateResult: TemplateResult;
-    let cacheControl: string;
-
-    if (dayRecord && dayRecord.status === 'completed') {
-      // Use existing photo for completed records
-      const cat = dayRecord.photo;
-      logger.log('Using existing cat photo for date:', requestedDate);
-
-      logger.log('Cat photo details:', {
-        id: cat.id,
-        alt_description: cat.alt_description,
-      });
-
-      // Render photo page template using lit-html
-      templateResult = renderPhotoPage({
-        meta: {
-          title,
-          description: cat.alt_description
-            ? `${capitalize(cat.alt_description)}. Photo by ${cat.user.name} on Unsplash.`
-            : `A cat photo by ${cat.user.name} on Unsplash.`,
-          url: pageUrl,
-          imageUrl: cat.urls.regular,
-          imageAlt: cat.alt_description || 'Cat photo',
-        },
-        linkUrl: cat.links.html,
-        imageUrl: cat.urls.regular,
-        userProfileImage: cat.user.profile_image.medium,
-        userName: cat.user.name,
-        userUsername: cat.user.username,
-        userProfileUrl: cat.user.links.html,
-        likesCount: cat.likes.toLocaleString(),
-        altDescription: cat.alt_description || 'Cat photo',
-        tags: cat.tags,
-        prevDateUrl,
-        showPrevArrow,
-        nextDateUrl,
-        showNextArrow,
-      });
-      cacheControl = photoPageCacheControl(requestedDate, now);
-    } else {
-      logger.log('No completed record found for date:', requestedDate);
-
-      // No completed record found - create a new day record if none exists
-      if (!dayRecord) {
-        logger.log('Creating new day record for date:', requestedDate);
-        dayRecord = await createNewDayRecord(requestedDate);
-      }
-
-      // Render processing page template
-      templateResult = renderProcessingPage({
-        meta: {
-          title,
-          description: DEFAULT_DESCRIPTION,
-          url: pageUrl,
-          imageUrl: `${SITE_URL}/images/cat.png`,
-          imageAlt: 'Daily Cat - Adorable cat photo',
-        },
-        linkUrl: '',
-        imageUrl: '',
-        userProfileImage: '',
-        userName: '',
-        userUsername: '',
-        userProfileUrl: '',
-        likesCount: '',
-        altDescription: '',
-        tags: [],
-        prevDateUrl,
-        showPrevArrow,
-        nextDateUrl,
-        showNextArrow,
-      });
-      cacheControl = PROCESSING_CACHE_CONTROL;
-    }
-
-    // Convert lit-html template result to string
-    const htmlIterator = render(templateResult);
-    let html = '';
-    for (const chunk of htmlIterator) {
-      html += chunk;
-    }
-
-    response.set('Cache-Control', cacheControl);
+    const page = await renderDayPage(parsed.date, path, now, config.minDate);
+    response.set('Cache-Control', page.cacheControl);
     response.status(200);
-    response.send(html);
+    response.send(page.html);
   } catch (error) {
     logger.error('Error fetching cat:', error);
     response.status(500).send('Error fetching cat image');

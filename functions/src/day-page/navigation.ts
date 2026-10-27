@@ -2,6 +2,8 @@
  * Navigation utilities for date-based navigation
  */
 
+import { addDays, toDateString } from '../platform';
+
 export interface NavigationUrls {
   prevDateUrl: string;
   showPrevArrow: boolean;
@@ -19,35 +21,14 @@ export function calculateNavigationUrls(
   requestedDate: string,
   minDate: string
 ): NavigationUrls {
-  const requestedDateObj = new Date(requestedDate + 'T00:00:00.000Z');
-  const currentDateObj = new Date();
-  const currentDateString = currentDateObj.toISOString().split('T')[0];
-
-  // Previous date (only if requested date is after minDate)
-  let prevDateUrl = '#';
-  let showPrevArrow = false;
-  if (requestedDate > minDate) {
-    const prevDateObj = new Date(requestedDateObj);
-    prevDateObj.setUTCDate(prevDateObj.getUTCDate() - 1);
-    prevDateUrl = `/${prevDateObj.toISOString().split('T')[0]}`;
-    showPrevArrow = true;
-  }
-
-  // Next date (only if requested date is before today)
-  let nextDateUrl = '#';
-  let showNextArrow = false;
-  if (requestedDate < currentDateString) {
-    const nextDateObj = new Date(requestedDateObj);
-    nextDateObj.setUTCDate(nextDateObj.getUTCDate() + 1);
-    const nextDateString = nextDateObj.toISOString().split('T')[0];
-    nextDateUrl = `/${nextDateString}`;
-    showNextArrow = true;
-  }
+  const today = toDateString(new Date());
+  const showPrevArrow = requestedDate > minDate;
+  const showNextArrow = requestedDate < today;
 
   return {
-    prevDateUrl,
+    prevDateUrl: showPrevArrow ? `/${addDays(requestedDate, -1)}` : '#',
     showPrevArrow,
-    nextDateUrl,
+    nextDateUrl: showNextArrow ? `/${addDays(requestedDate, 1)}` : '#',
     showNextArrow,
   };
 }
