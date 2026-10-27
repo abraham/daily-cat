@@ -1,10 +1,9 @@
 import * as logger from 'firebase-functions/logger';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { list } from '../api/cat-api';
-import { getConfig, updateConfig } from '../storage/config-storage';
+import { getConfig, unsplashClientId, updateConfig } from '../platform';
 import { isPhotoIdUsed } from '../storage/photo-id-storage';
 import { storeMultipleAvailablePhotoIds } from '../storage/available-photo-ids-storage';
-import { unsplashClientId } from '../photo-processor';
 
 /**
  * Firebase Function that runs every hour to import new cat photos.

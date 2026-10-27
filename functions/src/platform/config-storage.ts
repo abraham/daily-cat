@@ -1,16 +1,8 @@
-import { initializeApp, getApps, App } from 'firebase-admin/app';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
-import { Config } from '../types/config';
+import { Config } from './config';
+import { getApp } from './firebase';
 
-// Initialize Firebase Admin if not already initialized
-let app: App;
-if (getApps().length === 0) {
-  app = initializeApp();
-} else {
-  app = getApps()[0];
-}
-
-const db: Firestore = getFirestore(app);
+const db: Firestore = getFirestore(getApp());
 
 /**
  * Get the configuration document from Firestore

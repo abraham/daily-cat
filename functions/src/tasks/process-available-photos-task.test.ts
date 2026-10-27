@@ -32,9 +32,8 @@ const mockFirestore = {
 
 const mockApp = {};
 
-vi.mock('firebase-admin/app', () => ({
-  initializeApp: vi.fn(() => mockApp),
-  getApps: vi.fn(() => []),
+vi.mock('../platform/firebase', () => ({
+  getApp: vi.fn(() => mockApp),
 }));
 
 vi.mock('firebase-admin/firestore', async () => {
@@ -59,7 +58,7 @@ const mockSecret = {
   value: vi.fn(() => 'test-client-id'),
 };
 
-vi.mock('../photo-processor', () => ({
+vi.mock('../platform/secrets', () => ({
   unsplashClientId: mockSecret,
 }));
 
@@ -80,7 +79,7 @@ vi.mock('../api/cat-api', () => ({
 
 // Mock the config-storage module
 const mockGetConfig = vi.fn();
-vi.mock('../storage/config-storage', () => ({
+vi.mock('../platform/config-storage', () => ({
   getConfig: mockGetConfig,
 }));
 

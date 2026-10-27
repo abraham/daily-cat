@@ -1,8 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 
-vi.mock('firebase-admin/app', () => ({
-  getApps: vi.fn(() => []),
-  initializeApp: vi.fn(() => ({})),
+vi.mock('./platform/firebase', () => ({
+  getApp: vi.fn(() => ({})),
 }));
 
 vi.mock('firebase-admin/firestore', async (importOriginal) => ({

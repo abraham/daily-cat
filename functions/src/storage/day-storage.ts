@@ -1,4 +1,3 @@
-import { App, getApps, initializeApp } from 'firebase-admin/app';
 import {
   DocumentData,
   Firestore,
@@ -9,16 +8,9 @@ import { CompletedDayRecord, DayRecord, NewDayRecord } from '../types/day';
 import { UnsplashPhoto } from '../types/unsplash';
 import { Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions';
+import { getApp } from '../platform';
 
-// Initialize Firebase Admin if not already initialized
-let app: App;
-if (getApps().length === 0) {
-  app = initializeApp();
-} else {
-  app = getApps()[0];
-}
-
-const db: Firestore = getFirestore(app);
+const db: Firestore = getFirestore(getApp());
 const COLLECTION_NAME = 'days';
 
 /**

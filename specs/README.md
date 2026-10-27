@@ -89,6 +89,7 @@ flowchart LR
 | `functions/src/template.ts`, `navigation.ts`, `svg.ts`                                                          | Day page                                                   |
 | `functions/src/tasks/topics-task.ts`, `send-notifications-task.ts`                                              | Notifications                                              |
 | `functions/src/storage/`                                                                                        | One module per collection, owned by the slice listed above |
+| `functions/src/platform/`                                                                                       | Platform                                                   |
 | `src/`                                                                                                          | Notifications (client side)                                |
 | `assets/`                                                                                                       | Day page (static files)                                    |
 | `firebase.json`, `firestore.*`, `rollup.config.js`, `seed/`, `.github/`                                         | Platform                                                   |

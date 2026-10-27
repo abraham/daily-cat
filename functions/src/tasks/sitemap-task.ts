@@ -1,19 +1,10 @@
 import * as logger from 'firebase-functions/logger';
 import { onRequest } from 'firebase-functions/v2/https';
-import { App, getApps, initializeApp } from 'firebase-admin/app';
 import { Firestore, getFirestore } from 'firebase-admin/firestore';
 import { DayRecord } from '../types/day';
-import { getConfig } from '../storage/config-storage';
+import { getApp, getConfig } from '../platform';
 
-// Initialize Firebase Admin if not already initialized
-let app: App;
-if (getApps().length === 0) {
-  app = initializeApp();
-} else {
-  app = getApps()[0];
-}
-
-const db: Firestore = getFirestore(app);
+const db: Firestore = getFirestore(getApp());
 const COLLECTION_NAME = 'days';
 
 /**

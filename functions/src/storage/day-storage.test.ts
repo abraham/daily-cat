@@ -37,9 +37,8 @@ const mockFirestore = {
 const mockApp = {};
 
 // Mock Firebase Admin
-vi.mock('firebase-admin/app', () => ({
-  initializeApp: vi.fn(() => mockApp),
-  getApps: vi.fn(() => []),
+vi.mock('../platform/firebase', () => ({
+  getApp: vi.fn(() => mockApp),
 }));
 
 vi.mock('firebase-admin/firestore', async () => {

@@ -42,9 +42,8 @@ const mockFirestore = {
 
 const mockApp = {};
 
-vi.mock('firebase-admin/app', () => ({
-  initializeApp: vi.fn(() => mockApp),
-  getApps: vi.fn(() => []),
+vi.mock('../platform/firebase', () => ({
+  getApp: vi.fn(() => mockApp),
 }));
 
 vi.mock('firebase-admin/firestore', () => ({
@@ -60,7 +59,7 @@ vi.mock('../api/cat-api', () => ({
 // Mock the config-storage module
 const mockGetConfig = vi.fn();
 const mockUpdateConfig = vi.fn();
-vi.mock('../storage/config-storage', () => ({
+vi.mock('../platform/config-storage', () => ({
   getConfig: mockGetConfig,
   updateConfig: mockUpdateConfig,
 }));

@@ -3,9 +3,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Mock Firebase Admin before importing the module
 const mockGet = vi.fn();
 
-vi.mock('firebase-admin/app', () => ({
-  getApps: vi.fn(() => [{}]), // Return existing app
-  initializeApp: vi.fn(() => ({})),
+vi.mock('../platform/firebase', () => ({
+  getApp: vi.fn(() => ({})),
 }));
 
 vi.mock('firebase-admin/firestore', () => ({
@@ -33,7 +32,7 @@ vi.mock('firebase-functions/v2/https', () => ({
 }));
 
 // Mock config storage
-vi.mock('../storage/config-storage', () => ({
+vi.mock('../platform/config-storage', () => ({
   getConfig: vi.fn(),
 }));
 
@@ -51,7 +50,7 @@ describe('sitemap function', () => {
     vi.resetModules();
 
     // Get the mocked modules after reset
-    configStorageMock = await import('../storage/config-storage.js');
+    configStorageMock = await import('../platform/config-storage.js');
 
     // Set up default config mock
     configStorageMock.getConfig.mockResolvedValue({
