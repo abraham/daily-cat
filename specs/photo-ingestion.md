@@ -74,7 +74,7 @@ sequenceDiagram
 
 | Failure                                          | Behavior                                                                                                                                                                                  |
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `config/config` is missing                       | `getConfig()` throws and the run fails. The next hourly run tries again.                                                                                                                  |
+| `config/config` is missing or fails the schema   | `getConfig()` throws and the run fails. The next hourly run tries again.                                                                                                                  |
 | `UNSPLASH_CLIENT_ID` is empty                    | The run throws.                                                                                                                                                                           |
 | A page fails (rate limit, network, or Firestore) | The error is logged and the loop moves on. `lastPage` has not been advanced, so the next iteration requests the same page again: a rate-limited run retries one page `importLimit` times. |
 | `lastPage` is past the last search page          | `results` is empty. The run imports nothing but still advances `lastPage` on every pass.                                                                                                  |

@@ -1,5 +1,5 @@
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
-import { Config } from './config';
+import { Config, parseConfig } from './config';
 import { getApp } from './firebase';
 
 const db: Firestore = getFirestore(getApp());
@@ -7,7 +7,7 @@ const db: Firestore = getFirestore(getApp());
 /**
  * Get the configuration document from Firestore
  * @returns Promise<Config> - The configuration object
- * @throws Error if the configuration document is not found
+ * @throws Error if the configuration document is not found or fails the schema
  */
 export async function getConfig(): Promise<Config> {
   const doc = await db.collection('config').doc('config').get();
@@ -16,7 +16,7 @@ export async function getConfig(): Promise<Config> {
     throw new Error('Configuration document not found at config/config');
   }
 
-  return doc.data() as Config;
+  return parseConfig(doc.data());
 }
 
 /**
@@ -46,7 +46,7 @@ export async function advanceLastPage(page: string): Promise<string> {
       throw new Error('Configuration document not found at config/config');
     }
 
-    const current = Number((doc.data() as Config).lastPage);
+    const current = Number(parseConfig(doc.data()).lastPage);
     const next = Math.max(current, Number(page) + 1).toString();
     transaction.update(ref, { lastPage: next });
     return next;
