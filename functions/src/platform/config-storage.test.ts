@@ -20,8 +20,16 @@ const mockCollection = {
   get: vi.fn(),
 };
 
+const mockTransaction = {
+  get: vi.fn(),
+  update: vi.fn(),
+};
+
 const mockFirestore = {
   collection: vi.fn(() => mockCollection),
+  runTransaction: vi.fn((updateFunction: (t: typeof mockTransaction) => any) =>
+    updateFunction(mockTransaction)
+  ),
 };
 
 const mockApp = {};
@@ -131,7 +139,7 @@ describe('Config Storage Functions', () => {
 
     it('should update config document with single field', async () => {
       const singleFieldUpdate = {
-        lastPage: 'page-5',
+        importLimit: 5,
       };
 
       mockDoc.update.mockResolvedValue(undefined);
@@ -168,6 +176,48 @@ describe('Config Storage Functions', () => {
       expect(mockFirestore.collection).toHaveBeenCalledWith('config');
       expect(mockCollection.doc).toHaveBeenCalledWith('config');
       expect(mockDoc.update).toHaveBeenCalledWith(emptyUpdate);
+    });
+  });
+
+  describe('advanceLastPage', () => {
+    it('should move lastPage past the fetched page inside a transaction', async () => {
+      mockTransaction.get.mockResolvedValue({
+        exists: true,
+        data: () => ({ lastPage: '5' }),
+      });
+
+      const next = await configStorage.advanceLastPage('5');
+
+      expect(next).toBe('6');
+      expect(mockFirestore.runTransaction).toHaveBeenCalledOnce();
+      expect(mockTransaction.get).toHaveBeenCalledWith(mockDoc);
+      expect(mockTransaction.update).toHaveBeenCalledWith(mockDoc, {
+        lastPage: '6',
+      });
+      expect(mockDoc.update).not.toHaveBeenCalled();
+    });
+
+    it('should never move lastPage backwards when another caller got further', async () => {
+      mockTransaction.get.mockResolvedValue({
+        exists: true,
+        data: () => ({ lastPage: '9' }),
+      });
+
+      const next = await configStorage.advanceLastPage('5');
+
+      expect(next).toBe('9');
+      expect(mockTransaction.update).toHaveBeenCalledWith(mockDoc, {
+        lastPage: '9',
+      });
+    });
+
+    it('should throw when the config document is missing', async () => {
+      mockTransaction.get.mockResolvedValue({ exists: false });
+
+      await expect(configStorage.advanceLastPage('5')).rejects.toThrow(
+        'Configuration document not found at config/config'
+      );
+      expect(mockTransaction.update).not.toHaveBeenCalled();
     });
   });
 });

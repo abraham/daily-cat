@@ -45,24 +45,23 @@ stateDiagram-v2
   [*] --> completed: savePhotoForDate (scheduled path)
   created --> completed: savePhotoForDate
   processing --> completed: savePhotoForDate
-  processing --> created: createNewDayRecord overwrite (see Day page known issues)
 ```
 
 Functions that write `days` ([day-storage.ts](../functions/src/assignment/day-storage.ts)):
 
-| Function                 | Write              | Effect                                                                                       |
-| ------------------------ | ------------------ | -------------------------------------------------------------------------------------------- |
-| `createNewDayRecord`     | `set` (overwrites) | Sets `status: 'created'` and `photo: null`                                                   |
-| `setDayRecordProcessing` | `update`           | Sets `status: 'processing'`                                                                  |
-| `completePhotoForDay`    | `update`           | Sets `photo` and `status: 'completed'`                                                       |
-| `savePhotoForDate`       | `set` (overwrites) | Writes a completed record. Creates the document if it doesn't exist, and resets `createdAt`. |
+| Function                 | Write              | Effect                                                                                                              |
+| ------------------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `createNewDayRecord`     | `create`           | Sets `status: 'created'` and `photo: null`. If the day already has a record, it changes nothing and returns `null`. |
+| `setDayRecordProcessing` | `update`           | Sets `status: 'processing'`                                                                                         |
+| `completePhotoForDay`    | `update`           | Sets `photo` and `status: 'completed'`                                                                              |
+| `savePhotoForDate`       | `set` (overwrites) | Writes a completed record. Creates the document if it doesn't exist, and resets `createdAt`.                        |
 
 ## Path A: on demand
 
 1. The [Day page](day-page.md) creates `days/{date}` with `status: 'created'`.
 2. `onDayRecordCreated` runs only if the new document's status is `created`. It sets the status to `processing` and calls `processPhotoForDay(dayId, 10)`.
 3. Each attempt of `processPhotoForDay`:
-   1. Fetches search page `config.lastPage` and advances `config.lastPage`. This uses up one search page per attempt, even when the attempt succeeds.
+   1. Fetches search page `lastPage`, then calls Platform's `advanceLastPage()` and continues from the page it returns. This uses up one search page per attempt, even when the attempt succeeds.
    2. Takes the first result that isn't in `photo-ids` and calls `get()` for its full details. If that call fails, it tries the next result.
    3. Calls `completePhotoForDay()` and returns `true`.
 4. Failed attempts wait with exponential backoff: 1 s, 2 s, 4 s, 8 s, then 10 s for each attempt after that. After 10 attempts it returns `false`.
@@ -88,7 +87,7 @@ When `savePhotoForDate` creates a document, `onDayRecordCreated` fires. It does 
 ## Invariants and contracts
 
 - **A completed day keeps its photo.** No production code reassigns a completed day. `updatePhotoForDay` exists but is only called from tests.
-- **The Day page must create records with `status: 'created'` and `photo: null`.** That is what starts Path A.
+- **The Day page must create records with `status: 'created'` and `photo: null`.** That is what starts Path A. `createNewDayRecord()` uses Firestore `create()`, so it can never reset a record that already exists, including one in `processing`.
 - **Each photo should be used at most once, but this is best effort.** `photo-ids` is written after the assignment, by a trigger, so there are gaps:
   - Checking `photo-ids` and assigning a photo is not transactional. Two paths running at the same time can pick the same ID before either one is recorded.
   - Path B can overwrite a day that Path A is still filling, because `created` and `processing` both count as "needs photo". The later write wins, and both IDs are marked as used.

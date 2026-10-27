@@ -46,8 +46,9 @@ The infrastructure every slice depends on: Firebase Hosting routing, Firestore s
 
 ## `config/config`
 
-[config-storage.ts](../functions/src/platform/config-storage.ts) provides `getConfig()` and `updateConfig(partial)`, typed by `Config` in [config.ts](../functions/src/platform/config.ts). Nothing creates the document.
+[config-storage.ts](../functions/src/platform/config-storage.ts) provides `getConfig()`, `updateConfig(partial)`, and `advanceLastPage(page)`, typed by `Config` in [config.ts](../functions/src/platform/config.ts). Nothing creates the document.
 
+- `advanceLastPage(page)` is the only writer of `lastPage`; `updateConfig()` doesn't accept it. In a transaction, it sets `lastPage` to the larger of its current value and `page + 1`, and returns the result as the next page to fetch.
 - If it is missing, `getConfig()` throws. Every page then returns 500, and every scheduled job fails.
 - It has to be provisioned by hand in production. Locally it comes from `seed/`.
 

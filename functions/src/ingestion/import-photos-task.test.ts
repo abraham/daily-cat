@@ -58,10 +58,10 @@ vi.mock('./cat-api', () => ({
 
 // Mock the config-storage module
 const mockGetConfig = vi.fn();
-const mockUpdateConfig = vi.fn();
+const mockAdvanceLastPage = vi.fn();
 vi.mock('../platform/config-storage', () => ({
   getConfig: mockGetConfig,
-  updateConfig: mockUpdateConfig,
+  advanceLastPage: mockAdvanceLastPage,
 }));
 
 // Mock the photo-id-storage module
@@ -122,7 +122,9 @@ describe('import-photos-task', () => {
 
     mockList.mockResolvedValue(mockSearchResults);
     mockIsPhotoIdUsed.mockResolvedValue(false);
-    mockUpdateConfig.mockResolvedValue(undefined);
+    mockAdvanceLastPage.mockImplementation(async (page: string) =>
+      (Number(page) + 1).toString()
+    );
     mockStoreMultipleAvailablePhotoIds.mockResolvedValue(undefined);
 
     // Import the task module to initialize the handler
@@ -153,13 +155,36 @@ describe('import-photos-task', () => {
     // Verify that available photo IDs were stored
     expect(mockStoreMultipleAvailablePhotoIds).toHaveBeenCalledTimes(10);
 
-    // Verify that config was updated 10 times with incremental pages
-    expect(mockUpdateConfig).toHaveBeenCalledTimes(10);
+    // Verify that each fetched page was recorded with advanceLastPage
+    expect(mockAdvanceLastPage).toHaveBeenCalledTimes(10);
     for (let i = 0; i < 10; i++) {
-      expect(mockUpdateConfig).toHaveBeenNthCalledWith(i + 1, {
-        lastPage: (6 + i).toString(), // Starting from page 6 (5 + 1)
-      });
+      expect(mockAdvanceLastPage).toHaveBeenNthCalledWith(
+        i + 1,
+        (5 + i).toString()
+      );
     }
+  });
+
+  it('should continue from where another caller moved lastPage', async () => {
+    mockGetConfig.mockResolvedValue({
+      minDate: '2024-01-01',
+      importEnabled: true,
+      lastPage: '5',
+      importLimit: 2,
+      processLimit: 10,
+    });
+    mockAdvanceLastPage.mockResolvedValueOnce('9');
+
+    await mockScheduleHandler();
+
+    expect(mockList).toHaveBeenNthCalledWith(1, {
+      clientId: 'test-client-id',
+      page: '5',
+    });
+    expect(mockList).toHaveBeenNthCalledWith(2, {
+      clientId: 'test-client-id',
+      page: '9',
+    });
   });
 
   it('should skip import when disabled in config', async () => {
@@ -179,7 +204,7 @@ describe('import-photos-task', () => {
 
     // Verify that no API calls were made
     expect(mockList).not.toHaveBeenCalled();
-    expect(mockUpdateConfig).not.toHaveBeenCalled();
+    expect(mockAdvanceLastPage).not.toHaveBeenCalled();
     expect(mockStoreMultipleAvailablePhotoIds).not.toHaveBeenCalled();
 
     // Verify appropriate log message
@@ -238,8 +263,8 @@ describe('import-photos-task', () => {
     // Verify that all 10 API calls were attempted
     expect(mockList).toHaveBeenCalledTimes(10);
 
-    // Verify that config was updated 3 times (before the failing page)
-    expect(mockUpdateConfig).toHaveBeenCalledTimes(3);
+    // Verify that lastPage was advanced 3 times (before the failing page)
+    expect(mockAdvanceLastPage).toHaveBeenCalledTimes(3);
 
     // Verify that error was logged
     expect(mockLogger.error).toHaveBeenCalledWith(
@@ -262,7 +287,7 @@ describe('import-photos-task', () => {
     expect(mockIsPhotoIdUsed).not.toHaveBeenCalled();
     expect(mockStoreMultipleAvailablePhotoIds).not.toHaveBeenCalled();
 
-    // Config should still be updated 10 times
-    expect(mockUpdateConfig).toHaveBeenCalledTimes(10);
+    // lastPage should still be advanced 10 times
+    expect(mockAdvanceLastPage).toHaveBeenCalledTimes(10);
   });
 });

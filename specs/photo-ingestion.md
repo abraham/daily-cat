@@ -54,13 +54,13 @@ sequenceDiagram
   alt importEnabled is false
     I-->>S: return
   end
-  loop importLimit times, page = lastPage
+  loop importLimit times, page starts at lastPage
     I->>U: list(page)
     loop each result
       I->>FS: isPhotoIdUsed(id)
     end
     I->>FS: batch set available-photo-ids/{id}
-    I->>FS: update config.lastPage = page + 1
+    I->>FS: page = advanceLastPage(page) (transaction)
   end
 ```
 
@@ -68,7 +68,7 @@ sequenceDiagram
 
 - **The queue holds candidates, not reservations.** A queued ID can be used by the on-demand path after it is queued, so [Day assignment](day-assignment.md) checks `photo-ids` again before using it.
 - **Imports are idempotent.** Entries are written with `set({})`, so importing the same page twice creates no duplicates.
-- **The `lastPage` cursor is shared without coordination.** Import reads `lastPage` once at the start of a run and then writes its own local counter after each page. The on-demand path in Day assignment also advances `lastPage`. If both run at the same time, one can overwrite the other's advance, so a page may be fetched twice. The used-ID checks make this harmless, but it wastes API quota.
+- **The `lastPage` cursor is shared, and only moves forward.** Import and the on-demand path in Day assignment both advance it through Platform's `advanceLastPage()`, a transaction that never moves it backwards. Each caller then continues from the page it returns, so it skips pages the other caller already fetched. Two callers that start on the same page can still both fetch it. The used-ID checks make this harmless, but it wastes API quota.
 
 ## Failure modes
 

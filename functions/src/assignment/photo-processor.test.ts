@@ -51,7 +51,7 @@ vi.mock('./day-storage', () => mockDayStorage);
 // Mock config storage module
 const mockConfigStorage = {
   getConfig: vi.fn(),
-  updateConfig: vi.fn(),
+  advanceLastPage: vi.fn(),
 };
 
 vi.mock('../platform/config-storage', () => mockConfigStorage);
@@ -86,7 +86,9 @@ describe('Photo Processor', () => {
       importEnabled: true,
       lastPage: '1',
     });
-    mockConfigStorage.updateConfig.mockResolvedValue(undefined);
+    mockConfigStorage.advanceLastPage.mockImplementation(async (page: string) =>
+      (Number(page) + 1).toString()
+    );
     mockCatApi.list.mockResolvedValue({
       total: mockRandomPhotos.length,
       total_pages: 1,
@@ -114,9 +116,7 @@ describe('Photo Processor', () => {
         clientId: 'test-client-id',
         page: '1',
       });
-      expect(mockConfigStorage.updateConfig).toHaveBeenCalledWith({
-        lastPage: '2',
-      });
+      expect(mockConfigStorage.advanceLastPage).toHaveBeenCalledWith('1');
       expect(mockPhotoIdStorage.isPhotoIdUsed).toHaveBeenCalledWith(
         mockRandomPhotos[0].id
       );
@@ -219,7 +219,7 @@ describe('Photo Processor', () => {
 
       expect(result).toBe(true);
       expect(mockCatApi.list).toHaveBeenCalledTimes(2);
-      expect(mockConfigStorage.updateConfig).toHaveBeenCalledTimes(2);
+      expect(mockConfigStorage.advanceLastPage).toHaveBeenCalledTimes(2);
       expect(mockDayStorage.completePhotoForDay).toHaveBeenCalledWith(
         dayId,
         mockCompletePhoto

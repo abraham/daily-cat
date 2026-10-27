@@ -832,5 +832,31 @@ describe('Cat Function', () => {
       expect(dayStorageMock.createNewDayRecord).not.toHaveBeenCalled();
       expect(templateMock.renderProcessingPage).toHaveBeenCalledOnce();
     });
+
+    it('should render the processing page when the record already exists at create time', async () => {
+      dayStorageMock.getPhotoForDate.mockResolvedValue(null);
+      dayStorageMock.createNewDayRecord.mockResolvedValue(null);
+
+      const req = { method: 'GET', url: '/2025-06-27' } as any;
+      let statusCode = 0;
+      const res = {
+        set: () => res,
+        status: (code: number) => {
+          statusCode = code;
+          return res;
+        },
+      } as any;
+
+      await new Promise<void>((resolve) => {
+        res.send = () => resolve();
+        myFunctions.cat(req, res);
+      });
+
+      expect(statusCode).toBe(200);
+      expect(dayStorageMock.createNewDayRecord).toHaveBeenCalledWith(
+        '2025-06-27'
+      );
+      expect(templateMock.renderProcessingPage).toHaveBeenCalledOnce();
+    });
   });
 });
