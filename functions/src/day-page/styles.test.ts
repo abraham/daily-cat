@@ -2,12 +2,28 @@ import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 
+const assetsDir = path.join(__dirname, '..', '..', '..', 'assets');
 const stylesheet = fs
-  .readFileSync(
-    path.join(__dirname, '..', '..', '..', 'assets', 'styles.css'),
-    'utf8'
-  )
+  .readFileSync(path.join(assetsDir, 'styles.css'), 'utf8')
   .replace(/\/\*[\s\S]*?\*\//g, '');
+
+function tokensIn(block: string): Map<string, string> {
+  return new Map(
+    [...block.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)].map((match) => [
+      match[1],
+      match[2].trim(),
+    ])
+  );
+}
+
+const lightTokens = tokensIn(
+  stylesheet.match(/^:root\s*\{([^}]*)\}/m)?.[1] ?? ''
+);
+const darkTokens = tokensIn(
+  stylesheet.match(
+    /@media \(prefers-color-scheme: dark\)\s*\{\s*:root\s*\{([^}]*)\}/
+  )?.[1] ?? ''
+);
 
 const rootBlocks = [...stylesheet.matchAll(/:root\s*\{([^}]*)\}/g)].map(
   (match) => match[1]
@@ -47,6 +63,44 @@ describe('styles.css', () => {
     );
 
     expect(unusedTokens).toEqual([]);
+  });
+
+  it('opts in to both color schemes', () => {
+    expect(stylesheet).toMatch(/^:root\s*\{[^}]*color-scheme:\s*light dark;/m);
+  });
+
+  it('gives every token a dark value, and nothing else', () => {
+    expect(lightTokens.size).toBeGreaterThan(0);
+    expect([...darkTokens.keys()].sort()).toEqual(
+      [...lightTokens.keys()].sort()
+    );
+  });
+});
+
+describe.each([
+  ['day pages', path.join(__dirname, 'template.ts')],
+  ['404.html', path.join(assetsDir, '404.html')],
+])('%s', (_name, file) => {
+  const source = fs.readFileSync(file, 'utf8');
+
+  it('link the shared stylesheet and opt in to both color schemes', () => {
+    expect(source).toContain('<link rel="stylesheet" href="/styles.css" />');
+    expect(source).toContain(
+      '<meta name="color-scheme" content="light dark" />'
+    );
+    expect(source).not.toContain('<style');
+  });
+
+  it('set the toolbar color to --surface in each scheme', () => {
+    const themeColor = (scheme: string) =>
+      source.match(
+        new RegExp(
+          `name="theme-color"\\s+media="\\(prefers-color-scheme: ${scheme}\\)"\\s+content="([^"]+)"`
+        )
+      )?.[1];
+
+    expect(themeColor('light')).toBe(lightTokens.get('--surface'));
+    expect(themeColor('dark')).toBe(darkTokens.get('--surface'));
   });
 });
 

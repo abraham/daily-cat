@@ -218,6 +218,18 @@ function renderPage(
           name="viewport"
           content="width=device-width, initial-scale=1.0, user-scalable=no"
         />
+        <meta name="color-scheme" content="light dark" />
+        <!-- Toolbar colors; must match --surface in styles.css (tested). -->
+        <meta
+          name="theme-color"
+          media="(prefers-color-scheme: light)"
+          content="#ffffff"
+        />
+        <meta
+          name="theme-color"
+          media="(prefers-color-scheme: dark)"
+          content="#1e1e1e"
+        />
         <!-- Static: lit can't bind inside raw-text elements like <title>. -->
         <title>Daily Cat</title>
         <link rel="icon" type="image/png" href="/images/cat-face-small.png" />

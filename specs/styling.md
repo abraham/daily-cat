@@ -1,6 +1,6 @@
 # Styling and dark theme
 
-Part of the [architecture overview](README.md). Status: milestones T1 to T3 are **done**; T4 and T5 are **proposed**.
+Part of the [architecture overview](README.md). Status: milestones T1 to T4 are **done**; T5 is **proposed**.
 
 ## Purpose
 
@@ -24,7 +24,7 @@ Non-goals:
 
 ## Current state
 
-- Since T1, all day-page CSS lives in [assets/styles.css](../assets/styles.css), which every day page links from `<head>`. `404.html` doesn't use it yet.
+- Since T1, all CSS lives in [assets/styles.css](../assets/styles.css), which every day page links from `<head>`. Since T4, so does `404.html`.
 - Before T1, about 550 lines of CSS sat inside the `renderPage()` template literal in [template.ts](../functions/src/day-page/template.ts) and were re-sent with almost every request. The processing page also emitted a second `<style>` block inside `<body>` for the spinner.
 - Since T2, the stylesheet is organized by section and mobile-first, with one `@media (min-width: 1025px)` block and no `!important`. The header, footer, and profile are solid white, the icon buttons share `.icon-button`, and the dead code is gone. It went from 625 to 458 lines. The bullets below that describe the old structure are kept for the record and marked as fixed.
 - Fixed in T3: [svg.ts](../functions/src/day-page/svg.ts) hard-coded icon fills (`#333` and `#1f1f1f`), so the icons didn't follow the buttons' hover color. They now use `currentColor`.
@@ -38,7 +38,8 @@ Non-goals:
   - `user-scalable=no` blocks pinch zoom, which fails WCAG 1.4.4.
   - Every `env(safe-area-inset-*)` value is 0, because the viewport tag lacks `viewport-fit=cover`.
   - There is no `:focus-visible` style and no `prefers-reduced-motion` handling.
-- [404.html](../assets/404.html) is the default Firebase page, with its own palette and text about the Firebase CLI.
+- Fixed in T4: [404.html](../assets/404.html) was the default Firebase page, with its own palette and text about the Firebase CLI.
+- Since T4, every page follows the system light or dark setting.
 - Before T1, [template.test.ts](../functions/src/day-page/template.test.ts) checked for CSS text such as `.notifications-button {` and `width: 48px`. It now checks markup only.
 
 ## Design
@@ -105,7 +106,7 @@ The light `--link` (today's `#007acc`) passes with no margin, at 4.51:1. Any cha
 
 - `:root` sets `color-scheme: light dark`. The page also adds `<meta name="color-scheme" content="light dark">`, so the browser paints the right background before the stylesheet arrives and themes scrollbars and form controls.
 - `@media (prefers-color-scheme: dark) { :root { … } }` overrides the token values. This works in every browser the site supports. `light-dark()` would be shorter, but it only became broadly available in 2024.
-- Two `<meta name="theme-color">` tags, one per `media="(prefers-color-scheme: …)"`, set the mobile browser toolbar to `--surface`.
+- Two `<meta name="theme-color">` tags, one per `media="(prefers-color-scheme: …)"`, set the mobile browser toolbar to `--surface`. HTML can't read CSS variables, so the two values are written out in `template.ts` and `404.html`, and a test checks they match `--surface`.
 - Icons use `fill="currentColor"` and pick up `--text-muted`, or `--text` on hover. This also fixes hover feedback on the icons.
 - Photos and avatars are shown unchanged. Dimming photos in dark mode was considered and rejected, because the photo is the content.
 - The server renders the same HTML for both themes. The choice happens entirely in the browser, so the 1 s page caching and the CDN keep working.
@@ -130,7 +131,9 @@ The light `--link` (today's `#007acc`) passes with no margin, at 4.51:1. Any cha
 
 ### 404 page
 
-`404.html` links `/styles.css`, uses the same tokens, header style, and footer, and so gets the dark theme too. It keeps one link back to `/`. The Firebase CLI text goes away.
+`404.html` links `/styles.css` and has the same color-scheme and theme-color tags, so it gets the dark theme too. It uses the site's header (title only, linking to `/`) and footer, and a centered `.not-found` block: the cat-face image, "Page not found", one line of text, and a "See today's cat" link back to `/`. The link is a pill built from the tag tokens (`--hover`, `--active`, `--pressed`). The Firebase CLI text is gone. Hosting serves it with status 404 for any path that matches neither a file nor a rewrite.
+
+The header and footer markup is copied from `template.ts`, because `404.html` is a static file. A change to either must be made in both places.
 
 ## Invariants
 
@@ -146,8 +149,8 @@ The light `--link` (today's `#007acc`) passes with no margin, at 4.51:1. Any cha
   - a hex, `rgb()`, or `hsl()` color appears outside `:root`;
   - a `var(--x)` is used but not defined;
   - a token is defined but never used;
-  - a token is defined in `:root` but missing from the dark block (added in T4).
-- The same file checks that every SVG in `svg.ts` uses `fill="currentColor"`.
+  - a token is defined in `:root` but missing from the dark block, or the other way around.
+- The same file checks that every SVG in `svg.ts` uses `fill="currentColor"`, and that both `template.ts` and `404.html` link the stylesheet, have no `<style>`, opt in to both color schemes, and set `theme-color` to the light and dark `--surface`.
 - [template.test.ts](../functions/src/day-page/template.test.ts) stops checking CSS text. It checks markup instead: the stylesheet link, the `color-scheme` and `theme-color` tags, and the classes that `src/notifications.ts` and `src/toast.ts` depend on (`hidden`, `show`, `notifications-on`, `notifications-off`, `toast`).
 - Manual check for each milestone: in the emulator (`npm start`), open a photo page, a processing page, and the 404 page, with the browser's developer tools set to light, dark, and reduced motion, at widths 375 px and 1280 px.
 
@@ -191,10 +194,19 @@ The only visual change is the icons. They take the button's color: `--text-muted
 
 How it was checked: the same comparison as T2, between T2 and T3. With the icons hidden in both versions, every page matched pixel for pixel at all seven widths, including the tags' rest, hover, and pressed colors. A second script measured each icon's fill at rest and on hover in both versions to confirm the change above.
 
-### T4. Dark theme
+### T4. Dark theme (done)
 
 1. Add the dark token values, `color-scheme`, and the `theme-color` tags.
 2. Restyle `404.html` on the shared stylesheet.
+
+The dark values are the ones in the [Tokens](#tokens) table. Light mode is unchanged.
+
+How it was checked:
+
+- Light mode, compared with T3 using the T2 script at all seven widths: every page matched pixel for pixel.
+- Dark mode: screenshots of the photo, processing, and 404 pages at 375 px and 1280 px, reviewed by eye.
+- Contrast: a script measured each text element's computed color against the background it actually sits on (translucent layers blended), in both themes, on all three pages. Every one is at least 4.5:1. The lowest are 4.51:1 in light (footer links) and 5.69:1 in dark (tags).
+- The Hosting emulator returns the new page with status 404 for an unknown path, and its stylesheet and image load.
 
 ### T5. Accessibility and polish
 

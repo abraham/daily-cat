@@ -1,6 +1,7 @@
 /* Tokens. The only place colors are written; everything else uses var(). */
 
 :root {
+  color-scheme: light dark;
   --bg: #ffffff;
   --surface: #ffffff;
   --text: #333333;
@@ -15,6 +16,25 @@
   --toast-text: #f5f5f5;
   --spinner-track: #f0f0f0;
   --spinner-head: #666666;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121212;
+    --surface: #1e1e1e;
+    --text: #e6e6e6;
+    --text-muted: #a3a3a3;
+    --border: rgb(255 255 255 / 12%);
+    --hover: #2a2a2a;
+    --active: #333333;
+    --pressed: #3d3d3d;
+    --link: #4db3ff;
+    --link-hover: #80c8ff;
+    --toast-bg: rgb(235 235 235 / 95%);
+    --toast-text: #1f1f1f;
+    --spinner-track: #2a2a2a;
+    --spinner-head: #a3a3a3;
+  }
 }
 
 /* Base */
@@ -43,7 +63,8 @@ body {
 
 .header-title,
 .icon-button,
-.tag {
+.tag,
+.not-found-link {
   touch-action: manipulation;
 }
 
@@ -372,6 +393,58 @@ body {
   line-height: 1.4;
   text-align: center;
   color: var(--text-muted);
+}
+
+.not-found {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 30px 15px;
+  text-align: center;
+}
+
+.not-found img {
+  width: 96px;
+  height: 96px;
+}
+
+.not-found h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.not-found p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.not-found-link {
+  margin-top: 8px;
+  padding: 10px 18px;
+  border-radius: 20px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  background-color: var(--hover);
+  transition: background-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.not-found-link:hover {
+  background-color: var(--active);
+}
+
+.not-found-link:active {
+  background-color: var(--pressed);
+  transform: scale(0.95);
 }
 
 /* Larger screens */
