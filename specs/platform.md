@@ -24,7 +24,7 @@ The infrastructure every slice depends on: Firebase Hosting routing, Firestore s
 ## Functions runtime
 
 - [functions/](../functions/) is a separate npm package (`main: lib/index.js`, `engines.node: 22`). Firebase deploys it with runtime `nodejs22`, and its `predeploy` hook runs `npm --prefix functions run build`.
-- [functions/src/index.ts](../functions/src/index.ts) only re-exports the eight functions from `src/tasks/`. Each task file defines exactly one function.
+- [functions/src/index.ts](../functions/src/index.ts) only re-exports the eight functions from `src/tasks/`. Each task file defines exactly one function. [index.test.ts](../functions/src/index.test.ts) fails if that list of names changes, because Firebase deploys a renamed function as a delete plus a create.
 - Every storage module, and `sitemap-task.ts`, initializes `firebase-admin` itself with a `getApps().length === 0` guard.
 
 ## Firestore
@@ -76,6 +76,7 @@ The infrastructure every slice depends on: Firebase Hosting routing, Firestore s
 | `public/404.html`, `public/images/` | `rollup-plugin-copy`                                                        | [assets/](../assets/)                                           |
 
 - Root `npm run build` builds the functions first, then runs `rollup -c`.
+- The functions build deletes `lib/` before running `tsc`, so files from moved or deleted modules don't linger. `npm start` (`tsc --watch`) doesn't.
 - The root project uses TypeScript 6 with [tsconfig.json](../tsconfig.json).
 
 ## Local development
