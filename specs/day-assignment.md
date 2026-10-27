@@ -105,7 +105,7 @@ When `savePhotoForDate` creates a document, `onDayRecordCreated` fires. It does 
 
 ## Code and tests
 
-Everything is in [functions/src/assignment/](../functions/src/assignment/). Other slices import it only through [index.ts](../functions/src/assignment/index.ts), which exports `getPhotoForDate()`, `createNewDayRecord()`, `isPhotoIdUsed()`, and the `DayRecord` type.
+Everything is in [functions/src/assignment/](../functions/src/assignment/). Other slices import it only through [index.ts](../functions/src/assignment/index.ts), which exports `getPhotoForDate()`, `getCompletedDaysSince()`, `createNewDayRecord()`, `isPhotoIdUsed()`, and the `DayRecord` type.
 
 - [photo-processor.ts](../functions/src/assignment/photo-processor.ts), [photo-processor.test.ts](../functions/src/assignment/photo-processor.test.ts)
 - [find-photo-for-day-task.ts](../functions/src/assignment/find-photo-for-day-task.ts), [find-photo-for-day-task.test.ts](../functions/src/assignment/find-photo-for-day-task.test.ts)

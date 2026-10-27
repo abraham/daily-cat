@@ -1,24 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock Firebase Admin before importing the module
-const mockGet = vi.fn();
+const mockGetCompletedDaysSince = vi.fn();
+
+vi.mock('../assignment/day-storage', () => ({
+  getCompletedDaysSince: mockGetCompletedDaysSince,
+}));
 
 vi.mock('../platform/firebase', () => ({
   getApp: vi.fn(() => ({})),
 }));
 
 vi.mock('firebase-admin/firestore', () => ({
-  getFirestore: vi.fn(() => ({
-    collection: vi.fn(() => ({
-      where: vi.fn(() => ({
-        where: vi.fn(() => ({
-          orderBy: vi.fn(() => ({
-            get: mockGet,
-          })),
-        })),
-      })),
-    })),
-  })),
+  getFirestore: vi.fn(() => ({})),
 }));
 
 // Mock Firebase Functions
@@ -88,34 +81,26 @@ describe('sitemap function', () => {
   });
 
   it('should generate valid XML sitemap format', async () => {
-    // Mock Firestore response
-    const mockSnapshot = {
-      docs: [
-        {
-          id: '2024-01-01',
-          data: () => ({
-            status: 'completed',
-            updatedAt: {
-              toDate: () => new Date('2024-01-01T12:00:00Z'),
-            },
-          }),
+    mockGetCompletedDaysSince.mockResolvedValue([
+      {
+        id: '2024-01-01',
+        status: 'completed',
+        updatedAt: {
+          toDate: () => new Date('2024-01-01T12:00:00Z'),
         },
-        {
-          id: '2024-01-02',
-          data: () => ({
-            status: 'completed',
-            updatedAt: {
-              toDate: () => new Date('2024-01-02T12:00:00Z'),
-            },
-          }),
+      },
+      {
+        id: '2024-01-02',
+        status: 'completed',
+        updatedAt: {
+          toDate: () => new Date('2024-01-02T12:00:00Z'),
         },
-      ],
-    };
-
-    mockGet.mockResolvedValue(mockSnapshot);
+      },
+    ]);
 
     await myFunctions.sitemap(mockRequest, mockResponse);
 
+    expect(mockGetCompletedDaysSince).toHaveBeenCalledWith('2024-01-01');
     expect(mockResponse.set).toHaveBeenCalledWith(
       'Content-Type',
       'application/xml'
@@ -146,12 +131,7 @@ describe('sitemap function', () => {
   });
 
   it('should handle empty results gracefully', async () => {
-    // Mock empty Firestore response
-    const mockSnapshot = {
-      docs: [],
-    };
-
-    mockGet.mockResolvedValue(mockSnapshot);
+    mockGetCompletedDaysSince.mockResolvedValue([]);
 
     await myFunctions.sitemap(mockRequest, mockResponse);
 
@@ -165,8 +145,7 @@ describe('sitemap function', () => {
   });
 
   it('should handle database errors', async () => {
-    // Mock Firestore error
-    mockGet.mockRejectedValue(new Error('Database error'));
+    mockGetCompletedDaysSince.mockRejectedValue(new Error('Database error'));
 
     await myFunctions.sitemap(mockRequest, mockResponse);
 

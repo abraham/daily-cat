@@ -135,6 +135,27 @@ export async function getPhotosForDateRange(
 }
 
 /**
+ * Get completed day records from a start date onward, ordered by date
+ * @param startDate - Start date (ISO string, YYYY-MM-DD), inclusive
+ * @returns Promise<DayRecord[]> - Array of completed day records
+ */
+export async function getCompletedDaysSince(
+  startDate: string
+): Promise<DayRecord[]> {
+  const snapshot = await db
+    .collection(COLLECTION_NAME)
+    .where('status', '==', 'completed')
+    .where('__name__', '>=', startDate)
+    .orderBy('__name__', 'asc')
+    .get();
+
+  return snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as DayRecord[];
+}
+
+/**
  * Delete a day record
  * @param id - ISO date string (YYYY-MM-DD) - used as document ID
  * @returns Promise<void>

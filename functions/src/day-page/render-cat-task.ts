@@ -2,10 +2,10 @@ import { render } from '@lit-labs/ssr';
 import * as logger from 'firebase-functions/logger';
 import { onRequest } from 'firebase-functions/v2/https';
 import { TemplateResult } from 'lit-html';
-import { calculateNavigationUrls } from '../navigation';
+import { calculateNavigationUrls } from './navigation';
 import { getConfig } from '../platform';
 import { createNewDayRecord, getPhotoForDate } from '../assignment';
-import { renderPhotoPage, renderProcessingPage } from '../template';
+import { renderPhotoPage, renderProcessingPage } from './template';
 
 export const cat = onRequest(async (request, response) => {
   if (request.method !== 'GET') {

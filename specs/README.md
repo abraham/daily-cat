@@ -83,8 +83,7 @@ flowchart LR
 | ----------------------------------------------------------------------- | ---------------------------------------------------------- |
 | `functions/src/ingestion/`                                              | Photo ingestion                                            |
 | `functions/src/assignment/`                                             | Day assignment                                             |
-| `functions/src/tasks/render-cat-task.ts`, `sitemap-task.ts`             | Day page                                                   |
-| `functions/src/template.ts`, `navigation.ts`, `svg.ts`                  | Day page                                                   |
+| `functions/src/day-page/`                                               | Day page                                                   |
 | `functions/src/tasks/topics-task.ts`, `send-notifications-task.ts`      | Notifications                                              |
 | `functions/src/storage/`                                                | One module per collection, owned by the slice listed above |
 | `functions/src/platform/`                                               | Platform                                                   |
