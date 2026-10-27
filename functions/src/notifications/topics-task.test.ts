@@ -112,6 +112,81 @@ describe('topics task', () => {
       success: true,
       message: 'Subscribed to topic: hour-12',
       topics: ['hour-12'],
+      unsubscribedTopics: [],
+    });
+  });
+
+  it('should subscribe to the topic given in the request', async () => {
+    mockRequest.query.topic = 'hour-07';
+    const { getTokenDocument, saveTokenDocument } =
+      await import('./token-storage.js');
+    (getTokenDocument as any).mockResolvedValue(null);
+    mockMessaging.subscribeToTopic.mockResolvedValue({ successCount: 1 });
+
+    await topics(mockRequest, mockResponse);
+
+    expect(mockMessaging.subscribeToTopic).toHaveBeenCalledWith(
+      ['test-token-123456789'],
+      'hour-07'
+    );
+    expect(saveTokenDocument).toHaveBeenCalledWith(
+      'test-token-123456789',
+      expect.objectContaining({ topics: ['hour-07'] })
+    );
+  });
+
+  it.each(['hour-24', 'hour-7', 'daily', ''])(
+    'should return 400 for an invalid topic %j',
+    async (topic) => {
+      mockRequest.query.topic = topic;
+
+      await topics(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.send).toHaveBeenCalledWith(
+        'Invalid topic. Use hour-00 to hour-23.'
+      );
+      expect(mockMessaging.subscribeToTopic).not.toHaveBeenCalled();
+    }
+  );
+
+  it("should replace a token's other topics so it gets one notification a day", async () => {
+    const createdAt = Timestamp.fromDate(new Date('2024-06-01T00:00:00Z'));
+    const { getTokenDocument, saveTokenDocument } =
+      await import('./token-storage.js');
+    (getTokenDocument as any).mockResolvedValue({
+      token: 'test-token-123456789',
+      topics: ['hour-03', 'hour-12', 'hour-20'],
+      createdAt,
+      updatedAt: createdAt,
+    });
+    mockMessaging.subscribeToTopic.mockResolvedValue({ successCount: 1 });
+    mockMessaging.unsubscribeFromTopic
+      .mockRejectedValueOnce(new Error('FCM unavailable'))
+      .mockResolvedValueOnce(undefined);
+
+    await topics(mockRequest, mockResponse);
+
+    expect(mockMessaging.unsubscribeFromTopic).toHaveBeenCalledTimes(2);
+    expect(mockMessaging.unsubscribeFromTopic).toHaveBeenCalledWith(
+      ['test-token-123456789'],
+      'hour-03'
+    );
+    expect(mockMessaging.unsubscribeFromTopic).toHaveBeenCalledWith(
+      ['test-token-123456789'],
+      'hour-20'
+    );
+    expect(saveTokenDocument).toHaveBeenCalledWith('test-token-123456789', {
+      token: 'test-token-123456789',
+      topics: ['hour-12'],
+      createdAt,
+      updatedAt: expect.any(Timestamp),
+    });
+    expect(mockResponse.json).toHaveBeenCalledWith({
+      success: true,
+      message: 'Subscribed to topic: hour-12',
+      topics: ['hour-12'],
+      unsubscribedTopics: ['hour-03', 'hour-20'],
     });
   });
 

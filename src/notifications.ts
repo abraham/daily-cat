@@ -9,41 +9,15 @@ import {
 } from 'firebase/messaging';
 import { showToast } from './toast';
 
-// Function to calculate hours until next notification at 00:15 GMT
-const getHoursUntilNextNotification = (): number => {
-  const now = new Date();
-
-  // Create next notification time (00:15 GMT) - use current date as starting point
-  const nextNotification = new Date(now);
-  nextNotification.setUTCHours(0, 15, 0, 0);
-
-  // If we've already passed 00:15 GMT today, set it for tomorrow
-  if (now >= nextNotification) {
-    nextNotification.setUTCDate(nextNotification.getUTCDate() + 1);
-  }
-
-  // Calculate hours difference
-  const timeDiff = nextNotification.getTime() - now.getTime();
-  return Math.ceil(timeDiff / (1000 * 60 * 60)); // Convert to hours and round up
-};
+const TOKEN_KEY = 'notification_token';
+const TOPIC_KEY = 'notification_topic';
+// The token the server last confirmed. Differs from the current token after FCM rotates it.
+const SYNCED_TOKEN_KEY = 'notification_synced_token';
 
 const localToken = () => {
   console.log('Getting local token');
-  const value = localStorage.getItem('notification_token');
+  const value = localStorage.getItem(TOKEN_KEY);
   console.log(value);
-  return value;
-};
-
-const hasTopic = (): boolean => {
-  const value = localStorage.getItem('notification_topic');
-  console.log('hasTopic', value);
-  return !!value;
-};
-
-// TODO: Delete this after July 2025
-const shouldUpgradeToTopic = () => {
-  const value = hasLocalToken() && !hasTopic();
-  console.log('shouldUpgradeToTopic', value);
   return value;
 };
 
@@ -84,7 +58,7 @@ const vapidKey =
 let messaging: Messaging;
 
 export const initNotifications = async (app: FirebaseApp) => {
-  if (!isSupported()) {
+  if (!(await isSupported())) {
     console.warn('This browser does not support notifications.');
     return;
   }
@@ -101,10 +75,6 @@ export const initNotifications = async (app: FirebaseApp) => {
 
   if (await isSubscribed()) {
     showNotificationsOn();
-    if (shouldUpgradeToTopic()) {
-      await subscribe();
-      console.log('Upgraded to topic subscription');
-    }
   } else {
     setTimeout(async () => {
       // Chrome mobile randomly shows default instead of granted.
@@ -155,7 +125,7 @@ const isSubscribed = async (): Promise<boolean> => {
   console.log('Updating token');
   const token = await getToken(messaging, { vapidKey });
   console.log(token);
-  localStorage.setItem('notification_token', token);
+  await syncToken(token);
 
   return true;
 };
@@ -164,11 +134,37 @@ const utcHourPadded = (date: Date): string => {
   return date.getUTCHours().toString().padStart(2, '0');
 };
 
-const subscribeToTopics = async (token: string) => {
-  console.log(`Subscribing to topic`);
-  const response = await fetch(`/topics?${new URLSearchParams({ token })}`, {
-    method: 'POST',
-  });
+const currentHourTopic = () => `hour-${utcHourPadded(new Date())}`;
+
+// Registers the current token with the server if the server hasn't confirmed it yet:
+// after FCM rotates the token, and once for clients from before topics were replaced.
+const syncToken = async (token: string) => {
+  if (localStorage.getItem(SYNCED_TOKEN_KEY) === token) {
+    return;
+  }
+
+  const previousToken = localToken();
+  const topic = localStorage.getItem(TOPIC_KEY) ?? currentHourTopic();
+  try {
+    await subscribeToTopics(token, topic);
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(TOPIC_KEY, topic);
+    localStorage.setItem(SYNCED_TOKEN_KEY, token);
+
+    if (previousToken && previousToken !== token) {
+      await unsubscribeFromTopics(previousToken);
+    }
+  } catch (error) {
+    console.error('Error syncing notification token:', error);
+  }
+};
+
+const subscribeToTopics = async (token: string, topic: string) => {
+  console.log(`Subscribing to topic ${topic}`);
+  const response = await fetch(
+    `/topics?${new URLSearchParams({ token, topic })}`,
+    { method: 'POST' }
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to subscribe to topic`);
@@ -183,7 +179,8 @@ const unsubscribeFromTopics = async (token: string) => {
     method: 'DELETE',
   });
 
-  if (!response.ok) {
+  // 404 means the server has no record of the token, which is the goal anyway.
+  if (!response.ok && response.status !== 404) {
     throw new Error(`Failed to unsubscribe from topic`);
   }
 
@@ -196,13 +193,12 @@ const subscribe = async () => {
     await Notification.requestPermission();
     if (isGranted()) {
       const token = await getToken(messaging, { vapidKey });
-      await subscribeToTopics(token);
+      const topic = currentHourTopic();
+      await subscribeToTopics(token, topic);
       console.log('token', token);
-      localStorage.setItem('notification_token', token);
-      localStorage.setItem(
-        'notification_topic',
-        `hour-${utcHourPadded(new Date())}`
-      );
+      localStorage.setItem(TOKEN_KEY, token);
+      localStorage.setItem(TOPIC_KEY, topic);
+      localStorage.setItem(SYNCED_TOKEN_KEY, token);
       showNotificationsOn();
 
       showToast(`Subscribed to daily notifications.`, 'success');
@@ -221,7 +217,9 @@ const unsubscribe = async (token: string) => {
     await unsubscribeFromTopics(token);
     await deleteToken(messaging);
     console.log('Token deleted successfully');
-    localStorage.removeItem('notification_token');
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(TOPIC_KEY);
+    localStorage.removeItem(SYNCED_TOKEN_KEY);
     showNotificationsOff();
 
     showToast('Unsubscribed from daily notifications', 'info');
@@ -236,10 +234,8 @@ export {
   subscribe,
   unsubscribe,
   listen,
-  getHoursUntilNextNotification,
   subscribeToTopics,
   unsubscribeFromTopics,
   utcHourPadded,
-  hasTopic,
-  shouldUpgradeToTopic,
+  syncToken,
 };

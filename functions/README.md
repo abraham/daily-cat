@@ -30,12 +30,12 @@ The code has one folder per slice of the system:
 
 ```
 src/
-├── index.ts          # Re-exports the eight deployed functions
+├── index.ts          # Re-exports the nine deployed functions
 ├── platform/         # Firebase app, config/config, secrets
 ├── ingestion/        # Photo ingestion: Unsplash client, available-photo-ids queue
 ├── assignment/       # Day assignment: days and photo-ids
 ├── day-page/         # Day page: cat and sitemap
-└── notifications/    # Notifications: topics, sendNotificationsScheduled, tokens
+└── notifications/    # Notifications: topics, sendNotificationsScheduled, pruneTokensScheduled, tokens
 
 lib/                  # Compiled output (gitignored)
 ```

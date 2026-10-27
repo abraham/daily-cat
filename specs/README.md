@@ -11,7 +11,7 @@ This document is the entry point. Each slice of the system is described in its o
 | [Photo ingestion](photo-ingestion.md) | Search Unsplash and queue unused photo IDs                                 | `importPhotosScheduled`                                                            | `available-photo-ids`          |
 | [Day assignment](day-assignment.md)   | Give each day a photo, and never reuse a photo                             | `onDayRecordCreated`, `processAvailablePhotosScheduled`, `recordPhotoIdOnDayWrite` | `days`, `photo-ids`            |
 | [Day page](day-page.md)               | Server-rendered day pages, navigation, sharing, and the sitemap            | `cat`, `sitemap`                                                                   | — (creates placeholder `days`) |
-| [Notifications](notifications.md)     | Web push opt-in and opt-out, and the daily send                            | `topics`, `sendNotificationsScheduled`                                             | `tokens`                       |
+| [Notifications](notifications.md)     | Web push opt-in and opt-out, the daily send, and pruning dead tokens       | `topics`, `sendNotificationsScheduled`, `pruneTokensScheduled`                     | `tokens`                       |
 | [Platform](platform.md)               | Hosting, Firestore rules, config, secrets, build, local development, CI/CD | —                                                                                  | `config/config`                |
 
 ## System diagram
@@ -29,6 +29,7 @@ flowchart LR
   subgraph Notifications
     TopicsFn[topics]
     NotifyFn[sendNotificationsScheduled]
+    PruneFn[pruneTokensScheduled]
   end
   subgraph Ingestion[Photo ingestion]
     ImportFn[importPhotosScheduled]
@@ -56,6 +57,8 @@ flowchart LR
   TopicsFn --> Tokens[(tokens)]
   TopicsFn --> FCM[FCM topics]
   NotifyFn --> FCM
+  PruneFn --> Tokens
+  PruneFn -->|dry run, unsubscribe| FCM
   FCM --> SW
 ```
 

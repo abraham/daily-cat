@@ -18,7 +18,6 @@ describe('Notifications', () => {
   const mockToken = 'mock-firebase-token';
 
   // Mock localStorage at the global level since it's read at module import time
-  const originalGetItem = localStorage.getItem;
   const mockGetItem = vi.fn();
   const mockSetItem = vi.fn();
   const mockRemoveItem = vi.fn();
@@ -74,14 +73,16 @@ describe('Notifications', () => {
   });
 
   afterEach(() => {
-    // Restore original localStorage
+    const store = new Map<string, string>();
     Object.defineProperty(globalThis, 'localStorage', {
       value: {
-        getItem: originalGetItem,
-        setItem: localStorage.setItem,
-        removeItem: localStorage.removeItem,
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: (key: string, value: string) => store.set(key, String(value)),
+        removeItem: (key: string) => store.delete(key),
+        clear: () => store.clear(),
       },
       writable: true,
+      configurable: true,
     });
   });
 
@@ -449,210 +450,100 @@ describe('Notifications', () => {
     });
   });
 
-  describe('getHoursUntilNextNotification', () => {
-    beforeEach(() => {
-      vi.useFakeTimers();
-    });
-
-    afterEach(() => {
-      vi.useRealTimers();
-    });
-
-    const testTimeCalculation = (
-      mockTime: string,
-      expectedHours: number,
-      description: string
-    ) => {
-      it(description, async () => {
-        // Set the system time to the mock time
-        vi.setSystemTime(new Date(mockTime));
-
-        // Re-import the module to get fresh function with mocked time
-        vi.resetModules();
-        const { getHoursUntilNextNotification } =
-          await import('./notifications');
-        const result = getHoursUntilNextNotification();
-        expect(result).toBe(expectedHours);
-      });
-    };
-
-    // Test various times throughout the day
-    testTimeCalculation(
-      '2025-06-30T00:10:00.000Z',
-      1,
-      'should return 1 hour when current time is 00:10 GMT (5 minutes before notification)'
-    );
-
-    testTimeCalculation(
-      '2025-06-30T00:14:59.999Z',
-      1,
-      'should return 1 hour when current time is 00:14:59 GMT (1 second before notification)'
-    );
-
-    testTimeCalculation(
-      '2025-06-30T00:15:00.000Z',
-      24,
-      'should return 24 hours when current time is exactly 00:15 GMT (notification time)'
-    );
-
-    testTimeCalculation(
-      '2025-06-30T00:16:00.000Z',
-      24,
-      'should return 24 hours when current time is 00:16 GMT (1 minute after notification)'
-    );
-
-    testTimeCalculation(
-      '2025-06-30T01:00:00.000Z',
-      24,
-      'should return 24 hours when current time is 01:00 GMT (45 minutes after notification)'
-    );
-
-    testTimeCalculation(
-      '2025-06-30T12:00:00.000Z',
-      13,
-      'should return 13 hours when current time is 12:00 GMT (noon)'
-    );
-
-    testTimeCalculation(
-      '2025-06-30T18:00:00.000Z',
-      7,
-      'should return 7 hours when current time is 18:00 GMT (6 PM)'
-    );
-
-    testTimeCalculation(
-      '2025-06-30T23:00:00.000Z',
-      2,
-      'should return 2 hours when current time is 23:00 GMT (11 PM)'
-    );
-
-    testTimeCalculation(
-      '2025-06-30T23:59:59.999Z',
-      1,
-      'should return 1 hour when current time is 23:59:59 GMT (1 second before midnight)'
-    );
-
-    // Test edge cases
-    testTimeCalculation(
-      '2025-12-31T23:59:59.999Z',
-      1,
-      "should correctly handle year boundary (New Year's Eve)"
-    );
-
-    testTimeCalculation(
-      '2025-02-28T23:59:59.999Z',
-      1,
-      'should correctly handle month boundary (end of February)'
-    );
-
-    testTimeCalculation(
-      '2024-02-29T00:15:00.000Z',
-      24,
-      'should correctly handle leap year (February 29th notification time)'
-    );
-
-    it('should handle fractional hours correctly by rounding up', async () => {
-      // Test with a time that results in fractional hours
-      vi.setSystemTime(new Date('2025-06-30T23:45:00.000Z')); // 30 minutes until notification
-
-      vi.resetModules();
-      const { getHoursUntilNextNotification } = await import('./notifications');
-      const result = getHoursUntilNextNotification();
-      // 30 minutes = 0.5 hours, should round up to 1
-      expect(result).toBe(1);
-    });
-
-    it('should handle very small time differences correctly', async () => {
-      // Test with 1 minute until notification
-      vi.setSystemTime(new Date('2025-06-30T00:14:00.000Z')); // 1 minute until notification
-
-      vi.resetModules();
-      const { getHoursUntilNextNotification } = await import('./notifications');
-      const result = getHoursUntilNextNotification();
-      // 1 minute = 0.0167 hours, should round up to 1
-      expect(result).toBe(1);
-    });
-  });
   describe('Topic-based notification methods', () => {
-    describe('hasTopic', () => {
-      it('should return true when notification_topic exists in localStorage', () => {
-        // Test by directly calling the localStorage mock
-        mockGetItem.mockReturnValue('hour-12');
-        const result = mockGetItem('notification_topic');
-        expect(result).toBe('hour-12');
-        expect(!!result).toBe(true);
+    describe('syncToken', () => {
+      beforeEach(() => {
+        localStorage.clear();
+        vi.mocked(fetch).mockResolvedValue({ ok: true } as Response);
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2025-06-30T15:30:00.000Z'));
       });
 
-      it('should return false when notification_topic does not exist in localStorage', () => {
-        mockGetItem.mockReturnValue(null);
-        const result = mockGetItem('notification_topic');
-        expect(result).toBe(null);
-        expect(!!result).toBe(false);
+      afterEach(() => {
+        vi.useRealTimers();
+        localStorage.clear();
       });
 
-      it('should return false when notification_topic is empty string', () => {
-        mockGetItem.mockReturnValue('');
-        const result = mockGetItem('notification_topic');
-        expect(result).toBe('');
-        expect(!!result).toBe(false);
-      });
-    });
+      it('does nothing when the server already confirmed the token', async () => {
+        localStorage.setItem('notification_token', 'token-a');
+        localStorage.setItem('notification_synced_token', 'token-a');
 
-    describe('shouldUpgradeToTopic logic', () => {
-      it('should return true when user has local token but no topic', () => {
-        // Test the logical condition: hasLocalToken() && !hasTopic()
-        mockGetItem.mockImplementation((key: string) => {
-          if (key === 'notification_token') return 'existing-token';
-          if (key === 'notification_topic') return null;
-          return null;
+        vi.resetModules();
+        const { syncToken } = await import('./notifications');
+        await syncToken('token-a');
+
+        expect(fetch).not.toHaveBeenCalled();
+      });
+
+      it('registers a rotated token with the stored topic and drops the old one', async () => {
+        localStorage.setItem('notification_token', 'token-a');
+        localStorage.setItem('notification_topic', 'hour-07');
+        localStorage.setItem('notification_synced_token', 'token-a');
+
+        vi.resetModules();
+        const { syncToken } = await import('./notifications');
+        await syncToken('token-b');
+
+        expect(fetch).toHaveBeenNthCalledWith(
+          1,
+          '/topics?token=token-b&topic=hour-07',
+          { method: 'POST' }
+        );
+        expect(fetch).toHaveBeenNthCalledWith(2, '/topics?token=token-a', {
+          method: 'DELETE',
         });
-
-        const hasToken = !!mockGetItem('notification_token');
-        const hasTopic = !!mockGetItem('notification_topic');
-        const shouldUpgrade = hasToken && !hasTopic;
-
-        expect(shouldUpgrade).toBe(true);
+        expect(localStorage.getItem('notification_token')).toBe('token-b');
+        expect(localStorage.getItem('notification_synced_token')).toBe(
+          'token-b'
+        );
       });
 
-      it('should return false when user has no local token', () => {
-        mockGetItem.mockImplementation((key: string) => {
-          if (key === 'notification_token') return null;
-          if (key === 'notification_topic') return null;
-          return null;
-        });
+      it('re-registers an unchanged token once for clients synced before topics were replaced', async () => {
+        localStorage.setItem('notification_token', 'token-a');
+        localStorage.setItem('notification_topic', 'hour-07');
 
-        const hasToken = !!mockGetItem('notification_token');
-        const hasTopic = !!mockGetItem('notification_topic');
-        const shouldUpgrade = hasToken && !hasTopic;
+        vi.resetModules();
+        const { syncToken } = await import('./notifications');
+        await syncToken('token-a');
 
-        expect(shouldUpgrade).toBe(false);
+        expect(fetch).toHaveBeenCalledOnce();
+        expect(fetch).toHaveBeenCalledWith(
+          '/topics?token=token-a&topic=hour-07',
+          { method: 'POST' }
+        );
+        expect(localStorage.getItem('notification_synced_token')).toBe(
+          'token-a'
+        );
       });
 
-      it('should return false when user has both token and topic', () => {
-        mockGetItem.mockImplementation((key: string) => {
-          if (key === 'notification_token') return 'existing-token';
-          if (key === 'notification_topic') return 'hour-12';
-          return null;
-        });
+      it('uses the current hour when no topic is stored', async () => {
+        localStorage.setItem('notification_token', 'token-a');
 
-        const hasToken = !!mockGetItem('notification_token');
-        const hasTopic = !!mockGetItem('notification_topic');
-        const shouldUpgrade = hasToken && !hasTopic;
+        vi.resetModules();
+        const { syncToken } = await import('./notifications');
+        await syncToken('token-a');
 
-        expect(shouldUpgrade).toBe(false);
+        expect(fetch).toHaveBeenCalledWith(
+          '/topics?token=token-a&topic=hour-15',
+          { method: 'POST' }
+        );
+        expect(localStorage.getItem('notification_topic')).toBe('hour-15');
       });
 
-      it('should return false when user has topic but no token', () => {
-        mockGetItem.mockImplementation((key: string) => {
-          if (key === 'notification_token') return null;
-          if (key === 'notification_topic') return 'hour-12';
-          return null;
-        });
+      it('keeps the old token when the server rejects the new one', async () => {
+        localStorage.setItem('notification_token', 'token-a');
+        localStorage.setItem('notification_synced_token', 'token-a');
+        vi.mocked(fetch).mockResolvedValue({ ok: false } as Response);
 
-        const hasToken = !!mockGetItem('notification_token');
-        const hasTopic = !!mockGetItem('notification_topic');
-        const shouldUpgrade = hasToken && !hasTopic;
+        vi.resetModules();
+        const { syncToken } = await import('./notifications');
+        await syncToken('token-b');
 
-        expect(shouldUpgrade).toBe(false);
+        expect(fetch).toHaveBeenCalledOnce();
+        expect(localStorage.getItem('notification_token')).toBe('token-a');
+        expect(localStorage.getItem('notification_synced_token')).toBe(
+          'token-a'
+        );
       });
     });
 
@@ -699,7 +590,7 @@ describe('Notifications', () => {
     });
 
     describe('subscribeToTopics', () => {
-      it('should make POST request to /topics endpoint with token', async () => {
+      it('should make POST request to /topics endpoint with token and topic', async () => {
         const mockResponse = { ok: true };
         vi.mocked(fetch).mockResolvedValue(mockResponse as Response);
 
@@ -707,11 +598,12 @@ describe('Notifications', () => {
         const { subscribeToTopics } = await import('./notifications');
 
         const testToken = 'test-token-123';
-        await subscribeToTopics(testToken);
+        await subscribeToTopics(testToken, 'hour-09');
 
-        expect(fetch).toHaveBeenCalledWith('/topics?token=test-token-123', {
-          method: 'POST',
-        });
+        expect(fetch).toHaveBeenCalledWith(
+          '/topics?token=test-token-123&topic=hour-09',
+          { method: 'POST' }
+        );
       });
 
       it('should throw error when subscription fails', async () => {
@@ -723,7 +615,7 @@ describe('Notifications', () => {
 
         const testToken = 'test-token-123';
 
-        await expect(subscribeToTopics(testToken)).rejects.toThrow(
+        await expect(subscribeToTopics(testToken, 'hour-09')).rejects.toThrow(
           'Failed to subscribe to topic'
         );
       });
@@ -736,7 +628,7 @@ describe('Notifications', () => {
 
         const testToken = 'test-token-123';
 
-        await expect(subscribeToTopics(testToken)).rejects.toThrow(
+        await expect(subscribeToTopics(testToken, 'hour-09')).rejects.toThrow(
           'Network error'
         );
       });
@@ -759,7 +651,7 @@ describe('Notifications', () => {
       });
 
       it('should throw error when unsubscription fails', async () => {
-        const mockResponse = { ok: false };
+        const mockResponse = { ok: false, status: 500 };
         vi.mocked(fetch).mockResolvedValue(mockResponse as Response);
 
         vi.resetModules();
@@ -770,6 +662,18 @@ describe('Notifications', () => {
         await expect(unsubscribeFromTopics(testToken)).rejects.toThrow(
           'Failed to unsubscribe from topic'
         );
+      });
+
+      it('should treat 404 as success, since the server has nothing to remove', async () => {
+        const mockResponse = { ok: false, status: 404 };
+        vi.mocked(fetch).mockResolvedValue(mockResponse as Response);
+
+        vi.resetModules();
+        const { unsubscribeFromTopics } = await import('./notifications');
+
+        await expect(
+          unsubscribeFromTopics('test-token-123')
+        ).resolves.toBeUndefined();
       });
 
       it('should handle network errors', async () => {
@@ -824,13 +728,15 @@ describe('Notifications', () => {
 
         await subscribe();
 
-        expect(fetch).toHaveBeenCalledWith('/topics?token=test-token-123', {
-          method: 'POST',
-        });
-
-        // Note: Due to module reset, the localStorage calls happen in the module
-        // but we can't easily assert them here. The key behavior is the fetch call.
-
+        expect(fetch).toHaveBeenCalledWith(
+          '/topics?token=test-token-123&topic=hour-15',
+          { method: 'POST' }
+        );
+        expect(localStorage.getItem('notification_topic')).toBe('hour-15');
+        expect(localStorage.getItem('notification_synced_token')).toBe(
+          testToken
+        );
+        localStorage.clear();
         vi.useRealTimers();
       });
 
@@ -874,12 +780,19 @@ describe('Notifications', () => {
         vi.resetModules();
         const { unsubscribe } = await import('./notifications');
 
+        localStorage.setItem('notification_token', testToken);
+        localStorage.setItem('notification_topic', 'hour-15');
+        localStorage.setItem('notification_synced_token', testToken);
+
         await unsubscribe(testToken);
 
         expect(fetch).toHaveBeenCalledWith('/topics?token=test-token-123', {
           method: 'DELETE',
         });
         expect(firebaseMessaging.deleteToken).toHaveBeenCalled();
+        expect(localStorage.getItem('notification_token')).toBeNull();
+        expect(localStorage.getItem('notification_topic')).toBeNull();
+        expect(localStorage.getItem('notification_synced_token')).toBeNull();
       });
 
       it('should handle topic unsubscription failure gracefully', async () => {
@@ -904,53 +817,39 @@ describe('Notifications', () => {
       });
     });
   });
-  describe('initNotifications with topic upgrade', () => {
-    it('should demonstrate topic upgrade flow concept', async () => {
-      // This test demonstrates the concept of topic upgrades
-      // Due to module import-time dependencies, we test the conceptual flow
-
-      const testToken = 'existing-token';
-      const mockResponse = { ok: true };
-
-      // Mock successful topic subscription
-      vi.mocked(fetch).mockResolvedValue(mockResponse as Response);
-
-      // Mock Firebase messaging
+  describe('initNotifications support check', () => {
+    it('stops when the browser does not support push', async () => {
       const firebaseMessaging = await import('firebase/messaging');
-      vi.mocked(firebaseMessaging.getMessaging).mockReturnValue({} as any);
-      vi.mocked(firebaseMessaging.getToken).mockResolvedValue(testToken);
-      vi.mocked(firebaseMessaging.onMessage).mockImplementation(() => vi.fn());
+      vi.mocked(firebaseMessaging.isSupported).mockResolvedValue(false);
+
+      vi.resetModules();
+      const { initNotifications } = await import('./notifications');
+      await initNotifications({} as any);
+
+      expect(firebaseMessaging.getMessaging).not.toHaveBeenCalled();
+      expect(
+        document
+          .getElementById('notifications-button')
+          ?.classList.contains('hidden')
+      ).toBe(true);
+    });
+
+    it('shows the button when the browser supports push', async () => {
+      const firebaseMessaging = await import('firebase/messaging');
       vi.mocked(firebaseMessaging.isSupported).mockResolvedValue(true);
+      vi.mocked(firebaseMessaging.getMessaging).mockReturnValue({} as any);
+      vi.mocked(firebaseMessaging.onMessage).mockImplementation(() => vi.fn());
 
-      // Mock toast to avoid module issues
-      vi.doMock('./toast', () => ({
-        showToast: vi.fn(),
-      }));
+      vi.resetModules();
+      const { initNotifications } = await import('./notifications');
+      await initNotifications({} as any);
 
-      // Mock successful notification permission
-      Object.defineProperty(globalThis, 'Notification', {
-        value: class MockNotification {
-          static permission = 'granted';
-          static requestPermission = vi.fn(() => Promise.resolve('granted'));
-        },
-        writable: true,
-      });
-
-      // The concept is: if user has token but no topic, they should be upgraded
-      const hasToken = true;
-      const hasTopic = false;
-      const shouldUpgrade = hasToken && !hasTopic;
-
-      expect(shouldUpgrade).toBe(true);
-
-      // When upgrading, it should call the topics API
-      if (shouldUpgrade) {
-        await fetch('/topics?token=existing-token', { method: 'POST' });
-      }
-
-      expect(fetch).toHaveBeenCalledWith('/topics?token=existing-token', {
-        method: 'POST',
-      });
+      expect(firebaseMessaging.getMessaging).toHaveBeenCalled();
+      expect(
+        document
+          .getElementById('notifications-button')
+          ?.classList.contains('hidden')
+      ).toBe(false);
     });
   });
 
