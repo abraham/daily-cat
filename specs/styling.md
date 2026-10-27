@@ -1,6 +1,6 @@
 # Styling and dark theme
 
-Part of the [architecture overview](README.md). Status: all milestones, T1 to T5, are **done**. What's left is under [Open questions](#open-questions).
+Part of the [architecture overview](README.md). Status: all milestones, T1 to T5, are **done**. Nothing else is planned; see [Not planned](#not-planned).
 
 ## Purpose
 
@@ -18,7 +18,7 @@ Goals:
 
 Non-goals:
 
-- A manual light/dark switch. See [Open questions](#open-questions).
+- A manual light/dark switch. See [Not planned](#not-planned).
 - A redesign. Sizes, spacing, and the light palette stay as they are.
 - A CSS framework or a build step for CSS.
 
@@ -48,17 +48,18 @@ Non-goals:
 
 - All CSS lives in `assets/styles.css`. The build already copies `assets/*` to `public/`, so Hosting serves it at `/styles.css`.
 - Every page links it in `<head>` with `<link rel="stylesheet" href="/styles.css">`, including `404.html`. The processing page's spinner rules move into the same file.
-- Hosting sends its default `Cache-Control: max-age=3600` for static files and clears its CDN on deploy. A CSS change can therefore take up to an hour to reach a browser that already has the old file. That is acceptable for this site; see [Open questions](#open-questions) for a fingerprinted name.
+- Hosting sends its default `Cache-Control: max-age=3600` for static files and clears its CDN on deploy. A CSS change can therefore take up to an hour to reach a browser that already has the old file. That is acceptable for this site, so the file name is not fingerprinted; see [Not planned](#not-planned).
 - Prettier formats the file. Stylelint can be added later without code changes.
 
-File order, one section per component:
+File order, one section per concern:
 
 1. Tokens (`:root`, then the dark overrides)
-2. Base (`html`, `body`, links, focus)
+2. Base (`html`, `body`, touch handling, focus)
 3. Layout (`.page`, `.header`, `.footer`)
-4. Components (`.icon-button`, `.user-profile`, `.tag`, `.photo`, `.toast`, `.spinner`)
-5. Utilities (`.hidden`)
-6. Preference queries (`prefers-reduced-motion`)
+4. Components (`.icon-button`, `.user-profile`, `.tag`, `.photo-container`, `.toast`, `.spinner`, `.not-found`)
+5. Larger screens (`@media (min-width: 1025px)`)
+6. Reduced motion (`@media (prefers-reduced-motion: reduce)`)
+7. Utilities (`.hidden`), last so it wins over the components' `display` values
 
 ### Tokens
 
@@ -150,8 +151,9 @@ The header and footer markup is copied from `template.ts`, because `404.html` is
   - a `var(--x)` is used but not defined;
   - a token is defined but never used;
   - a token is defined in `:root` but missing from the dark block, or the other way around.
-- The same file checks that every SVG in `svg.ts` uses `fill="currentColor"`, and that both `template.ts` and `404.html` link the stylesheet, have no `<style>`, opt in to both color schemes, and set `theme-color` to the light and dark `--surface`.
-- [template.test.ts](../functions/src/day-page/template.test.ts) stops checking CSS text. It checks markup instead: the stylesheet link, the `color-scheme` and `theme-color` tags, and the classes that `src/notifications.ts` and `src/toast.ts` depend on (`hidden`, `show`, `notifications-on`, `notifications-off`, `toast`).
+- The same file checks that every SVG in `svg.ts` uses `fill="currentColor"`, and that both `template.ts` and `404.html` link the stylesheet, have no `<style>`, opt in to both color schemes, set `theme-color` to the light and dark `--surface`, and use the viewport tag that allows zoom.
+- [template.test.ts](../functions/src/day-page/template.test.ts) checks rendered markup, not CSS text: the stylesheet link in `<head>`, no inline styles, the `.page` wrapper, and the classes that `src/notifications.ts` and `src/toast.ts` depend on (`hidden`, `notifications-on`, `notifications-off`, `toast`). The `show` class is added by `src/toast.ts` and covered by its own tests.
+- `src/notifications.test.ts` checks that both failure toasts use the `error` type.
 - Manual check for each milestone: in the emulator (`npm start`), open a photo page, a processing page, and the 404 page, with the browser's developer tools set to light, dark, and reduced motion, at widths 375 px and 1280 px.
 
 ## Milestones
@@ -226,10 +228,13 @@ How it was checked:
   - `touch-action`: `manipulation` on links, `auto` on the body and other elements;
   - the outline on the first element reached with Tab (2 px solid `--focus`, offset 2 px).
 - The success and error toasts were reviewed by eye in both themes.
+- The contrast and behavior scripts were rerun in WebKit (Playwright's Safari engine) with the same results. Safari's Tab key skips links and buttons by default, so its focus outline was checked with Option-Tab instead.
 
-## Open questions
+## Not planned
 
-1. **Manual theme switch.** It would need a `data-theme` attribute on `<html>`, a small script in `<head>` that reads `localStorage` before the first paint, and a header button. The server can't help, because browsers don't send the preference by default, and `Sec-CH-Prefers-Color-Scheme` would mean caching two versions of every page. Not planned unless visitors ask for it.
-2. **Fingerprinted stylesheet.** Naming the file `styles.<hash>.css` with a long cache would remove the one-hour window after a deploy. It needs the build to write the hash where `template.ts` can read it. Worth doing only if stale CSS causes a visible problem.
-3. **Breakpoint.** 1024 px sends landscape tablets the phone layout. Moving it to 768 px is a visual change, so it is left for after T5.
-4. **Visual regression tests.** The repo has no browser tests. Playwright screenshots of the three pages in both themes would catch regressions that unit tests can't, at the cost of a new CI dependency.
+These were considered and set aside. The notes record what each would take.
+
+- **Manual theme switch.** It would need a `data-theme` attribute on `<html>`, a small script in `<head>` that reads `localStorage` before the first paint, and a header button. The server can't help, because browsers don't send the preference by default, and `Sec-CH-Prefers-Color-Scheme` would mean caching two versions of every page.
+- **Fingerprinted stylesheet.** Naming the file `styles.<hash>.css` with a long cache would remove the one-hour window after a deploy. It needs the build to write the hash where `template.ts` can read it.
+- **Breakpoint.** 1024 px sends landscape tablets the phone layout. Moving it to 768 px would be a visual change.
+- **Visual regression tests.** The repo has no browser tests. Playwright screenshots of the three pages in both themes would catch regressions that unit tests can't, at the cost of a new CI dependency.
