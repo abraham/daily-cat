@@ -114,7 +114,7 @@ Emulator ports:
 | Functions | `npm test --prefix functions` | Vitest, Node                                                       | `functions/src/**/*.test.ts` |
 
 - Tests mock `firebase-functions`, `firebase-admin`, `fetch`, and sibling modules. They don't run against the emulators.
-- Unsplash responses come from [functions/src/fixtures/](../functions/src/fixtures/).
+- Unsplash responses come from [functions/src/ingestion/fixtures/](../functions/src/ingestion/fixtures/).
 
 ## CI/CD
 

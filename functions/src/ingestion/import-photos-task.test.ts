@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { UnsplashSearch } from '../types/unsplash';
+import { UnsplashSearch } from './unsplash';
 
 // Load the search fixture for testing
-const searchFixturePath = path.join(__dirname, '..', 'fixtures', 'search.json');
+const searchFixturePath = path.join(__dirname, 'fixtures', 'search.json');
 const mockSearchResults = JSON.parse(
   fs.readFileSync(searchFixturePath, 'utf8')
 ) as UnsplashSearch;
@@ -52,7 +52,7 @@ vi.mock('firebase-admin/firestore', () => ({
 
 // Mock the cat-api module
 const mockList = vi.fn();
-vi.mock('../api/cat-api', () => ({
+vi.mock('./cat-api', () => ({
   list: mockList,
 }));
 
@@ -72,7 +72,7 @@ vi.mock('../storage/photo-id-storage', () => ({
 
 // Mock the available-photo-ids-storage module
 const mockStoreMultipleAvailablePhotoIds = vi.fn();
-vi.mock('../storage/available-photo-ids-storage', () => ({
+vi.mock('./available-photo-ids-storage', () => ({
   storeMultipleAvailablePhotoIds: mockStoreMultipleAvailablePhotoIds,
 }));
 

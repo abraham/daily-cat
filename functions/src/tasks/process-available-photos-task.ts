@@ -1,18 +1,18 @@
 import * as logger from 'firebase-functions/logger';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { get } from '../api/cat-api';
-import { getConfig, unsplashClientId } from '../platform';
 import {
+  get,
   getNextAvailablePhotoIds,
+  NotFoundError,
   removeAvailablePhotoId,
-} from '../storage/available-photo-ids-storage';
+} from '../ingestion';
+import { getConfig, unsplashClientId } from '../platform';
 import {
   getPhotosForDateRange,
   savePhotoForDate,
 } from '../storage/day-storage';
 import { isPhotoIdUsed } from '../storage/photo-id-storage';
 import { DayRecord } from '../types/day';
-import { NotFoundError } from '../types/errors';
 
 /**
  * Generate date string in YYYY-MM-DD format

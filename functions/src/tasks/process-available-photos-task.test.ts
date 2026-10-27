@@ -3,7 +3,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // Load the photo fixture for testing
-const photoFixturePath = path.join(__dirname, '..', 'fixtures', 'photo.json');
+const photoFixturePath = path.join(
+  __dirname,
+  '..',
+  'ingestion',
+  'fixtures',
+  'photo.json'
+);
 const mockPhoto = JSON.parse(fs.readFileSync(photoFixturePath, 'utf8'));
 
 // Mock Firebase Admin
@@ -71,9 +77,16 @@ const mockLogger = {
 
 vi.mock('firebase-functions/logger', () => mockLogger);
 
+// Hoisted because the static NotFoundError import below loads these mocks first
+const { mockGet, mockGetNextAvailablePhotoIds, mockRemoveAvailablePhotoId } =
+  vi.hoisted(() => ({
+    mockGet: vi.fn(),
+    mockGetNextAvailablePhotoIds: vi.fn(),
+    mockRemoveAvailablePhotoId: vi.fn(),
+  }));
+
 // Mock the cat-api module
-const mockGet = vi.fn();
-vi.mock('../api/cat-api', () => ({
+vi.mock('../ingestion/cat-api', () => ({
   get: mockGet,
 }));
 
@@ -84,9 +97,7 @@ vi.mock('../platform/config-storage', () => ({
 }));
 
 // Mock the available-photo-ids-storage module
-const mockGetNextAvailablePhotoIds = vi.fn();
-const mockRemoveAvailablePhotoId = vi.fn();
-vi.mock('../storage/available-photo-ids-storage', () => ({
+vi.mock('../ingestion/available-photo-ids-storage', () => ({
   getNextAvailablePhotoIds: mockGetNextAvailablePhotoIds,
   removeAvailablePhotoId: mockRemoveAvailablePhotoId,
 }));
@@ -108,7 +119,7 @@ vi.mock('../storage/day-storage', () => ({
 }));
 
 // Import NotFoundError for testing
-import { NotFoundError } from '../types/errors';
+import { NotFoundError } from '../ingestion';
 import { Timestamp } from 'firebase-admin/firestore';
 
 describe('Process Available Photos Task', () => {

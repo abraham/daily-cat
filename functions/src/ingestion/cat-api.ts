@@ -1,10 +1,6 @@
 import { logger } from 'firebase-functions';
-import {
-  CatApiOptions,
-  UnsplashPhoto,
-  UnsplashSearch,
-} from '../types/unsplash';
-import { NotFoundError, RateLimitedError } from '../types/errors';
+import { CatApiOptions, UnsplashPhoto, UnsplashSearch } from './unsplash';
+import { NotFoundError, RateLimitedError } from './errors';
 
 export async function list({
   clientId,

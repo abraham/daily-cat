@@ -1,5 +1,5 @@
 import { Timestamp } from 'firebase-admin/firestore';
-import { UnsplashPhoto } from './unsplash';
+import { UnsplashPhoto } from '../ingestion';
 
 export interface DayRecord {
   id: string; // ISO date string (YYYY-MM-DD)
