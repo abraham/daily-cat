@@ -2,7 +2,7 @@
 
 Daily Cat ([daily.cat](https://daily.cat)) shows one cat photo from Unsplash for each calendar day (UTC). Every page is rendered on the server by Firebase Cloud Functions. A small browser bundle adds opt-in daily push notifications.
 
-This document is the entry point. Each slice of the system is described in its own spec in this directory.
+This document is the entry point. Each slice of the system is described in its own spec in this directory. [Styling and dark theme](styling.md) is a proposed design that applies to every page.
 
 ## Slices
 
