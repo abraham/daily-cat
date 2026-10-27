@@ -48,9 +48,9 @@ Everything a visitor or crawler fetches: the server-rendered page for each date,
 
 ## Rendering
 
-[template.ts](../functions/src/day-page/template.ts) builds a complete HTML document with lit-html. `@lit-labs/ssr` `render()` turns it into a string, which is sent as a single response. There is no hydration: the client bundle only adds behavior to the buttons.
+[template.ts](../functions/src/day-page/template.ts) builds a complete HTML document from Lit's server-only `html` templates (from `@lit-labs/ssr`), including the icons in [svg.ts](../functions/src/day-page/svg.ts). `render()` plus `collectResultSync()` turn it into a string, which is sent as a single response. There is no hydration: the client bundle only adds behavior to the buttons, so the output has no Lit hydration markers and server-only templates can bind inside `<title>`. They can't be nested inside ordinary `lit-html` templates, and `collectResultSync()` throws if a template ever renders asynchronously.
 
-- **`<head>`**: the static title `Daily Cat`, favicon, `<script src="/index.js" defer>`, the shared stylesheet `/styles.css` (see [Styling](styling.md)), and a canonical link plus Open Graph and Twitter Card tags built for each page (below). lit-html escapes every value.
+- **`<head>`**: the title `Daily Cat: <Month D, YYYY>`, favicon, `<script src="/index.js" defer>`, the shared stylesheet `/styles.css` (see [Styling](styling.md)), and a canonical link plus Open Graph and Twitter Card tags built for each page (below). Lit escapes every value.
 - **Header**:
   - A previous-day link, shown only when the date is after `minDate`.
   - A next-day link, shown only when the date is before today.
@@ -78,7 +78,7 @@ Link-preview tags (`PageMeta`). Every URL is absolute and starts with Platform's
 | `og:image`, `twitter:image`             | The photo's `urls.regular`                           | `SITE_URL/images/cat.png`                |
 | `og:url`, canonical link                | `SITE_URL/` for `/`, otherwise `SITE_URL/YYYY-MM-DD` | Same                                     |
 
-The `<title>` element stays `Daily Cat`, because lit-html can't bind values inside raw-text elements like `<title>`.
+The `<title>` element uses the same text as `og:title`.
 
 ## Sitemap
 
