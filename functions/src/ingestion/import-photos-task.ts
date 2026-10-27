@@ -5,10 +5,30 @@ import { advanceLastPage, getConfig, unsplashClientId } from '../platform';
 import { isPhotoIdUsed } from '../assignment';
 import { storeMultipleAvailablePhotoIds } from './available-photo-ids-storage';
 
+/** Stores the unused photo IDs from one search page and returns how many. */
+async function importPage(page: number, clientId: string): Promise<number> {
+  const { results } = await list({ clientId, page: page.toString() });
+
+  const unusedIds: string[] = [];
+  for (const photo of results) {
+    if (!(await isPhotoIdUsed(photo.id))) {
+      unusedIds.push(photo.id);
+    }
+  }
+
+  if (unusedIds.length > 0) {
+    await storeMultipleAvailablePhotoIds(unusedIds);
+  }
+  logger.log(
+    `Page ${page}: stored ${unusedIds.length} of ${results.length} photos`
+  );
+  return unusedIds.length;
+}
+
 /**
  * Firebase Function that runs every hour to import new cat photos.
- * Fetches 10 pages of photos from the cat API, filters out already used ones,
- * and stores the remaining photo IDs as available for selection.
+ * Fetches `importLimit` pages of photos from the cat API, filters out already
+ * used ones, and stores the remaining photo IDs as available for selection.
  */
 export const importPhotosScheduled = onSchedule(
   {
@@ -20,66 +40,25 @@ export const importPhotosScheduled = onSchedule(
     try {
       logger.log('Starting scheduled photo import task');
 
-      // Get current configuration
       const config = await getConfig();
-
       if (!config.importEnabled) {
         logger.log('Photo import is disabled in configuration');
         return;
       }
 
-      let currentPage = Number(config.lastPage);
       const clientId = unsplashClientId.value();
-
       if (!clientId) {
         throw new Error('UNSPLASH_CLIENT_ID environment variable is not set');
       }
 
-      logger.log(`Starting import from page ${currentPage}`);
-
-      // Process importLimit pages of photos
+      let currentPage = Number(config.lastPage);
       for (let i = 0; i < config.importLimit; i++) {
         try {
-          logger.log(`Fetching page ${currentPage} from cat API`);
-
-          // Get photos from cat API
-          const searchResults = await list({
-            clientId,
-            page: currentPage.toString(),
-          });
-
-          logger.log(
-            `Fetched ${searchResults.results.length} photos from page ${currentPage}`
-          );
-
-          // Filter out photos that are already used
-          const availablePhotoIds: string[] = [];
-
-          for (const photo of searchResults.results) {
-            const isUsed = await isPhotoIdUsed(photo.id);
-            if (!isUsed) {
-              availablePhotoIds.push(photo.id);
-            }
-          }
-
-          logger.log(
-            `Found ${availablePhotoIds.length} new available photos from page ${currentPage}`
-          );
-
-          // Store available photo IDs if any were found
-          if (availablePhotoIds.length > 0) {
-            await storeMultipleAvailablePhotoIds(availablePhotoIds);
-            logger.log(
-              `Stored ${availablePhotoIds.length} available photo IDs from page ${currentPage}`
-            );
-          }
-
+          await importPage(currentPage, clientId);
           currentPage = Number(await advanceLastPage(currentPage.toString()));
-          logger.log(`Advanced lastPage to ${currentPage}`);
         } catch (error) {
+          // One bad page shouldn't stop the rest of the import.
           logger.error(`Error processing page ${currentPage}:`, error);
-          // Continue with next page instead of failing the entire task
-          continue;
         }
       }
 

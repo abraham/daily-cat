@@ -3,7 +3,7 @@ import * as logger from 'firebase-functions/logger';
 import { onRequest } from 'firebase-functions/v2/https';
 import { TemplateResult } from 'lit-html';
 import { calculateNavigationUrls, NavigationUrls } from './navigation';
-import { getConfig, SITE_URL } from '../platform';
+import { getConfig, SITE_URL, toDateString } from '../platform';
 import { createNewDayRecord, getPhotoForDate } from '../assignment';
 import type { UnsplashPhoto } from '../ingestion';
 import {
@@ -16,10 +16,6 @@ const DEFAULT_DESCRIPTION = 'Your daily dose of adorable cat photos';
 const HOUR = 60 * 60;
 const DAY = 24 * HOUR;
 const PROCESSING_CACHE_CONTROL = 'public, max-age=1, s-maxage=1';
-
-function toDateString(date: Date): string {
-  return date.toISOString().split('T')[0];
-}
 
 /**
  * A finished past day only changes when the site is redeployed. Today's page

@@ -1,7 +1,7 @@
 import * as logger from 'firebase-functions/logger';
 import { onRequest } from 'firebase-functions/v2/https';
 import { DayRecord, getCompletedDaysSince } from '../assignment';
-import { getConfig, SITE_URL } from '../platform';
+import { getConfig, SITE_URL, toDateString } from '../platform';
 
 /**
  * Firebase Function for generating sitemap.xml
@@ -51,7 +51,7 @@ function generateSitemapXml(dayRecords: DayRecord[], baseUrl: string): string {
   const urlEntries = dayRecords
     .map((day) => {
       const url = `${baseUrl}/${day.id}`;
-      const lastmod = day.updatedAt.toDate().toISOString().split('T')[0];
+      const lastmod = toDateString(day.updatedAt.toDate());
 
       return `  <url>
     <loc>${url}</loc>

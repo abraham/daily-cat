@@ -72,29 +72,33 @@ export const initNotifications = async (app: FirebaseApp) => {
   listen(messaging);
 
   showNotificationButton();
+  await showSubscriptionStatus();
+  notificationsButton.addEventListener('click', onNotificationsButtonClick);
+};
 
+const showSubscriptionStatus = async () => {
   if (await isSubscribed()) {
     showNotificationsOn();
-  } else {
-    setTimeout(async () => {
-      // Chrome mobile randomly shows default instead of granted.
-      console.log('Checking subscription status after 100ms');
-      if (await isSubscribed()) {
-        showNotificationsOn();
-      }
-    }, 100);
+    return;
   }
-
-  notificationsButton.addEventListener('click', async () => {
-    const token = localToken();
-    if (!isGranted() || !localToken()) {
-      await subscribe();
-    } else {
-      await unsubscribe(token!);
+  setTimeout(async () => {
+    // Chrome mobile randomly shows default instead of granted.
+    console.log('Checking subscription status after 100ms');
+    if (await isSubscribed()) {
+      showNotificationsOn();
     }
-    console.log('Notifications button clicked');
-    console.log('permission', Notification.permission);
-  });
+  }, 100);
+};
+
+const onNotificationsButtonClick = async () => {
+  const token = localToken();
+  if (!isGranted() || !token) {
+    await subscribe();
+  } else {
+    await unsubscribe(token);
+  }
+  console.log('Notifications button clicked');
+  console.log('permission', Notification.permission);
 };
 
 const listen = (messaging: Messaging) => {
