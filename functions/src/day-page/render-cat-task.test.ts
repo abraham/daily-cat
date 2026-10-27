@@ -117,6 +117,30 @@ describe('Cat Function', () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+    vi.useRealTimers();
+  });
+
+  describe('photoPageCacheControl', () => {
+    const now = new Date('2026-10-27T18:00:00.000Z');
+
+    it('caches past days for an hour in browsers and a day on the CDN', () => {
+      expect(myFunctions.photoPageCacheControl('2026-10-26', now)).toBe(
+        'public, max-age=3600, s-maxage=86400'
+      );
+    });
+
+    it('caches today until the next UTC midnight', () => {
+      expect(myFunctions.photoPageCacheControl('2026-10-27', now)).toBe(
+        'public, max-age=3600, s-maxage=21600'
+      );
+    });
+
+    it('never lets browsers keep today past midnight', () => {
+      const lateNow = new Date('2026-10-27T23:59:30.000Z');
+      expect(myFunctions.photoPageCacheControl('2026-10-27', lateNow)).toBe(
+        'public, max-age=30, s-maxage=30'
+      );
+    });
   });
 
   describe('cat function', () => {
@@ -298,6 +322,8 @@ describe('Cat Function', () => {
     });
 
     it('should set caching headers for completed records', async () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-10-27T18:00:00.000Z'));
       const completedRecord = {
         status: 'completed',
         photo: mockApiResponse,
@@ -327,7 +353,32 @@ describe('Cat Function', () => {
       });
 
       expect(cacheKey).toBe('Cache-Control');
-      expect(cacheValue).toBe('public, max-age=1, s-maxage=1');
+      expect(cacheValue).toBe('public, max-age=3600, s-maxage=21600');
+    });
+
+    it('should cache completed past days for a day on the CDN', async () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-10-27T18:00:00.000Z'));
+      dayStorageMock.getPhotoForDate.mockResolvedValue({
+        status: 'completed',
+        photo: mockApiResponse,
+      });
+
+      const req = { method: 'GET', url: '/2026-10-20' } as any;
+      const headers: Record<string, string> = {};
+      const res = { status: () => res } as any;
+
+      await new Promise<void>((resolve) => {
+        res.set = (key: string, value: string) => {
+          headers[key] = value;
+        };
+        res.send = () => resolve();
+        myFunctions.cat(req, res);
+      });
+
+      expect(headers['Cache-Control']).toBe(
+        'public, max-age=3600, s-maxage=86400'
+      );
     });
 
     it('should set caching headers for processing pages', async () => {
