@@ -74,12 +74,12 @@ The infrastructure every slice depends on: Firebase Hosting routing, Firestore s
 
 ## Build
 
-| Output                              | Tool                                                                        | Source                                                          |
-| ----------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| `functions/lib/`                    | `tsc` (TypeScript 7), [functions/tsconfig.json](../functions/tsconfig.json) | `functions/src/`                                                |
-| `public/index.js`                   | Rollup, UMD bundle named `DailyCat`                                         | [src/index.ts](../src/index.ts)                                 |
-| `public/firebase-messaging-sw.js`   | Rollup, IIFE bundle                                                         | [src/firebase-messaging-sw.ts](../src/firebase-messaging-sw.ts) |
-| `public/404.html`, `public/images/` | `rollup-plugin-copy`                                                        | [assets/](../assets/)                                           |
+| Output                                                   | Tool                                                                        | Source                                                          |
+| -------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `functions/lib/`                                         | `tsc` (TypeScript 7), [functions/tsconfig.json](../functions/tsconfig.json) | `functions/src/`                                                |
+| `public/index.js`                                        | Rollup, UMD bundle named `DailyCat`                                         | [src/index.ts](../src/index.ts)                                 |
+| `public/firebase-messaging-sw.js`                        | Rollup, IIFE bundle                                                         | [src/firebase-messaging-sw.ts](../src/firebase-messaging-sw.ts) |
+| `public/404.html`, `public/styles.css`, `public/images/` | `rollup-plugin-copy`                                                        | [assets/](../assets/)                                           |
 
 - Root `npm run build` builds the functions first, then runs `rollup -c`.
 - Both `package.json` files set `engines.node` to `22` and use `@types/node` 22, matching the `nodejs22` runtime and the Node version that CI and deploys use.

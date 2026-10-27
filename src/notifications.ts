@@ -207,7 +207,7 @@ const subscribe = async () => {
     }
   } catch (error) {
     console.error('Error:', error);
-    showToast('Failed to subscribe to notifications', 'info');
+    showToast('Failed to subscribe to notifications', 'error');
   }
 };
 
@@ -225,7 +225,7 @@ const unsubscribe = async (token: string) => {
     showToast('Unsubscribed from daily notifications', 'info');
   } catch (error) {
     console.error('Error unsubscribing from notifications:', error);
-    showToast('Failed to unsubscribe from notifications', 'info');
+    showToast('Failed to unsubscribe from notifications', 'error');
   }
 };
 

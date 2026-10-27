@@ -50,7 +50,7 @@ Everything a visitor or crawler fetches: the server-rendered page for each date,
 
 [template.ts](../functions/src/day-page/template.ts) builds a complete HTML document with lit-html. `@lit-labs/ssr` `render()` turns it into a string, which is sent as a single response. There is no hydration: the client bundle only adds behavior to the buttons.
 
-- **`<head>`**: the static title `Daily Cat`, favicon, inline CSS, `<script src="/index.js" defer>`, and a canonical link plus Open Graph and Twitter Card tags built for each page (below). lit-html escapes every value.
+- **`<head>`**: the static title `Daily Cat`, favicon, `<script src="/index.js" defer>`, the shared stylesheet `/styles.css` (see [Styling](styling.md)), and a canonical link plus Open Graph and Twitter Card tags built for each page (below). lit-html escapes every value.
 - **Header**:
   - A previous-day link, shown only when the date is after `minDate`.
   - A next-day link, shown only when the date is before today.

@@ -122,7 +122,7 @@ describe('Template', () => {
       expect(htmlString).toContain('manually refresh this page');
     });
 
-    it('should include CSS styles for loading animation', () => {
+    it('should link the shared stylesheet instead of inlining CSS', () => {
       const mockData = {
         ...pageBase,
         linkUrl: '',
@@ -139,19 +139,10 @@ describe('Template', () => {
         showNextArrow: true,
       };
 
-      const result = renderProcessingPage(mockData);
+      const htmlString = toHtml(renderProcessingPage(mockData));
 
-      // Convert lit-html template result to string
-      const htmlIterator = render(result);
-      let htmlString = '';
-      for (const chunk of htmlIterator) {
-        htmlString += chunk;
-      }
-
-      // Check that CSS styles are included
-      expect(htmlString).toContain('@keyframes spin');
-      expect(htmlString).toContain('animation: spin 1s linear infinite');
-      expect(htmlString).toContain('border-radius: 50%');
+      expect(htmlString).toContain('<link rel="stylesheet" href="/styles.css"');
+      expect(htmlString).not.toContain('<style');
     });
   });
 
@@ -187,7 +178,9 @@ describe('Template', () => {
 
       // Check that notification button is included
       expect(htmlString).toContain('id="notifications-button"');
-      expect(htmlString).toContain('class="notifications-button hidden"');
+      expect(htmlString).toContain(
+        'class="icon-button notifications-button hidden"'
+      );
       expect(htmlString).toContain('title="Toggle notifications"');
       expect(htmlString).toContain('type="button"');
     });
@@ -241,54 +234,31 @@ describe('Template', () => {
       expect(htmlString).toContain('class="notifications-off"');
     });
 
-    it('should include CSS styles for notification button', () => {
-      const result = renderPhotoPage(mockData);
+    it('should link the shared stylesheet once, in the head, instead of inlining CSS', () => {
+      const htmlString = toHtml(renderPhotoPage(mockData));
+      const head = htmlString.slice(0, htmlString.indexOf('</head>'));
 
-      // Convert lit-html template result to string
-      const htmlIterator = render(result);
-      let htmlString = '';
-      for (const chunk of htmlIterator) {
-        htmlString += chunk;
-      }
-
-      // Check that notification button styles are included
-      expect(htmlString).toContain('.notifications-button {');
-      expect(htmlString).toContain('.header-controls {');
-      expect(htmlString).toContain('.notifications-button:hover {');
-      expect(htmlString).toContain('.notifications-button:active {');
-      expect(htmlString).toContain('.notifications-on,');
-      expect(htmlString).toContain('.notifications-off {');
+      expect(head).toContain('<link rel="stylesheet" href="/styles.css"');
+      expect(htmlString.split('href="/styles.css"')).toHaveLength(2);
+      expect(htmlString).not.toContain('<style');
     });
 
-    it('should include mobile responsive styles for notification button', () => {
-      const result = renderPhotoPage(mockData);
+    it('should render the elements the client scripts style by class', () => {
+      const htmlString = toHtml(renderPhotoPage(mockData));
 
-      // Convert lit-html template result to string
-      const htmlIterator = render(result);
-      let htmlString = '';
-      for (const chunk of htmlIterator) {
-        htmlString += chunk;
-      }
-
-      // Check that mobile styles for notification button are included
-      expect(htmlString).toContain('.notifications-button {');
-      expect(htmlString).toMatch(/width:\s*48px/); // Mobile button size
-      expect(htmlString).toMatch(/height:\s*48px/); // Mobile button size
+      expect(htmlString).toContain('id="toast" class="toast"');
+      expect(htmlString).toContain('class="icon-button share-button hidden"');
+      expect(htmlString).toContain('class="notifications-on hidden"');
+      expect(htmlString).toContain('class="notifications-off"');
     });
 
-    it('should include safe area styles for notification button on mobile', () => {
-      const result = renderPhotoPage(mockData);
+    it('should render one page wrapper with no inline styles', () => {
+      const htmlString = toHtml(renderPhotoPage(mockData));
 
-      // Convert lit-html template result to string
-      const htmlIterator = render(result);
-      let htmlString = '';
-      for (const chunk of htmlIterator) {
-        htmlString += chunk;
-      }
-
-      // Check that safe area styles are included
-      expect(htmlString).toContain('env(safe-area-inset-right)');
-      expect(htmlString).toContain('.header-controls {');
+      expect(htmlString).toContain('<div class="page">');
+      expect(htmlString).not.toContain('left-column');
+      expect(htmlString).not.toContain('style=');
+      expect(htmlString).toMatch(/class="cat-image"[^>]*draggable="false"/);
     });
 
     it('should position notification button between title and share button', () => {
@@ -311,8 +281,8 @@ describe('Template', () => {
     });
 
     it('should render the previous arrow only when it is shown', () => {
-      expect(toHtml(renderPhotoPage(mockData))).toContain(
-        'href="/2025-06-27" class="nav-arrow left"'
+      expect(toHtml(renderPhotoPage(mockData))).toMatch(
+        /href="\/2025-06-27"\s+class="icon-button nav-arrow left"/
       );
 
       const onMinDate = toHtml(

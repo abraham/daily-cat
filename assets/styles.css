@@ -1,0 +1,593 @@
+/* Tokens. The only place colors are written; everything else uses var(). */
+
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --text: #333333;
+  --text-muted: #666666;
+  --border: rgb(0 0 0 / 10%);
+  --hover: #f0f0f0;
+  --active: #e0e0e0;
+  --pressed: #d0d0d0;
+  --link: #007acc;
+  --link-hover: #005599;
+  --focus: #007acc;
+  --toast-bg: rgb(64 64 64 / 95%);
+  --toast-text: #f5f5f5;
+  --success: #81c784;
+  --error: #ef9a9a;
+  --spinner-track: #f0f0f0;
+  --spinner-head: #666666;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121212;
+    --surface: #1e1e1e;
+    --text: #e6e6e6;
+    --text-muted: #a3a3a3;
+    --border: rgb(255 255 255 / 12%);
+    --hover: #2a2a2a;
+    --active: #333333;
+    --pressed: #3d3d3d;
+    --link: #4db3ff;
+    --link-hover: #80c8ff;
+    --focus: #4db3ff;
+    --toast-bg: rgb(235 235 235 / 95%);
+    --toast-text: #1f1f1f;
+    --success: #2e7d32;
+    --error: #c62828;
+    --spinner-track: #2a2a2a;
+    --spinner-head: #a3a3a3;
+  }
+}
+
+/* Base */
+
+html {
+  background-color: var(--bg);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Stops double-tap zoom on controls; pinch zoom still works everywhere */
+a,
+button {
+  touch-action: manipulation;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Layout */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  max-width: 1024px;
+  height: 100vh;
+  height: 100dvh;
+  margin-inline: auto;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  min-height: 44px; /* iOS touch target size */
+  padding: max(15px, env(safe-area-inset-top))
+    max(10px, env(safe-area-inset-right)) 15px
+    max(10px, env(safe-area-inset-left));
+  text-align: center;
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.header h1 {
+  margin: 0;
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.header-title {
+  color: inherit;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.header-title:hover {
+  opacity: 0.8;
+}
+
+.header-title:active {
+  opacity: 0.6;
+}
+
+/* Zero height, so the buttons overflow the row instead of making the header taller */
+.nav-arrows-left,
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 0;
+}
+
+.nav-arrows-left {
+  justify-self: start;
+}
+
+.header-controls {
+  justify-self: end;
+}
+
+.footer {
+  padding: 10px max(20px, env(safe-area-inset-right))
+    max(15px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+  background-color: var(--surface);
+}
+
+.footer a {
+  margin: 0 4px;
+  color: var(--link);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer a:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
+/* Components */
+
+.icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--text-muted);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.icon-button:hover {
+  background-color: var(--hover);
+  color: var(--text);
+}
+
+.icon-button:active {
+  background-color: var(--active);
+  transform: scale(0.95);
+}
+
+.notifications-button {
+  position: relative;
+  font-size: 18px; /* Sets the icon spans' line height, which centers the icons */
+}
+
+.notifications-button .notifications-on,
+.notifications-button .notifications-off {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.2s ease;
+}
+
+.user-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px max(15px, env(safe-area-inset-right)) 12px
+    max(15px, env(safe-area-inset-left));
+  background-color: var(--surface);
+}
+
+.user-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.user-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-profile img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.user-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.user-username {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.2;
+  color: var(--text-muted);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.user-username:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+.right-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.likes-count {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 16px;
+  line-height: 1.2;
+  color: var(--text-muted);
+}
+
+.likes-count svg {
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tag {
+  padding: 3px 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: var(--text-muted);
+  text-decoration: none;
+  background-color: var(--hover);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tag:hover {
+  background-color: var(--active);
+  color: var(--text);
+}
+
+.tag:active {
+  background-color: var(--pressed);
+  transform: scale(0.95);
+}
+
+.photo-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
+  overflow: hidden;
+}
+
+.photo-container a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 5px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cat-image {
+  max-width: 100%;
+  max-height: 100%;
+  margin: 0 8px;
+  object-fit: contain;
+  border-radius: 8px;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.toast {
+  position: fixed;
+  top: max(70px, calc(env(safe-area-inset-top) + 15px));
+  left: 50%;
+  z-index: 1000;
+  max-width: 85%;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--toast-text);
+  background-color: var(--toast-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, -8px);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease,
+    visibility 0.3s ease;
+}
+
+.toast.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+
+.toast.success {
+  border-left: 4px solid var(--success);
+}
+
+.toast.error {
+  border-left: 4px solid var(--error);
+}
+
+.loading-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 30px 15px;
+}
+
+.loading-spinner {
+  position: relative;
+  width: 50px;
+  height: 50px;
+}
+
+.spinner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 4px solid var(--spinner-track);
+  border-top-color: var(--spinner-head);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  font-size: 15px;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.not-found {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 30px 15px;
+  text-align: center;
+}
+
+.not-found img {
+  width: 96px;
+  height: 96px;
+}
+
+.not-found h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.not-found p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.not-found-link {
+  margin-top: 8px;
+  padding: 10px 18px;
+  border-radius: 20px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  background-color: var(--hover);
+  transition: background-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.not-found-link:hover {
+  background-color: var(--active);
+}
+
+.not-found-link:active {
+  background-color: var(--pressed);
+  transform: scale(0.95);
+}
+
+/* Larger screens */
+
+@media (min-width: 1025px) {
+  .header {
+    min-height: auto;
+    padding: max(20px, env(safe-area-inset-top))
+      max(20px, env(safe-area-inset-right)) 20px
+      max(20px, env(safe-area-inset-left));
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+
+  .footer {
+    font-size: 14px;
+  }
+
+  .icon-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .notifications-button {
+    font-size: 20px;
+  }
+
+  .user-profile {
+    padding: 15px max(20px, env(safe-area-inset-right)) 15px
+      max(20px, env(safe-area-inset-left));
+  }
+
+  .user-row {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .user-profile img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .user-name {
+    font-size: 16px;
+  }
+
+  .user-username {
+    font-size: 14px;
+  }
+
+  .right-section {
+    align-items: flex-end;
+  }
+
+  .likes-count svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .tags {
+    gap: 6px;
+  }
+
+  .tag {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+
+  .cat-image {
+    margin: 0;
+  }
+
+  .toast {
+    top: max(80px, calc(env(safe-area-inset-top) + 20px));
+    max-width: 90%;
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+
+  .loading-container {
+    gap: 20px;
+    padding: 40px 20px;
+  }
+
+  .loading-spinner {
+    width: 60px;
+    height: 60px;
+  }
+
+  .loading-text {
+    font-size: 16px;
+  }
+}
+
+/* Reduced motion. The spinner keeps turning: it is the only sign the page is working. */
+
+@media (prefers-reduced-motion: reduce) {
+  .header-title,
+  .footer a,
+  .icon-button,
+  .notifications-button .notifications-on,
+  .notifications-button .notifications-off,
+  .tag,
+  .not-found-link,
+  .toast {
+    transition: none;
+  }
+
+  .icon-button:active,
+  .tag:active,
+  .not-found-link:active {
+    transform: none;
+  }
+
+  .toast {
+    transform: translate(-50%, 0);
+  }
+}
+
+/* Utilities. Last, so they win over component display values. */
+
+.hidden {
+  display: none;
+}
