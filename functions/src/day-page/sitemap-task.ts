@@ -1,7 +1,7 @@
 import * as logger from 'firebase-functions/logger';
 import { onRequest } from 'firebase-functions/v2/https';
 import { DayRecord, getCompletedDaysSince } from '../assignment';
-import { getConfig } from '../platform';
+import { getConfig, SITE_URL } from '../platform';
 
 /**
  * Firebase Function for generating sitemap.xml
@@ -31,8 +31,7 @@ export const sitemap = onRequest(
       logger.log(`Found ${completedDays.length} completed day records`);
 
       // Generate sitemap XML
-      const baseUrl = getBaseUrl(request);
-      const sitemap = generateSitemapXml(completedDays, baseUrl);
+      const sitemap = generateSitemapXml(completedDays, SITE_URL);
 
       // Set appropriate headers
       response.set('Content-Type', 'application/xml');
@@ -44,15 +43,6 @@ export const sitemap = onRequest(
     }
   }
 );
-
-/**
- * Generate the base URL from the request
- */
-function getBaseUrl(request: any): string {
-  const protocol = request.get('x-forwarded-proto');
-  const host = request.get('x-forwarded-host');
-  return `${protocol}://${host}`;
-}
 
 /**
  * Generate sitemap XML for completed day records

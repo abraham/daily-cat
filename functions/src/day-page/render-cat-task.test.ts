@@ -602,6 +602,13 @@ describe('Cat Function', () => {
       });
 
       expect(templateMock.renderPhotoPage).toHaveBeenCalledWith({
+        meta: {
+          title: 'Daily Cat: June 27, 2025',
+          description: `${mockApiResponse.alt_description.charAt(0).toUpperCase()}${mockApiResponse.alt_description.slice(1)}. Photo by ${mockApiResponse.user.name} on Unsplash.`,
+          url: 'https://daily.cat/2025-06-27',
+          imageUrl: mockApiResponse.urls.regular,
+          imageAlt: mockApiResponse.alt_description,
+        },
         linkUrl: mockApiResponse.links.html,
         imageUrl: mockApiResponse.urls.regular,
         userProfileImage: mockApiResponse.user.profile_image.medium,
@@ -612,6 +619,7 @@ describe('Cat Function', () => {
         altDescription: mockApiResponse.alt_description,
         tags: mockApiResponse.tags,
         prevDateUrl: '/2025-06-26',
+        showPrevArrow: true,
         nextDateUrl: '/2025-06-28',
         showNextArrow: true,
       });
@@ -636,6 +644,13 @@ describe('Cat Function', () => {
       });
 
       expect(templateMock.renderProcessingPage).toHaveBeenCalledWith({
+        meta: {
+          title: 'Daily Cat: June 27, 2025',
+          description: 'Your daily dose of adorable cat photos',
+          url: 'https://daily.cat/2025-06-27',
+          imageUrl: 'https://daily.cat/images/cat.png',
+          imageAlt: 'Daily Cat - Adorable cat photo',
+        },
         linkUrl: '',
         imageUrl: '',
         userProfileImage: '',
@@ -646,9 +661,45 @@ describe('Cat Function', () => {
         altDescription: '',
         tags: [],
         prevDateUrl: '/2025-06-26',
+        showPrevArrow: true,
         nextDateUrl: '/2025-06-28',
         showNextArrow: true,
       });
+    });
+
+    it('should hide the previous arrow on minDate', async () => {
+      configStorageMock.getConfig.mockResolvedValue({
+        minDate: '2025-06-27',
+      });
+      dayStorageMock.getPhotoForDate.mockResolvedValue(null);
+
+      const req = { method: 'GET', url: '/2025-06-27' } as any;
+      const res = { set: () => res, status: () => res } as any;
+
+      await new Promise<void>((resolve) => {
+        res.send = () => resolve();
+        myFunctions.cat(req, res);
+      });
+
+      expect(templateMock.renderProcessingPage).toHaveBeenCalledWith(
+        expect.objectContaining({ prevDateUrl: '#', showPrevArrow: false })
+      );
+    });
+
+    it('should use the site root as the page URL for /', async () => {
+      dayStorageMock.getPhotoForDate.mockResolvedValue(null);
+
+      const req = { method: 'GET', url: '/' } as any;
+      const res = { set: () => res, status: () => res } as any;
+
+      await new Promise<void>((resolve) => {
+        res.send = () => resolve();
+        myFunctions.cat(req, res);
+      });
+
+      const data = templateMock.renderProcessingPage.mock.calls[0][0];
+      expect(data.meta.url).toBe('https://daily.cat/');
+      expect(data.meta.title).toMatch(/^Daily Cat: \w+ \d{1,2}, \d{4}$/);
     });
 
     it('should handle query parameters in URL', async () => {

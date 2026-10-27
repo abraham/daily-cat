@@ -29,6 +29,7 @@ The infrastructure every slice depends on: Firebase Hosting routing, Firestore s
   - `getApp()` in [firebase.ts](../functions/src/platform/firebase.ts) returns the `firebase-admin` app, initializing it on first use. Every module that talks to Firestore calls it, and tests mock this one module.
   - `getConfig()` and `updateConfig()` (see below).
   - The `UNSPLASH_CLIENT_ID` secret (see below).
+  - `SITE_URL` in [site.ts](../functions/src/platform/site.ts), the public origin `https://daily.cat`. The Day page uses it for absolute URLs instead of trusting request headers.
 
 ## Firestore
 
