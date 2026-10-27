@@ -12,6 +12,8 @@ import { getApp } from '../platform';
 
 const db: Firestore = getFirestore(getApp());
 const COLLECTION_NAME = 'days';
+// gRPC status code Firestore returns when create() finds an existing document
+const ALREADY_EXISTS = 6;
 
 /**
  * Save an UnsplashPhoto to the 'days' collection for a specific date
@@ -187,11 +189,13 @@ export async function getMostRecentPhoto(): Promise<DayRecord | null> {
 }
 
 /**
- * Create a new day record with 'created' status
+ * Create a new day record with 'created' status, unless the day already has a record
  * @param id - ISO date string (YYYY-MM-DD)
- * @returns Promise<NewDayRecord> - The created day record
+ * @returns Promise<NewDayRecord | null> - The created day record, or null if one already existed
  */
-export async function createNewDayRecord(id: string): Promise<NewDayRecord> {
+export async function createNewDayRecord(
+  id: string
+): Promise<NewDayRecord | null> {
   const newRecord: Omit<NewDayRecord, 'id'> = {
     status: 'created',
     photo: null,
@@ -199,7 +203,14 @@ export async function createNewDayRecord(id: string): Promise<NewDayRecord> {
     updatedAt: Timestamp.now(),
   };
 
-  await db.collection(COLLECTION_NAME).doc(id).set(newRecord);
+  try {
+    await db.collection(COLLECTION_NAME).doc(id).create(newRecord);
+  } catch (error) {
+    if ((error as { code?: unknown }).code === ALREADY_EXISTS) {
+      return null;
+    }
+    throw error;
+  }
 
   return {
     id,

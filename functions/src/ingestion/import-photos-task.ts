@@ -1,7 +1,7 @@
 import * as logger from 'firebase-functions/logger';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { list } from './cat-api';
-import { getConfig, unsplashClientId, updateConfig } from '../platform';
+import { advanceLastPage, getConfig, unsplashClientId } from '../platform';
 import { isPhotoIdUsed } from '../assignment';
 import { storeMultipleAvailablePhotoIds } from './available-photo-ids-storage';
 
@@ -74,10 +74,8 @@ export const importPhotosScheduled = onSchedule(
             );
           }
 
-          // Update config with the latest page processed
-          currentPage += 1;
-          await updateConfig({ lastPage: currentPage.toString() });
-          logger.log(`Updated config with lastPage: ${currentPage}`);
+          currentPage = Number(await advanceLastPage(currentPage.toString()));
+          logger.log(`Advanced lastPage to ${currentPage}`);
         } catch (error) {
           logger.error(`Error processing page ${currentPage}:`, error);
           // Continue with next page instead of failing the entire task

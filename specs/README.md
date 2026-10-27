@@ -61,13 +61,13 @@ flowchart LR
 
 ## How the slices connect
 
-| From → To                        | Through                                        | Contract                                                                                                |
-| -------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Day page → Day assignment        | Creating a `days/{date}` document              | The new record has `status: 'created'` and `photo: null`. This fires `onDayRecordCreated`.              |
-| Day assignment → Day page        | The `days/{date}` record                       | A `completed` record has a full `UnsplashPhoto`. The processing page polls until it appears.            |
-| Photo ingestion → Day assignment | `available-photo-ids`                          | Queued IDs are candidates only. Day assignment checks them against `photo-ids` again before using them. |
-| Photo ingestion ↔ Day assignment | `config.lastPage`                              | A shared Unsplash search page cursor. Writes aren't coordinated.                                        |
-| Day page → Notifications         | `#notifications-button`, `#toast`, `/index.js` | The server renders the markup. The client bundle adds behavior.                                         |
+| From → To                        | Through                                        | Contract                                                                                                                          |
+| -------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Day page → Day assignment        | `createNewDayRecord()`                         | Creates `days/{date}` with `status: 'created'` and `photo: null`, only if the day has no record. This fires `onDayRecordCreated`. |
+| Day assignment → Day page        | The `days/{date}` record                       | A `completed` record has a full `UnsplashPhoto`. The processing page polls until it appears.                                      |
+| Photo ingestion → Day assignment | `available-photo-ids`                          | Queued IDs are candidates only. Day assignment checks them against `photo-ids` again before using them.                           |
+| Photo ingestion ↔ Day assignment | `config.lastPage`                              | A shared Unsplash search page cursor. Both move it only through Platform's `advanceLastPage()`, which never moves it backwards.   |
+| Day page → Notifications         | `#notifications-button`, `#toast`, `/index.js` | The server renders the markup. The client bundle adds behavior.                                                                   |
 
 ## Cross-cutting rules
 
@@ -154,7 +154,7 @@ Rules for every milestone:
 
 These steps change behavior, so ship each one alone.
 
-1. Make `createNewDayRecord()` create the record only when none exists, for example with Firestore `create()`. The Day page can then no longer reset a `processing` record. This closes Day page known issue 1.
+1. Make `createNewDayRecord()` create the record only when none exists, for example with Firestore `create()`. The Day page can then no longer reset a `processing` record. This closes the Day page known issue about overwritten `processing` records.
 2. Give `config.lastPage` one writer: a single function that advances it in a transaction, called by both Photo ingestion and Day assignment.
 3. Update "How the slices connect" and the affected slice specs.
 

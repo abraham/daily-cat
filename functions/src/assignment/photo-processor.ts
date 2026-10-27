@@ -2,7 +2,7 @@ import * as logger from 'firebase-functions/logger';
 import * as catApi from '../ingestion';
 import { completePhotoForDay } from './day-storage';
 import { isPhotoIdUsed } from './photo-id-storage';
-import { getConfig, unsplashClientId, updateConfig } from '../platform';
+import { advanceLastPage, getConfig, unsplashClientId } from '../platform';
 
 /**
  * Process a day record by finding and assigning an unused cat photo
@@ -25,8 +25,7 @@ export async function processPhotoForDay(
 
     try {
       const catPhotos = await catApi.list({ clientId, page });
-      page = (Number(page) + 1).toString();
-      await updateConfig({ lastPage: page });
+      page = await advanceLastPage(page);
       logger.log(
         `Received ${catPhotos.results.length} cat photos from API on attempt ${attempt}`
       );

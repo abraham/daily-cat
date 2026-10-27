@@ -40,11 +40,11 @@ Everything a visitor or crawler fetches: the server-rendered page for each date,
 
 `getPhotoForDate()` maps the stored record as follows:
 
-| Stored record                                   | Returned             | What the handler does                                          |
-| ----------------------------------------------- | -------------------- | -------------------------------------------------------------- |
-| `completed` with a photo                        | `CompletedDayRecord` | Renders the photo page                                         |
-| `created` with `photo: null`                    | `NewDayRecord`       | Renders the processing page                                    |
-| No document, `processing`, or inconsistent data | `null`               | Calls `createNewDayRecord()`, then renders the processing page |
+| Stored record                                   | Returned             | What the handler does                                                                                      |
+| ----------------------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `completed` with a photo                        | `CompletedDayRecord` | Renders the photo page                                                                                     |
+| `created` with `photo: null`                    | `NewDayRecord`       | Renders the processing page                                                                                |
+| No document, `processing`, or inconsistent data | `null`               | Calls `createNewDayRecord()`, which creates a record only if none exists, then renders the processing page |
 
 ## Rendering
 
@@ -89,17 +89,14 @@ Non-GET requests get 405. Errors get 500.
 
 - Only dates from `minDate` through today (UTC) are served.
 - A visit to a day with no record is the only thing that starts on-demand assignment. The record must be created with `status: 'created'` and `photo: null`.
+- Visits never change an existing record. Each reload of the processing page calls `createNewDayRecord()` again, but it does nothing once the record exists.
 - The processing page only polls. It never writes anything.
 
 ## Known issues
 
-1. **Records in `processing` get overwritten.** `getPhotoForDate()` returns `null` for `processing`, so every request for that day calls `createNewDayRecord()` again. That includes the processing page's own reloads every 2 s. The call overwrites the record with `status: 'created'` and `photo: null`, and resets `createdAt`.
-   - An overwrite is not a create, so `onDayRecordCreated` doesn't fire again.
-   - If an overwrite lands just after `completePhotoForDay`, the assigned photo is discarded but stays marked as used. The day then stays `created` until the scheduled path in [Day assignment](day-assignment.md) fills it.
-   - Possible fixes: treat `processing` like `created`, or create placeholders with Firestore `create()`, which fails if the document already exists.
-2. **The previous-day link is always rendered.** On `minDate` it leads to a 403 plain-text response.
-3. **Social previews are generic.** The Open Graph and Twitter tags are the same for every day. `og:image` is a relative URL, but most link-preview scrapers expect an absolute one.
-4. **The sitemap trusts forwarded headers.** Firebase Hosting sets `x-forwarded-host`, but if the function URL is called directly, the caller controls the host written into the sitemap.
+1. **The previous-day link is always rendered.** On `minDate` it leads to a 403 plain-text response.
+2. **Social previews are generic.** The Open Graph and Twitter tags are the same for every day. `og:image` is a relative URL, but most link-preview scrapers expect an absolute one.
+3. **The sitemap trusts forwarded headers.** Firebase Hosting sets `x-forwarded-host`, but if the function URL is called directly, the caller controls the host written into the sitemap.
 
 ## Code and tests
 

@@ -23,6 +23,7 @@ const mockDoc = {
   data: vi.fn(),
   get: vi.fn(),
   set: vi.fn(),
+  create: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
 };
@@ -69,6 +70,7 @@ describe('Day Storage Functions', () => {
     mockDoc.data.mockReturnValue({});
     mockDoc.get.mockResolvedValue(mockDoc);
     mockDoc.set.mockResolvedValue(undefined);
+    mockDoc.create.mockResolvedValue(undefined);
     mockDoc.update.mockResolvedValue(undefined);
     mockDoc.delete.mockResolvedValue(undefined);
 
@@ -136,12 +138,13 @@ describe('Day Storage Functions', () => {
 
       expect(mockFirestore.collection).toHaveBeenCalledWith('days');
       expect(mockCollection.doc).toHaveBeenCalledWith(testDate);
-      expect(mockDoc.set).toHaveBeenCalledWith({
+      expect(mockDoc.create).toHaveBeenCalledWith({
         status: 'created',
         photo: null,
         createdAt: expect.any(Timestamp),
         updatedAt: expect.any(Timestamp),
       });
+      expect(mockDoc.set).not.toHaveBeenCalled();
 
       expect(result).toEqual({
         id: testDate,
@@ -159,7 +162,7 @@ describe('Day Storage Functions', () => {
       const result = await dayStorage.createNewDayRecord(testDate);
 
       const afterTime = Timestamp.now();
-      const callArgs = mockDoc.set.mock.calls[0][0];
+      const callArgs = mockDoc.create.mock.calls[0][0];
 
       expect(callArgs.createdAt).toBeInstanceOf(Timestamp);
       expect(callArgs.updatedAt).toBeInstanceOf(Timestamp);
@@ -176,8 +179,30 @@ describe('Day Storage Functions', () => {
         afterTime.toMillis()
       );
 
-      expect(result.createdAt).toBe(callArgs.createdAt);
-      expect(result.updatedAt).toBe(callArgs.updatedAt);
+      expect(result?.createdAt).toBe(callArgs.createdAt);
+      expect(result?.updatedAt).toBe(callArgs.updatedAt);
+    });
+
+    it('should return null and leave the record alone when the day already has one', async () => {
+      mockDoc.create.mockRejectedValue(
+        Object.assign(new Error('6 ALREADY_EXISTS'), { code: 6 })
+      );
+
+      const result = await dayStorage.createNewDayRecord('2025-06-27');
+
+      expect(result).toBeNull();
+      expect(mockDoc.set).not.toHaveBeenCalled();
+      expect(mockDoc.update).not.toHaveBeenCalled();
+    });
+
+    it('should rethrow other Firestore errors', async () => {
+      mockDoc.create.mockRejectedValue(
+        Object.assign(new Error('14 UNAVAILABLE'), { code: 14 })
+      );
+
+      await expect(dayStorage.createNewDayRecord('2025-06-27')).rejects.toThrow(
+        '14 UNAVAILABLE'
+      );
     });
   });
 
