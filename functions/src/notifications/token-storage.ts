@@ -1,4 +1,4 @@
-import { getFirestore, Firestore } from 'firebase-admin/firestore';
+import { getFirestore, Firestore, Timestamp } from 'firebase-admin/firestore';
 import { getApp } from '../platform';
 import { Token } from './token';
 
@@ -39,4 +39,53 @@ export async function saveTokenDocument(
  */
 export async function deleteTokenDocument(tokenId: string): Promise<void> {
   await db.collection('tokens').doc(tokenId).delete();
+}
+
+/**
+ * Get the tokens least recently updated before a cutoff, oldest first
+ * @param cutoff - Only tokens with `updatedAt` before this are returned
+ * @param limit - Maximum number of tokens to return
+ * @returns Promise<Token[]> - The matching token documents
+ */
+export async function getTokensUpdatedBefore(
+  cutoff: Timestamp,
+  limit: number
+): Promise<Token[]> {
+  const snapshot = await db
+    .collection('tokens')
+    .where('updatedAt', '<', cutoff)
+    .orderBy('updatedAt', 'asc')
+    .limit(limit)
+    .get();
+
+  return snapshot.docs.map((doc) => doc.data() as Token);
+}
+
+/**
+ * Set `updatedAt` to now on several token documents in one batch
+ * @param tokenIds - The token IDs to touch (at most 500)
+ * @returns Promise<void>
+ */
+export async function touchTokenDocuments(tokenIds: string[]): Promise<void> {
+  if (tokenIds.length === 0) return;
+  const batch = db.batch();
+  const now = Timestamp.now();
+  for (const tokenId of tokenIds) {
+    batch.update(db.collection('tokens').doc(tokenId), { updatedAt: now });
+  }
+  await batch.commit();
+}
+
+/**
+ * Delete several token documents in one batch
+ * @param tokenIds - The token IDs to delete (at most 500)
+ * @returns Promise<void>
+ */
+export async function deleteTokenDocuments(tokenIds: string[]): Promise<void> {
+  if (tokenIds.length === 0) return;
+  const batch = db.batch();
+  for (const tokenId of tokenIds) {
+    batch.delete(db.collection('tokens').doc(tokenId));
+  }
+  await batch.commit();
 }

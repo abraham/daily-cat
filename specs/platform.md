@@ -24,7 +24,7 @@ The infrastructure every slice depends on: Firebase Hosting routing, Firestore s
 ## Functions runtime
 
 - [functions/](../functions/) is a separate npm package (`main: lib/index.js`, `engines.node: 22`). Firebase deploys it with runtime `nodejs22`, and its `predeploy` hook runs `npm --prefix functions run build`.
-- [functions/src/index.ts](../functions/src/index.ts) only re-exports the eight functions from the slice folders. Each task file defines exactly one function. [index.test.ts](../functions/src/index.test.ts) fails if that list of names changes, because Firebase deploys a renamed function as a delete plus a create.
+- [functions/src/index.ts](../functions/src/index.ts) only re-exports the nine functions from the slice folders. Each task file defines exactly one function. [index.test.ts](../functions/src/index.test.ts) fails if that list of names changes, because Firebase deploys a renamed function as a delete plus a create.
 - [functions/src/platform/](../functions/src/platform/) holds the shared runtime pieces. Other code imports them only through its `index.ts`:
   - `getApp()` in [firebase.ts](../functions/src/platform/firebase.ts) returns the `firebase-admin` app, initializing it on first use. Every module that talks to Firestore calls it, and tests mock this one module.
   - `getConfig()` and `updateConfig()` (see below).

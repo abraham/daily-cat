@@ -19,6 +19,7 @@ describe('functions entry point', () => {
       'importPhotosScheduled',
       'onDayRecordCreated',
       'processAvailablePhotosScheduled',
+      'pruneTokensScheduled',
       'recordPhotoIdOnDayWrite',
       'sendNotificationsScheduled',
       'sitemap',

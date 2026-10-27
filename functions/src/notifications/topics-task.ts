@@ -12,10 +12,10 @@ import { Timestamp } from 'firebase-admin/firestore';
 /**
  * Firebase Function for managing FCM topic subscriptions
  *
- * POST /topics?token=<fcm_token>
- * - Subscribes the token to the current hour topic (e.g., hour-12)
- * - Saves the token and subscription info to the 'tokens' collection
- * - Returns success response with subscribed topics
+ * POST /topics?token=<fcm_token>[&topic=hour-HH]
+ * - Subscribes the token to `topic`, or to the current UTC hour's topic if omitted
+ * - Unsubscribes the token from any other topic, so it gets one notification a day
+ * - Saves the token and its topic to the 'tokens' collection
  *
  * DELETE /topics?token=<fcm_token>
  * - Unsubscribes the token from all previously subscribed topics
@@ -39,8 +39,20 @@ export const topics = onRequest(async (request, response) => {
     }
 
     if (request.method === 'POST') {
-      // Subscribe to current hour topic
-      await handleSubscription(token, response);
+      const requestedTopic = request.query.topic;
+      if (
+        requestedTopic !== undefined &&
+        (typeof requestedTopic !== 'string' || !HOUR_TOPIC.test(requestedTopic))
+      ) {
+        response.status(400).send('Invalid topic. Use hour-00 to hour-23.');
+        return;
+      }
+
+      await handleSubscription(
+        token,
+        requestedTopic ?? currentHourTopic(),
+        response
+      );
     } else if (request.method === 'DELETE') {
       // Unsubscribe from all topics and delete token
       await handleUnsubscription(token, response);
@@ -53,13 +65,14 @@ export const topics = onRequest(async (request, response) => {
   }
 });
 
-async function handleSubscription(token: string, response: any) {
-  try {
-    // Get current hour in 2-digit format (00-23)
-    const now = new Date();
-    const currentHour = now.getUTCHours().toString().padStart(2, '0');
-    const topic = `hour-${currentHour}`;
+const HOUR_TOPIC = /^hour-([01]\d|2[0-3])$/;
 
+function currentHourTopic(): string {
+  return `hour-${new Date().getUTCHours().toString().padStart(2, '0')}`;
+}
+
+async function handleSubscription(token: string, topic: string, response: any) {
+  try {
     logger.log(`Subscribing token to topic: ${topic}`);
 
     // Subscribe to the topic
@@ -77,14 +90,18 @@ async function handleSubscription(token: string, response: any) {
     // Check if token document already exists
     const existingToken = await getTokenDocument(token);
 
-    let topics: string[];
-    if (existingToken) {
-      // Add new topic to existing topics (avoid duplicates)
-      topics = [...new Set([...existingToken.topics, topic])];
-    } else {
-      // First time subscription
-      topics = [topic];
+    const previousTopics = (existingToken?.topics ?? []).filter(
+      (previous) => previous !== topic
+    );
+    for (const previous of previousTopics) {
+      try {
+        await getMessaging().unsubscribeFromTopic([token], previous);
+      } catch (error) {
+        logger.error(`Error unsubscribing from topic ${previous}:`, error);
+      }
     }
+
+    const topics = [topic];
 
     // Save token document
     const timestampNow = Timestamp.now();
@@ -102,6 +119,7 @@ async function handleSubscription(token: string, response: any) {
       success: true,
       message: `Subscribed to topic: ${topic}`,
       topics,
+      unsubscribedTopics: previousTopics,
     });
   } catch (error) {
     logger.error('Error handling subscription:', error);
