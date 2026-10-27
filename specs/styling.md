@@ -1,6 +1,6 @@
 # Styling and dark theme
 
-Part of the [architecture overview](README.md). Status: milestones T1 to T4 are **done**; T5 is **proposed**.
+Part of the [architecture overview](README.md). Status: all milestones, T1 to T5, are **done**. What's left is under [Open questions](#open-questions).
 
 ## Purpose
 
@@ -33,11 +33,11 @@ Non-goals:
 - Fixed in T2: `.nav-arrow`, `.share-button`, and `.notifications-button` repeated about 15 declarations each, and the arrows and share button were given `position: absolute`, then reset to `static`.
 - Fixed in T2: the header, profile, and footer used a translucent white background with `backdrop-filter: blur(10px)`, though nothing ever scrolls behind them. The toast keeps its blur, because it floats over the page.
 - Fixed in T2: dead code, namely the `.footer .separator` rule, `calendarIcon()`, `scroll-behavior: smooth`, and vendor prefixes such as `-khtml-user-drag`.
-- The toast types `info`, `success`, and `error` have no styles, so they look the same. `.toast.show` sets the same `transform` as `.toast`, so only opacity animates.
-- Accessibility:
-  - `user-scalable=no` blocks pinch zoom, which fails WCAG 1.4.4.
-  - Every `env(safe-area-inset-*)` value is 0, because the viewport tag lacks `viewport-fit=cover`.
-  - There is no `:focus-visible` style and no `prefers-reduced-motion` handling.
+- Fixed in T5: the toast types `info`, `success`, and `error` had no styles, so they looked the same, and `.toast.show` set the same `transform` as `.toast`, so only opacity animated.
+- Fixed in T5, accessibility:
+  - `user-scalable=no` blocked pinch zoom, which fails WCAG 1.4.4.
+  - Every `env(safe-area-inset-*)` value was 0, because the viewport tag lacked `viewport-fit=cover`.
+  - There was no `:focus-visible` style and no `prefers-reduced-motion` handling.
 - Fixed in T4: [404.html](../assets/404.html) was the default Firebase page, with its own palette and text about the Firebase CLI.
 - Since T4, every page follows the system light or dark setting.
 - Before T1, [template.test.ts](../functions/src/day-page/template.test.ts) checked for CSS text such as `.notifications-button {` and `width: 48px`. It now checks markup only.
@@ -86,7 +86,7 @@ Every color in `styles.css` is a `var(--…)`. Hex and `rgb()` values appear onl
 
 The light values are today's colors, so moving to tokens changes nothing visible. Tags rest one step darker than icon buttons, so they use three tokens: `--hover` at rest, `--active` on hover, and `--pressed` when pressed. The toast is dark in the light theme and light in the dark theme, so its accents are the light colors in the light theme and the reverse.
 
-Tokens are added when something first uses them: `--focus`, `--success`, and `--error` arrive with the styles that use them in T5.
+Tokens are added when something first uses them: `--focus`, `--success`, and `--error` arrived with the styles that use them in T5.
 
 Contrast, computed with the WCAG formula. Text needs 4.5:1, and the toast accent borders need 3:1 (WCAG 1.4.11). Translucent toast backgrounds are blended over `--bg` first.
 
@@ -119,15 +119,15 @@ The light `--link` (today's `#007acc`) passes with no margin, at 4.51:1. Any cha
 - **Surfaces:** the header, profile, and footer use solid `--surface` with no `backdrop-filter`.
 - **User profile:** the inline `style` attribute becomes a `.user-summary` class.
 - **Photo:** the image gets `draggable="false"` and keeps `user-select: none`. The old drag prefixes go away.
-- **Toast:** `success` and `error` get a 4 px left border in `--success` or `--error`, and `info` has none. The hidden state is `translate(-50%, -8px)` and the shown state is `translate(-50%, 0)`, so it slides in. The transition lists `opacity`, `transform`, and `visibility` instead of `all`.
+- **Toast:** `success` and `error` get a 4 px left border in `--success` or `--error`, and `info` has none. The client shows `success` after subscribing and, since T5, `error` when subscribing or unsubscribing fails; it used `info` for failures before. The hidden state is `translate(-50%, -8px)` and the shown state is `translate(-50%, 0)`, so it slides in. The transition lists `opacity`, `transform`, and `visibility` instead of `all`.
 - **Breakpoints:** mobile-first. Base rules are the current small-screen values, and one `@media (min-width: 1025px)` section holds the larger values. This keeps today's 1024 px switch point and removes the `!important`. Font sizes that differ by 1–2 px between the two could later use `clamp()`, but that changes sizes between the breakpoints, so it isn't part of T2.
 
 ### Accessibility
 
-- **Zoom:** the viewport tag drops `user-scalable=no`. Links and buttons keep `touch-action: manipulation`, which already stops double-tap zoom, and the `*` rule goes away.
-- **Safe areas:** the viewport tag adds `viewport-fit=cover`, so the existing `env(safe-area-inset-*)` padding takes effect on iPhones in landscape. The `@supports (padding: max(0px))` wrapper goes away, because every supported browser has `max()`.
-- **Focus:** `:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }` for links and buttons.
-- **Motion:** under `prefers-reduced-motion: reduce`, transitions and the pressed scale are removed, and the toast appears without sliding. The spinner keeps turning, because it is the only sign that the page is working.
+- **Zoom:** the viewport tag drops `user-scalable=no`. `a` and `button` elements keep `touch-action: manipulation`, which stops double-tap zoom on controls, and the `*` rule goes away. Pinch zoom works everywhere, and double-tap zoom works everywhere except on controls.
+- **Safe areas:** the viewport tag adds `viewport-fit=cover`, so the existing `env(safe-area-inset-*)` padding takes effect on iPhones in landscape. The photo area also gets `padding-inline` from the left and right insets, so the photo stays clear of a notch. Every inset is 0 on screens without one, so nothing moves there. (The `@supports (padding: max(0px))` wrapper was already removed in T2.)
+- **Focus:** `a:focus-visible, button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }`. The outline is 4.5:1 against `--surface` in light and 7.3:1 in dark.
+- **Motion:** under `prefers-reduced-motion: reduce`, transitions and the pressed scale are removed, and the toast appears without sliding. The spinner keeps turning, because it is the only sign that the page is working. The rules list the affected classes instead of using `* { transition: none !important }`, which keeps the stylesheet free of `!important`.
 
 ### 404 page
 
@@ -208,11 +208,24 @@ How it was checked:
 - Contrast: a script measured each text element's computed color against the background it actually sits on (translucent layers blended), in both themes, on all three pages. Every one is at least 4.5:1. The lowest are 4.51:1 in light (footer links) and 5.69:1 in dark (tags).
 - The Hosting emulator returns the new page with status 404 for an unknown path, and its stylesheet and image load.
 
-### T5. Accessibility and polish
+### T5. Accessibility and polish (done)
 
 1. Viewport changes: allow zoom and add `viewport-fit=cover`.
 2. Add the `:focus-visible` outline and the `prefers-reduced-motion` rules.
 3. Add the toast type accents and the slide-in.
+
+New tests: `styles.test.ts` checks that both page types use the new viewport tag, and `src/notifications.test.ts` checks that both failure toasts use `error`.
+
+How it was checked:
+
+- At rest, compared with T4 using the T2 script, in light and dark at all seven widths: every page matched pixel for pixel. The only box difference is the hidden toast, which now starts 8 px higher.
+- With the toast shown, it ends where it did before. It is 4 px wider because of the success accent, so it shifts 2 px left to stay centered.
+- A script measured, in both themes with and without reduced motion:
+  - the toast's hidden position, its transition, and the accent colors (3.9:1 to 4.4:1 against the toast);
+  - the icon button transition (0.2 s, or 0 s with reduced motion), and the spinner, which keeps turning either way;
+  - `touch-action`: `manipulation` on links, `auto` on the body and other elements;
+  - the outline on the first element reached with Tab (2 px solid `--focus`, offset 2 px).
+- The success and error toasts were reviewed by eye in both themes.
 
 ## Open questions
 

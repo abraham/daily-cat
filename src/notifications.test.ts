@@ -750,15 +750,18 @@ describe('Notifications', () => {
         vi.mocked(firebaseMessaging.getToken).mockResolvedValue(testToken);
 
         // Mock toast to avoid module issues
-        vi.doMock('./toast', () => ({
-          showToast: vi.fn(),
-        }));
+        const showToast = vi.fn();
+        vi.doMock('./toast', () => ({ showToast }));
 
         vi.resetModules();
         const { subscribe } = await import('./notifications');
 
         // Should not throw, but should handle error internally
         await expect(subscribe()).resolves.not.toThrow();
+        expect(showToast).toHaveBeenCalledWith(
+          'Failed to subscribe to notifications',
+          'error'
+        );
       });
     });
 
@@ -805,15 +808,18 @@ describe('Notifications', () => {
         vi.mocked(firebaseMessaging.deleteToken).mockResolvedValue(true);
 
         // Mock toast to avoid module issues
-        vi.doMock('./toast', () => ({
-          showToast: vi.fn(),
-        }));
+        const showToast = vi.fn();
+        vi.doMock('./toast', () => ({ showToast }));
 
         vi.resetModules();
         const { unsubscribe } = await import('./notifications');
 
         // Should not throw, but should handle error internally
         await expect(unsubscribe(testToken)).resolves.not.toThrow();
+        expect(showToast).toHaveBeenCalledWith(
+          'Failed to unsubscribe from notifications',
+          'error'
+        );
       });
     });
   });

@@ -12,8 +12,11 @@
   --pressed: #d0d0d0;
   --link: #007acc;
   --link-hover: #005599;
+  --focus: #007acc;
   --toast-bg: rgb(64 64 64 / 95%);
   --toast-text: #f5f5f5;
+  --success: #81c784;
+  --error: #ef9a9a;
   --spinner-track: #f0f0f0;
   --spinner-head: #666666;
 }
@@ -30,8 +33,11 @@
     --pressed: #3d3d3d;
     --link: #4db3ff;
     --link-hover: #80c8ff;
+    --focus: #4db3ff;
     --toast-bg: rgb(235 235 235 / 95%);
     --toast-text: #1f1f1f;
+    --success: #2e7d32;
+    --error: #c62828;
     --spinner-track: #2a2a2a;
     --spinner-head: #a3a3a3;
   }
@@ -56,16 +62,16 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Prevent zoom on double tap on touch screens */
-* {
+/* Stops double-tap zoom on controls; pinch zoom still works everywhere */
+a,
+button {
   touch-action: manipulation;
 }
 
-.header-title,
-.icon-button,
-.tag,
-.not-found-link {
-  touch-action: manipulation;
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 
 /* Layout */
@@ -307,6 +313,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
   overflow: hidden;
 }
 
@@ -344,14 +351,25 @@ body {
   -webkit-backdrop-filter: blur(10px);
   opacity: 0;
   visibility: hidden;
-  transform: translateX(-50%);
-  transition: all 0.3s ease;
+  transform: translate(-50%, -8px);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease,
+    visibility 0.3s ease;
 }
 
 .toast.show {
   opacity: 1;
   visibility: visible;
-  transform: translateX(-50%) translateY(0);
+  transform: translate(-50%, 0);
+}
+
+.toast.success {
+  border-left: 4px solid var(--success);
+}
+
+.toast.error {
+  border-left: 4px solid var(--error);
 }
 
 .loading-container {
@@ -450,10 +468,6 @@ body {
 /* Larger screens */
 
 @media (min-width: 1025px) {
-  * {
-    touch-action: auto;
-  }
-
   .header {
     min-height: auto;
     padding: max(20px, env(safe-area-inset-top))
@@ -544,6 +558,31 @@ body {
 
   .loading-text {
     font-size: 16px;
+  }
+}
+
+/* Reduced motion. The spinner keeps turning: it is the only sign the page is working. */
+
+@media (prefers-reduced-motion: reduce) {
+  .header-title,
+  .footer a,
+  .icon-button,
+  .notifications-button .notifications-on,
+  .notifications-button .notifications-off,
+  .tag,
+  .not-found-link,
+  .toast {
+    transition: none;
+  }
+
+  .icon-button:active,
+  .tag:active,
+  .not-found-link:active {
+    transform: none;
+  }
+
+  .toast {
+    transform: translate(-50%, 0);
   }
 }
 

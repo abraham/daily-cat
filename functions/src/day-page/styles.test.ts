@@ -91,6 +91,14 @@ describe.each([
     expect(source).not.toContain('<style');
   });
 
+  it('allow pinch zoom and extend under a notch', () => {
+    const viewport = source.match(/name="viewport"\s+content="([^"]+)"/)?.[1];
+
+    expect(viewport).toBe(
+      'width=device-width, initial-scale=1.0, viewport-fit=cover'
+    );
+  });
+
   it('set the toolbar color to --surface in each scheme', () => {
     const themeColor = (scheme: string) =>
       source.match(
