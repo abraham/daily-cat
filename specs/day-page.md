@@ -8,18 +8,18 @@ Everything a visitor or crawler fetches: the server-rendered page for each date,
 
 ## Entry points
 
-| Entry                  | Trigger                                                | Code                                                            |
-| ---------------------- | ------------------------------------------------------ | --------------------------------------------------------------- |
-| `cat`                  | HTTPS. Hosting rewrites `/` and `/YYYY-MM-DD` to it.   | [render-cat-task.ts](../functions/src/tasks/render-cat-task.ts) |
-| `sitemap`              | HTTPS. Hosting rewrites `/sitemap.xml` to it. 512 MiB. | [sitemap-task.ts](../functions/src/tasks/sitemap-task.ts)       |
-| `404.html`, `images/*` | Static files served by Hosting from `public/`          | [assets/](../assets/)                                           |
+| Entry                  | Trigger                                                | Code                                                               |
+| ---------------------- | ------------------------------------------------------ | ------------------------------------------------------------------ |
+| `cat`                  | HTTPS. Hosting rewrites `/` and `/YYYY-MM-DD` to it.   | [render-cat-task.ts](../functions/src/day-page/render-cat-task.ts) |
+| `sitemap`              | HTTPS. Hosting rewrites `/sitemap.xml` to it. 512 MiB. | [sitemap-task.ts](../functions/src/day-page/sitemap-task.ts)       |
+| `404.html`, `images/*` | Static files served by Hosting from `public/`          | [assets/](../assets/)                                              |
 
 ## Data
 
-| Data                       | Access                             | Notes                                                           |
-| -------------------------- | ---------------------------------- | --------------------------------------------------------------- |
-| `days/{YYYY-MM-DD}`        | Reads; creates placeholder records | Placeholders are filled by [Day assignment](day-assignment.md). |
-| `config/config`: `minDate` | Reads                              | Earliest date that is served or listed                          |
+| Data                       | Access                             | Notes                                                                                                                                                                 |
+| -------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `days/{YYYY-MM-DD}`        | Reads; creates placeholder records | Only through [Day assignment](day-assignment.md)'s `getPhotoForDate()`, `getCompletedDaysSince()`, and `createNewDayRecord()`. Day assignment fills the placeholders. |
+| `config/config`: `minDate` | Reads                              | Earliest date that is served or listed                                                                                                                                |
 
 ## `cat` request handling
 
@@ -48,7 +48,7 @@ Everything a visitor or crawler fetches: the server-rendered page for each date,
 
 ## Rendering
 
-[template.ts](../functions/src/template.ts) builds a complete HTML document with lit-html. `@lit-labs/ssr` `render()` turns it into a string, which is sent as a single response. There is no hydration: the client bundle only adds behavior to the buttons.
+[template.ts](../functions/src/day-page/template.ts) builds a complete HTML document with lit-html. `@lit-labs/ssr` `render()` turns it into a string, which is sent as a single response. There is no hydration: the client bundle only adds behavior to the buttons.
 
 - **`<head>`**: static title, favicon, inline CSS, static Open Graph and Twitter Card tags (the same for every day), and `<script src="/index.js" defer>`.
 - **Header**:
@@ -67,11 +67,11 @@ Everything a visitor or crawler fetches: the server-rendered page for each date,
 - **Footer**: credits for GitHub, abrah.am, Unsplash, and unDraw.
 - **`#toast`**: an empty element used by the client's `showToast()`.
 
-Icons come from [svg.ts](../functions/src/svg.ts). `calculateNavigationUrls(date)` in [navigation.ts](../functions/src/navigation.ts) returns `prevDateUrl`, `nextDateUrl` (`#` when hidden), and `showNextArrow`.
+Icons come from [svg.ts](../functions/src/day-page/svg.ts). `calculateNavigationUrls(date)` in [navigation.ts](../functions/src/day-page/navigation.ts) returns `prevDateUrl`, `nextDateUrl` (`#` when hidden), and `showNextArrow`.
 
 ## Sitemap
 
-1. Queries `days` for records with `status == 'completed'` and document ID `>= config.minDate`, ordered by ID.
+1. Calls Day assignment's `getCompletedDaysSince(config.minDate)`, which returns the `completed` records with document ID `>= minDate`, ordered by ID.
 2. Writes the homepage entry (`changefreq` daily, priority 1.0).
 3. Writes one entry per day: `lastmod` is the date part of `updatedAt`, `changefreq` is monthly, and priority is 0.8.
 4. Builds the base URL from the `x-forwarded-proto` and `x-forwarded-host` request headers.
@@ -103,9 +103,11 @@ Non-GET requests get 405. Errors get 500.
 
 ## Code and tests
 
-- [render-cat-task.ts](../functions/src/tasks/render-cat-task.ts), [render-cat-task.test.ts](../functions/src/tasks/render-cat-task.test.ts)
-- [sitemap-task.ts](../functions/src/tasks/sitemap-task.ts), [sitemap-task.test.ts](../functions/src/tasks/sitemap-task.test.ts)
-- [template.ts](../functions/src/template.ts), [template.test.ts](../functions/src/template.test.ts)
-- [navigation.ts](../functions/src/navigation.ts), [navigation.test.ts](../functions/src/navigation.test.ts)
-- [svg.ts](../functions/src/svg.ts)
+Everything is in [functions/src/day-page/](../functions/src/day-page/). Its [index.ts](../functions/src/day-page/index.ts) exports only the `cat` and `sitemap` functions.
+
+- [render-cat-task.ts](../functions/src/day-page/render-cat-task.ts), [render-cat-task.test.ts](../functions/src/day-page/render-cat-task.test.ts)
+- [sitemap-task.ts](../functions/src/day-page/sitemap-task.ts), [sitemap-task.test.ts](../functions/src/day-page/sitemap-task.test.ts)
+- [template.ts](../functions/src/day-page/template.ts), [template.test.ts](../functions/src/day-page/template.test.ts)
+- [navigation.ts](../functions/src/day-page/navigation.ts), [navigation.test.ts](../functions/src/day-page/navigation.test.ts)
+- [svg.ts](../functions/src/day-page/svg.ts)
 - [assets/](../assets/)

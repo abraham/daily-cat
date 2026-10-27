@@ -63,7 +63,7 @@ vi.mock('../platform/config-storage', () => ({
 }));
 
 // Mock the template module
-vi.mock('../template', () => ({
+vi.mock('./template', () => ({
   renderPhotoPage: vi.fn(),
   renderProcessingPage: vi.fn(),
 }));
@@ -93,7 +93,7 @@ describe('Cat Function', () => {
     // Get the mocked modules after reset
     dayStorageMock = await import('../assignment/day-storage.js');
     configStorageMock = await import('../platform/config-storage.js');
-    templateMock = await import('../template.js');
+    templateMock = await import('./template.js');
 
     dayStorageMock.getPhotoForDate.mockResolvedValue(null); // Default: no existing photo
     dayStorageMock.createNewDayRecord.mockResolvedValue({

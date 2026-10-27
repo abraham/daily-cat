@@ -357,6 +357,61 @@ describe('Day Storage Functions', () => {
     });
   });
 
+  describe('getCompletedDaysSince', () => {
+    it('should return completed records from the start date, ordered by date', async () => {
+      const updatedAt = Timestamp.now();
+      mockCollection.get.mockResolvedValue({
+        docs: [
+          {
+            id: '2025-06-25',
+            data: () => ({ status: 'completed', photo: mockPhoto, updatedAt }),
+          },
+          {
+            id: '2025-06-27',
+            data: () => ({ status: 'completed', photo: mockPhoto, updatedAt }),
+          },
+        ],
+      });
+
+      const result = await dayStorage.getCompletedDaysSince('2025-06-25');
+
+      expect(mockFirestore.collection).toHaveBeenCalledWith('days');
+      expect(mockCollection.where).toHaveBeenCalledWith(
+        'status',
+        '==',
+        'completed'
+      );
+      expect(mockCollection.where).toHaveBeenCalledWith(
+        '__name__',
+        '>=',
+        '2025-06-25'
+      );
+      expect(mockCollection.orderBy).toHaveBeenCalledWith('__name__', 'asc');
+      expect(result).toEqual([
+        {
+          id: '2025-06-25',
+          status: 'completed',
+          photo: mockPhoto,
+          updatedAt,
+        },
+        {
+          id: '2025-06-27',
+          status: 'completed',
+          photo: mockPhoto,
+          updatedAt,
+        },
+      ]);
+    });
+
+    it('should return empty array when no days are completed', async () => {
+      mockCollection.get.mockResolvedValue({ docs: [] });
+
+      const result = await dayStorage.getCompletedDaysSince('2025-06-25');
+
+      expect(result).toEqual([]);
+    });
+  });
+
   describe('deleteDayRecord', () => {
     it('should delete a day record by date', async () => {
       const testDate = '2025-06-27';

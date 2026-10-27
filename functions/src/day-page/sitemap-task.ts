@@ -1,11 +1,7 @@
 import * as logger from 'firebase-functions/logger';
 import { onRequest } from 'firebase-functions/v2/https';
-import { Firestore, getFirestore } from 'firebase-admin/firestore';
-import { DayRecord } from '../assignment';
-import { getApp, getConfig } from '../platform';
-
-const db: Firestore = getFirestore(getApp());
-const COLLECTION_NAME = 'days';
+import { DayRecord, getCompletedDaysSince } from '../assignment';
+import { getConfig } from '../platform';
 
 /**
  * Firebase Function for generating sitemap.xml
@@ -30,18 +26,7 @@ export const sitemap = onRequest(
 
       logger.log(`Using minDate: ${minDate}`);
 
-      // Query all day records with status 'completed' and after minDate
-      const snapshot = await db
-        .collection(COLLECTION_NAME)
-        .where('status', '==', 'completed')
-        .where('__name__', '>=', minDate)
-        .orderBy('__name__', 'asc')
-        .get();
-
-      const completedDays: DayRecord[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as DayRecord[];
+      const completedDays = await getCompletedDaysSince(minDate);
 
       logger.log(`Found ${completedDays.length} completed day records`);
 
