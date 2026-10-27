@@ -42,7 +42,7 @@ export const onDayRecordCreated = onDocumentCreated(
 );
 
 /** Marks the day as processing so it's handled once, then finds it a photo. */
-async function startAssignment(dayId: string): Promise<void> {
+export async function startAssignment(dayId: string): Promise<void> {
   logger.log(`Processing new day record for date: ${dayId}`);
   await setDayRecordProcessing(dayId);
 

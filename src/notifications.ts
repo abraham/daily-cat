@@ -242,4 +242,6 @@ export {
   unsubscribeFromTopics,
   utcHourPadded,
   syncToken,
+  showSubscriptionStatus,
+  onNotificationsButtonClick,
 };

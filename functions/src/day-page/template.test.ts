@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@lit-labs/ssr';
 import { collectResultSync } from '@lit-labs/ssr/lib/render-result.js';
-import { renderProcessingPage, renderPhotoPage } from './template';
+import {
+  renderMetaTags,
+  renderProcessingPage,
+  renderPhotoPage,
+} from './template';
 
 const pageBase = {
   meta: {
@@ -19,6 +23,38 @@ function toHtml(result: ReturnType<typeof renderPhotoPage>): string {
 }
 
 describe('Template', () => {
+  describe('renderMetaTags', () => {
+    const tags = () => collectResultSync(render(renderMetaTags(pageBase.meta)));
+
+    it('renders the canonical link and matching Open Graph and Twitter tags', () => {
+      const html = tags();
+
+      expect(html).toContain(
+        '<link rel="canonical" href="https://daily.cat/2025-06-28" />'
+      );
+      for (const [og, twitter, value] of [
+        ['og:title', 'twitter:title', pageBase.meta.title],
+        ['og:description', 'twitter:description', pageBase.meta.description],
+        ['og:image', 'twitter:image', pageBase.meta.imageUrl],
+        ['og:image:alt', 'twitter:image:alt', pageBase.meta.imageAlt],
+      ]) {
+        expect(html).toContain(`<meta property="${og}" content="${value}" />`);
+        expect(html).toContain(`<meta name="${twitter}" content="${value}" />`);
+      }
+      expect(html).toContain(
+        '<meta property="og:url" content="https://daily.cat/2025-06-28" />'
+      );
+      expect(html).toContain(
+        '<meta name="twitter:card" content="summary_large_image" />'
+      );
+    });
+
+    it('renders only head elements', () => {
+      const elements = tags().match(/<[a-z]+/g) ?? [];
+
+      expect(new Set(elements)).toEqual(new Set(['<link', '<meta']));
+    });
+  });
   describe('renderProcessingPage', () => {
     it('should include auto-refresh JavaScript for processing page', () => {
       const mockData = {

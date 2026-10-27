@@ -89,7 +89,7 @@ interface PageContext {
   navigation: NavigationUrls;
 }
 
-function photoPageData(
+export function photoPageData(
   photo: UnsplashPhoto,
   { title, url, navigation }: PageContext
 ): TemplateData {
@@ -116,7 +116,7 @@ function photoPageData(
   };
 }
 
-function processingPageData({
+export function processingPageData({
   title,
   url,
   navigation,
@@ -142,7 +142,7 @@ function processingPageData({
   };
 }
 
-function renderToString(template: ServerRenderedTemplate): string {
+export function renderToString(template: ServerRenderedTemplate): string {
   // Throws instead of printing "[object Promise]" if a template ever goes async.
   return collectResultSync(render(template));
 }

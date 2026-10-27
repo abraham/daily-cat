@@ -16,7 +16,7 @@ import { getPhotosForDateRange, savePhotoForDate } from './day-storage';
 import { isPhotoIdUsed } from './photo-id-storage';
 
 /** Every date from `startDate` through `endDate` without a completed record. */
-async function getDatesNeedingPhotosInRange(
+export async function getDatesNeedingPhotosInRange(
   startDate: string,
   endDate: string
 ): Promise<string[]> {
@@ -40,7 +40,9 @@ async function getDatesNeedingPhotosInRange(
  * Dates that need photos: the next 30 days starting today, or if those are all
  * filled, every earlier day back to `minDate`.
  */
-async function getDatesNeedingPhotos(minDate: string): Promise<string[]> {
+export async function getDatesNeedingPhotos(
+  minDate: string
+): Promise<string[]> {
   const today = toDateString(new Date());
 
   const futureDates = await getDatesNeedingPhotosInRange(
@@ -80,7 +82,7 @@ type AssignResult = 'assigned' | 'skipped';
  * Assigns the photo to `date` and takes it off the available list. Skips (and
  * removes) photos that are already used or no longer exist on Unsplash.
  */
-async function assignPhotoToDate(
+export async function assignPhotoToDate(
   photoId: string,
   date: string,
   clientId: string
@@ -114,7 +116,7 @@ async function assignPhotoToDate(
 }
 
 /** Pairs available photos with the dates that need them, in order. */
-async function assignPhotos(
+export async function assignPhotos(
   photoIds: string[],
   dates: string[],
   clientId: string

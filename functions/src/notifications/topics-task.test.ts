@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { topics } from './topics-task';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { parseTopic, topics, unsubscribeFromTopics } from './topics-task';
 import { Timestamp } from 'firebase-admin/firestore';
 
 // Mock Firebase functions
@@ -272,5 +272,67 @@ describe('topics task', () => {
 
     expect(mockResponse.status).toHaveBeenCalledWith(404);
     expect(mockResponse.send).toHaveBeenCalledWith('Token not found');
+  });
+});
+
+describe('parseTopic', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("defaults to the current UTC hour's topic", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2025-01-01T07:59:59Z'));
+
+    expect(parseTopic(undefined)).toBe('hour-07');
+  });
+
+  it.each(['hour-00', 'hour-09', 'hour-19', 'hour-23'])(
+    'accepts %s',
+    (topic) => {
+      expect(parseTopic(topic)).toBe(topic);
+    }
+  );
+
+  it.each([
+    'hour-24',
+    'hour-7',
+    'hour-007',
+    'HOUR-07',
+    'news',
+    '',
+    ['hour-01', 'hour-02'],
+    5,
+  ])('rejects %j', (topic) => {
+    expect(parseTopic(topic)).toBeNull();
+  });
+});
+
+describe('unsubscribeFromTopics', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockMessaging = { unsubscribeFromTopic: vi.fn() };
+  });
+
+  it('unsubscribes the token from each topic', async () => {
+    await unsubscribeFromTopics('token-1', ['hour-01', 'hour-02']);
+
+    expect(mockMessaging.unsubscribeFromTopic).toHaveBeenCalledWith(
+      ['token-1'],
+      'hour-01'
+    );
+    expect(mockMessaging.unsubscribeFromTopic).toHaveBeenCalledWith(
+      ['token-1'],
+      'hour-02'
+    );
+  });
+
+  it('carries on when one topic fails', async () => {
+    mockMessaging.unsubscribeFromTopic.mockRejectedValueOnce(new Error('x'));
+
+    await expect(
+      unsubscribeFromTopics('token-1', ['hour-01', 'hour-02'])
+    ).resolves.toBeUndefined();
+    expect(mockMessaging.unsubscribeFromTopic).toHaveBeenCalledTimes(2);
   });
 });

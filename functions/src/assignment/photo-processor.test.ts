@@ -369,4 +369,73 @@ describe('Photo Processor', () => {
       vi.restoreAllMocks();
     });
   });
+
+  describe('backoff', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it.each([
+      [1, 1000],
+      [2, 2000],
+      [3, 4000],
+      [4, 8000],
+      [5, 10000],
+      [9, 10000],
+    ])('waits for attempt %i: %i ms', async (attempt, delay) => {
+      vi.useFakeTimers();
+      let done = false;
+      const waiting = photoProcessor.backoff(attempt).then(() => {
+        done = true;
+      });
+
+      await vi.advanceTimersByTimeAsync(delay - 1);
+      expect(done).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      await waiting;
+      expect(done).toBe(true);
+    });
+  });
+
+  describe('findUnusedPhoto', () => {
+    const results = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+
+    it('returns the full details of the first unused result', async () => {
+      mockPhotoIdStorage.isPhotoIdUsed.mockImplementation(
+        async (id: string) => id === 'a'
+      );
+
+      await expect(
+        photoProcessor.findUnusedPhoto(results, 'client')
+      ).resolves.toBe(mockCompletePhoto);
+      expect(mockCatApi.get).toHaveBeenCalledTimes(1);
+      expect(mockCatApi.get).toHaveBeenCalledWith({ clientId: 'client' }, 'b');
+    });
+
+    it('skips a result whose details fail to load', async () => {
+      mockCatApi.get.mockRejectedValueOnce(new Error('404'));
+
+      await expect(
+        photoProcessor.findUnusedPhoto(results, 'client')
+      ).resolves.toBe(mockCompletePhoto);
+      expect(mockCatApi.get.mock.calls.map(([, id]) => id)).toEqual(['a', 'b']);
+    });
+
+    it('returns null when every result is used or fails', async () => {
+      mockPhotoIdStorage.isPhotoIdUsed.mockImplementation(
+        async (id: string) => id !== 'c'
+      );
+      mockCatApi.get.mockRejectedValue(new Error('404'));
+
+      await expect(
+        photoProcessor.findUnusedPhoto(results, 'client')
+      ).resolves.toBeNull();
+    });
+
+    it('returns null for an empty page', async () => {
+      await expect(
+        photoProcessor.findUnusedPhoto([], 'client')
+      ).resolves.toBeNull();
+    });
+  });
 });

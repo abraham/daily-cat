@@ -206,7 +206,7 @@ function renderBody(
   `;
 }
 
-function renderMetaTags(meta: PageMeta): TemplateResult {
+export function renderMetaTags(meta: PageMeta): TemplateResult {
   return html`
     <link rel="canonical" href="${meta.url}" />
 

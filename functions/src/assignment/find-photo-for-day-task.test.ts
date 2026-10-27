@@ -297,4 +297,43 @@ describe('Find Photo for Day Task', () => {
       expect(mockProcessPhotoForDay).not.toHaveBeenCalled();
     });
   });
+
+  describe('startAssignment', () => {
+    it('marks the day as processing before looking for a photo', async () => {
+      const order: string[] = [];
+      mockSetDayRecordProcessing.mockImplementation(async () => {
+        order.push('processing');
+      });
+      mockProcessPhotoForDay.mockImplementation(async () => {
+        order.push('find photo');
+        return true;
+      });
+
+      await findPhotoTask.startAssignment('2026-10-27');
+
+      expect(order).toEqual(['processing', 'find photo']);
+      expect(mockSetDayRecordProcessing).toHaveBeenCalledWith('2026-10-27');
+      expect(mockProcessPhotoForDay).toHaveBeenCalledWith('2026-10-27', 10);
+      expect(mockLogger.error).not.toHaveBeenCalled();
+    });
+
+    it('logs when no photo could be assigned', async () => {
+      mockProcessPhotoForDay.mockResolvedValue(false);
+
+      await findPhotoTask.startAssignment('2026-10-27');
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Failed to assign photo to day record 2026-10-27 after 10 retry attempts'
+      );
+    });
+
+    it('does not look for a photo if marking the day fails', async () => {
+      mockSetDayRecordProcessing.mockRejectedValue(new Error('write failed'));
+
+      await expect(findPhotoTask.startAssignment('2026-10-27')).rejects.toThrow(
+        'write failed'
+      );
+      expect(mockProcessPhotoForDay).not.toHaveBeenCalled();
+    });
+  });
 });

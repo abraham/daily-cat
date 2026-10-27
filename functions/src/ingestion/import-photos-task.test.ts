@@ -291,3 +291,43 @@ describe('import-photos-task', () => {
     expect(mockAdvanceLastPage).toHaveBeenCalledTimes(10);
   });
 });
+
+describe('importPage', () => {
+  let importPage: typeof import('./import-photos-task').importPage;
+  const page = (...ids: string[]) => ({
+    total: ids.length,
+    total_pages: 1,
+    results: ids.map((id) => ({ id })),
+  });
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    mockIsPhotoIdUsed.mockResolvedValue(false);
+    mockStoreMultipleAvailablePhotoIds.mockResolvedValue(undefined);
+    ({ importPage } = await import('./import-photos-task.js'));
+  });
+
+  it('requests the page and stores the unused photo IDs', async () => {
+    mockList.mockResolvedValue(page('a', 'b', 'c'));
+    mockIsPhotoIdUsed.mockImplementation(async (id: string) => id === 'b');
+
+    await expect(importPage(7, 'client')).resolves.toBe(2);
+
+    expect(mockList).toHaveBeenCalledWith({ clientId: 'client', page: '7' });
+    expect(mockStoreMultipleAvailablePhotoIds).toHaveBeenCalledWith(['a', 'c']);
+  });
+
+  it('stores nothing when every photo is used', async () => {
+    mockList.mockResolvedValue(page('a', 'b'));
+    mockIsPhotoIdUsed.mockResolvedValue(true);
+
+    await expect(importPage(7, 'client')).resolves.toBe(0);
+    expect(mockStoreMultipleAvailablePhotoIds).not.toHaveBeenCalled();
+  });
+
+  it('passes on errors so the caller can log the page', async () => {
+    mockList.mockRejectedValue(new Error('rate limited'));
+
+    await expect(importPage(7, 'client')).rejects.toThrow('rate limited');
+  });
+});

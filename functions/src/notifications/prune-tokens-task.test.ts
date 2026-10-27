@@ -121,3 +121,75 @@ describe('pruneTokensScheduled', () => {
     expect(mocks.touchTokenDocuments).toHaveBeenCalledWith(['alive', 'flaky']);
   });
 });
+
+describe('prune helpers', () => {
+  let task: typeof import('./prune-tokens-task');
+  const messaging = {
+    unsubscribeFromTopic: mocks.unsubscribeFromTopic,
+  } as unknown as import('firebase-admin/messaging').Messaging;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    mocks.unsubscribeFromTopic.mockResolvedValue(undefined);
+    task = await import('./prune-tokens-task.js');
+  });
+
+  describe('findDeadTokens', () => {
+    it('keeps only tokens whose send failed with a dead-token code', () => {
+      const tokens = [
+        token('alive', []),
+        token('unregistered', []),
+        token('invalid', []),
+        token('flaky', []),
+        token('no-code', []),
+      ];
+
+      const dead = task.findDeadTokens(tokens, [
+        ok,
+        failed('messaging/registration-token-not-registered'),
+        failed('messaging/invalid-registration-token'),
+        failed('messaging/internal-error'),
+        { success: false },
+      ] as never);
+
+      expect(dead.map(({ token }) => token)).toEqual([
+        'unregistered',
+        'invalid',
+      ]);
+    });
+  });
+
+  describe('unsubscribeDeadTokens', () => {
+    it('makes one call per topic with all of its dead tokens', async () => {
+      await task.unsubscribeDeadTokens(messaging, [
+        token('a', ['hour-01', 'hour-02']),
+        token('b', ['hour-01']),
+        token('c', []),
+      ]);
+
+      expect(mocks.unsubscribeFromTopic).toHaveBeenCalledTimes(2);
+      expect(mocks.unsubscribeFromTopic).toHaveBeenCalledWith(
+        ['a', 'b'],
+        'hour-01'
+      );
+      expect(mocks.unsubscribeFromTopic).toHaveBeenCalledWith(['a'], 'hour-02');
+    });
+
+    it('carries on with other topics when one call fails', async () => {
+      mocks.unsubscribeFromTopic.mockRejectedValueOnce(new Error('quota'));
+
+      await expect(
+        task.unsubscribeDeadTokens(messaging, [
+          token('a', ['hour-01', 'hour-02']),
+        ])
+      ).resolves.toBeUndefined();
+      expect(mocks.unsubscribeFromTopic).toHaveBeenCalledTimes(2);
+    });
+
+    it('does nothing without dead tokens', async () => {
+      await task.unsubscribeDeadTokens(messaging, []);
+
+      expect(mocks.unsubscribeFromTopic).not.toHaveBeenCalled();
+    });
+  });
+});
