@@ -3,9 +3,22 @@ import * as logger from 'firebase-functions/logger';
 import { onRequest } from 'firebase-functions/v2/https';
 import { TemplateResult } from 'lit-html';
 import { calculateNavigationUrls } from './navigation';
-import { getConfig } from '../platform';
+import { getConfig, SITE_URL } from '../platform';
 import { createNewDayRecord, getPhotoForDate } from '../assignment';
 import { renderPhotoPage, renderProcessingPage } from './template';
+
+const DEFAULT_DESCRIPTION = 'Your daily dose of adorable cat photos';
+
+function formatDate(date: string): string {
+  return new Date(`${date}T00:00:00.000Z`).toLocaleDateString('en-US', {
+    timeZone: 'UTC',
+    dateStyle: 'long',
+  });
+}
+
+function capitalize(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
 
 export const cat = onRequest(async (request, response) => {
   if (request.method !== 'GET') {
@@ -63,8 +76,11 @@ export const cat = onRequest(async (request, response) => {
     let dayRecord = await getPhotoForDate(requestedDate);
 
     // Calculate navigation dates
-    const { prevDateUrl, nextDateUrl, showNextArrow } =
-      calculateNavigationUrls(requestedDate);
+    const { prevDateUrl, showPrevArrow, nextDateUrl, showNextArrow } =
+      calculateNavigationUrls(requestedDate, config.minDate);
+    const pageUrl =
+      path === '/' ? `${SITE_URL}/` : `${SITE_URL}/${requestedDate}`;
+    const title = `Daily Cat: ${formatDate(requestedDate)}`;
 
     let templateResult: TemplateResult;
 
@@ -80,6 +96,15 @@ export const cat = onRequest(async (request, response) => {
 
       // Render photo page template using lit-html
       templateResult = renderPhotoPage({
+        meta: {
+          title,
+          description: cat.alt_description
+            ? `${capitalize(cat.alt_description)}. Photo by ${cat.user.name} on Unsplash.`
+            : `A cat photo by ${cat.user.name} on Unsplash.`,
+          url: pageUrl,
+          imageUrl: cat.urls.regular,
+          imageAlt: cat.alt_description || 'Cat photo',
+        },
         linkUrl: cat.links.html,
         imageUrl: cat.urls.regular,
         userProfileImage: cat.user.profile_image.medium,
@@ -90,6 +115,7 @@ export const cat = onRequest(async (request, response) => {
         altDescription: cat.alt_description || 'Cat photo',
         tags: cat.tags,
         prevDateUrl,
+        showPrevArrow,
         nextDateUrl,
         showNextArrow,
       });
@@ -104,6 +130,13 @@ export const cat = onRequest(async (request, response) => {
 
       // Render processing page template
       templateResult = renderProcessingPage({
+        meta: {
+          title,
+          description: DEFAULT_DESCRIPTION,
+          url: pageUrl,
+          imageUrl: `${SITE_URL}/images/cat.png`,
+          imageAlt: 'Daily Cat - Adorable cat photo',
+        },
         linkUrl: '',
         imageUrl: '',
         userProfileImage: '',
@@ -114,6 +147,7 @@ export const cat = onRequest(async (request, response) => {
         altDescription: '',
         tags: [],
         prevDateUrl,
+        showPrevArrow,
         nextDateUrl,
         showNextArrow,
       });

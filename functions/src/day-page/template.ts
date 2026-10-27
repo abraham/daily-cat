@@ -8,7 +8,17 @@ import {
   shareIcon,
 } from './svg';
 
+/** Per-page title and link-preview details. All URLs are absolute. */
+export interface PageMeta {
+  title: string;
+  description: string;
+  url: string;
+  imageUrl: string;
+  imageAlt: string;
+}
+
 interface TemplateData {
+  meta: PageMeta;
   linkUrl: string;
   imageUrl: string;
   userProfileImage: string;
@@ -19,6 +29,7 @@ interface TemplateData {
   altDescription: string;
   tags: Array<{ type: string; title: string }>;
   prevDateUrl: string;
+  showPrevArrow: boolean;
   nextDateUrl: string;
   showNextArrow: boolean;
 }
@@ -38,6 +49,14 @@ function renderTags(tags: Array<{ type: string; title: string }>) {
     );
 }
 
+function renderPrevArrow(showPrevArrow: boolean, prevDateUrl: string) {
+  return showPrevArrow
+    ? html`<a href="${prevDateUrl}" class="nav-arrow left" title="Previous"
+        >${backIcon()}</a
+      >`
+    : '';
+}
+
 function renderNextArrow(showNextArrow: boolean, nextDateUrl: string) {
   return showNextArrow
     ? html`<a href="${nextDateUrl}" class="nav-arrow right" title="Next"
@@ -50,9 +69,7 @@ function renderHeader(data: TemplateData): TemplateResult {
   return html`
     <div class="header">
       <div class="nav-arrows-left">
-        <a href="${data.prevDateUrl}" class="nav-arrow left" title="Previous"
-          >${backIcon()}</a
-        >
+        ${renderPrevArrow(data.showPrevArrow, data.prevDateUrl)}
         ${renderNextArrow(data.showNextArrow, data.nextDateUrl)}
       </div>
       <h1><a href="/" class="header-title">Daily Cat</a></h1>
@@ -198,35 +215,26 @@ function renderPage(
           name="viewport"
           content="width=device-width, initial-scale=1.0, user-scalable=no"
         />
+        <!-- Static: lit can't bind inside raw-text elements like <title>. -->
         <title>Daily Cat</title>
         <link rel="icon" type="image/png" href="/images/cat-face-small.png" />
+        <link rel="canonical" href="${data.meta.url}" />
 
         <!-- Open Graph tags for social media sharing -->
-        <meta property="og:title" content="Daily Cat" />
-        <meta
-          property="og:description"
-          content="Your daily dose of adorable cat photos"
-        />
-        <meta property="og:image" content="/images/cat.png" />
-        <meta
-          property="og:image:alt"
-          content="Daily Cat - Adorable cat photo"
-        />
+        <meta property="og:title" content="${data.meta.title}" />
+        <meta property="og:description" content="${data.meta.description}" />
+        <meta property="og:url" content="${data.meta.url}" />
+        <meta property="og:image" content="${data.meta.imageUrl}" />
+        <meta property="og:image:alt" content="${data.meta.imageAlt}" />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="Daily Cat" />
 
         <!-- Twitter Card tags -->
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Daily Cat" />
-        <meta
-          name="twitter:description"
-          content="Your daily dose of adorable cat photos"
-        />
-        <meta name="twitter:image" content="/images/cat.png" />
-        <meta
-          name="twitter:image:alt"
-          content="Daily Cat - Adorable cat photo"
-        />
+        <meta name="twitter:title" content="${data.meta.title}" />
+        <meta name="twitter:description" content="${data.meta.description}" />
+        <meta name="twitter:image" content="${data.meta.imageUrl}" />
+        <meta name="twitter:image:alt" content="${data.meta.imageAlt}" />
         <script src="/index.js" defer></script>
         <style>
           html,

@@ -52,9 +52,10 @@ describe('sitemap function', () => {
 
     mockRequest = {
       method: 'GET',
+      // A direct call to the function URL can set any forwarded host.
       get: vi.fn((header) => {
-        if (header === 'x-forwarded-host') return 'example.com';
-        if (header === 'x-forwarded-proto') return 'https';
+        if (header === 'x-forwarded-host') return 'evil.example';
+        if (header === 'x-forwarded-proto') return 'http';
         return null;
       }),
     };
@@ -121,13 +122,14 @@ describe('sitemap function', () => {
     expect(sentXml).toContain('</urlset>');
 
     // Check homepage entry
-    expect(sentXml).toContain('<loc>https://example.com/</loc>');
+    expect(sentXml).toContain('<loc>https://daily.cat/</loc>');
 
     // Check day entries
-    expect(sentXml).toContain('<loc>https://example.com/2024-01-01</loc>');
-    expect(sentXml).toContain('<loc>https://example.com/2024-01-02</loc>');
+    expect(sentXml).toContain('<loc>https://daily.cat/2024-01-01</loc>');
+    expect(sentXml).toContain('<loc>https://daily.cat/2024-01-02</loc>');
     expect(sentXml).toContain('<lastmod>2024-01-01</lastmod>');
     expect(sentXml).toContain('<lastmod>2024-01-02</lastmod>');
+    expect(sentXml).not.toContain('evil.example');
   });
 
   it('should handle empty results gracefully', async () => {
@@ -141,7 +143,15 @@ describe('sitemap function', () => {
 
     // Should still contain valid XML structure with just homepage
     expect(sentXml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
-    expect(sentXml).toContain('<loc>https://example.com/</loc>');
+    expect(sentXml).toContain('<loc>https://daily.cat/</loc>');
+  });
+
+  it('should not read the forwarded host or protocol headers', async () => {
+    mockGetCompletedDaysSince.mockResolvedValue([]);
+
+    await myFunctions.sitemap(mockRequest, mockResponse);
+
+    expect(mockRequest.get).not.toHaveBeenCalled();
   });
 
   it('should handle database errors', async () => {

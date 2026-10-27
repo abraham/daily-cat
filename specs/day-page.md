@@ -50,9 +50,9 @@ Everything a visitor or crawler fetches: the server-rendered page for each date,
 
 [template.ts](../functions/src/day-page/template.ts) builds a complete HTML document with lit-html. `@lit-labs/ssr` `render()` turns it into a string, which is sent as a single response. There is no hydration: the client bundle only adds behavior to the buttons.
 
-- **`<head>`**: static title, favicon, inline CSS, static Open Graph and Twitter Card tags (the same for every day), and `<script src="/index.js" defer>`.
+- **`<head>`**: the static title `Daily Cat`, favicon, inline CSS, `<script src="/index.js" defer>`, and a canonical link plus Open Graph and Twitter Card tags built for each page (below). lit-html escapes every value.
 - **Header**:
-  - A previous-day link, always shown.
+  - A previous-day link, shown only when the date is after `minDate`.
   - A next-day link, shown only when the date is before today.
   - A "Daily Cat" title that links to `/`.
   - A notifications button, hidden until [Notifications](notifications.md) shows it.
@@ -67,14 +67,25 @@ Everything a visitor or crawler fetches: the server-rendered page for each date,
 - **Footer**: credits for GitHub, abrah.am, Unsplash, and unDraw.
 - **`#toast`**: an empty element used by the client's `showToast()`.
 
-Icons come from [svg.ts](../functions/src/day-page/svg.ts). `calculateNavigationUrls(date)` in [navigation.ts](../functions/src/day-page/navigation.ts) returns `prevDateUrl`, `nextDateUrl` (`#` when hidden), and `showNextArrow`.
+Icons come from [svg.ts](../functions/src/day-page/svg.ts). `calculateNavigationUrls(date, minDate)` in [navigation.ts](../functions/src/day-page/navigation.ts) returns `prevDateUrl` and `nextDateUrl` (`#` when hidden), `showPrevArrow`, and `showNextArrow`.
+
+Link-preview tags (`PageMeta`). Every URL is absolute and starts with Platform's `SITE_URL` (`https://daily.cat`), except Unsplash image URLs:
+
+| Tag                                     | Photo page                                           | Processing page                          |
+| --------------------------------------- | ---------------------------------------------------- | ---------------------------------------- |
+| `og:title`, `twitter:title`             | `Daily Cat: <Month D, YYYY>`                         | Same                                     |
+| `og:description`, `twitter:description` | `<Alt description>. Photo by <name> on Unsplash.`    | `Your daily dose of adorable cat photos` |
+| `og:image`, `twitter:image`             | The photo's `urls.regular`                           | `SITE_URL/images/cat.png`                |
+| `og:url`, canonical link                | `SITE_URL/` for `/`, otherwise `SITE_URL/YYYY-MM-DD` | Same                                     |
+
+The `<title>` element stays `Daily Cat`, because lit-html can't bind values inside raw-text elements like `<title>`.
 
 ## Sitemap
 
 1. Calls Day assignment's `getCompletedDaysSince(config.minDate)`, which returns the `completed` records with document ID `>= minDate`, ordered by ID.
 2. Writes the homepage entry (`changefreq` daily, priority 1.0).
 3. Writes one entry per day: `lastmod` is the date part of `updatedAt`, `changefreq` is monthly, and priority is 0.8.
-4. Builds the base URL from the `x-forwarded-proto` and `x-forwarded-host` request headers.
+4. Builds every URL from Platform's `SITE_URL`. It doesn't read `x-forwarded-host` or `x-forwarded-proto`, so a direct call to the function URL can't change the host. In the emulator, the sitemap lists production URLs too.
 
 Non-GET requests get 405. Errors get 500.
 
@@ -94,9 +105,7 @@ Non-GET requests get 405. Errors get 500.
 
 ## Known issues
 
-1. **The previous-day link is always rendered.** On `minDate` it leads to a 403 plain-text response.
-2. **Social previews are generic.** The Open Graph and Twitter tags are the same for every day. `og:image` is a relative URL, but most link-preview scrapers expect an absolute one.
-3. **The sitemap trusts forwarded headers.** Firebase Hosting sets `x-forwarded-host`, but if the function URL is called directly, the caller controls the host written into the sitemap.
+None at the moment.
 
 ## Code and tests
 

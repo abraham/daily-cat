@@ -2,10 +2,30 @@ import { describe, it, expect } from 'vitest';
 import { render } from '@lit-labs/ssr';
 import { renderProcessingPage, renderPhotoPage } from './template';
 
+const pageBase = {
+  meta: {
+    title: 'Daily Cat: June 28, 2025',
+    description: 'A cute cat. Photo by Test User on Unsplash.',
+    url: 'https://daily.cat/2025-06-28',
+    imageUrl: 'https://images.unsplash.com/test.jpg',
+    imageAlt: 'A cute cat',
+  },
+  showPrevArrow: true,
+};
+
+function toHtml(result: ReturnType<typeof renderPhotoPage>): string {
+  let htmlString = '';
+  for (const chunk of render(result)) {
+    htmlString += chunk;
+  }
+  return htmlString;
+}
+
 describe('Template', () => {
   describe('renderProcessingPage', () => {
     it('should include auto-refresh JavaScript for processing page', () => {
       const mockData = {
+        ...pageBase,
         linkUrl: '',
         imageUrl: '',
         userProfileImage: '',
@@ -39,6 +59,7 @@ describe('Template', () => {
 
     it('should include loading animation elements', () => {
       const mockData = {
+        ...pageBase,
         linkUrl: '',
         imageUrl: '',
         userProfileImage: '',
@@ -72,6 +93,7 @@ describe('Template', () => {
 
     it('should include fallback message for max attempts exceeded', () => {
       const mockData = {
+        ...pageBase,
         linkUrl: '',
         imageUrl: '',
         userProfileImage: '',
@@ -102,6 +124,7 @@ describe('Template', () => {
 
     it('should include CSS styles for loading animation', () => {
       const mockData = {
+        ...pageBase,
         linkUrl: '',
         imageUrl: '',
         userProfileImage: '',
@@ -134,6 +157,7 @@ describe('Template', () => {
 
   describe('renderPhotoPage', () => {
     const mockData = {
+      ...pageBase,
       linkUrl: 'https://unsplash.com/photos/test',
       imageUrl: 'https://images.unsplash.com/test.jpg',
       userProfileImage: 'https://images.unsplash.com/profile.jpg',
@@ -284,6 +308,57 @@ describe('Template', () => {
 
       expect(titleIndex).toBeLessThan(notificationIndex);
       expect(notificationIndex).toBeLessThan(shareIndex);
+    });
+
+    it('should render the previous arrow only when it is shown', () => {
+      expect(toHtml(renderPhotoPage(mockData))).toContain(
+        'href="/2025-06-27" class="nav-arrow left"'
+      );
+
+      const onMinDate = toHtml(
+        renderPhotoPage({ ...mockData, showPrevArrow: false })
+      );
+      expect(onMinDate).not.toContain('nav-arrow left');
+      expect(onMinDate).toContain('nav-arrow right');
+    });
+
+    it('should render per-day title and link-preview tags with absolute URLs', () => {
+      const htmlString = toHtml(renderPhotoPage(mockData));
+
+      expect(htmlString).toContain(
+        '<meta property="og:title" content="Daily Cat: June 28, 2025"'
+      );
+      expect(htmlString).toContain(
+        '<link rel="canonical" href="https://daily.cat/2025-06-28"'
+      );
+      expect(htmlString).toContain(
+        '<meta property="og:url" content="https://daily.cat/2025-06-28"'
+      );
+      expect(htmlString).toContain(
+        '<meta property="og:image" content="https://images.unsplash.com/test.jpg"'
+      );
+      expect(htmlString).toContain(
+        '<meta name="twitter:image" content="https://images.unsplash.com/test.jpg"'
+      );
+      expect(htmlString).toContain(
+        '<meta property="og:description" content="A cute cat. Photo by Test User on Unsplash."'
+      );
+      expect(htmlString).not.toContain('content="/images/cat.png"');
+    });
+
+    it('should escape photo text in meta tags', () => {
+      const htmlString = toHtml(
+        renderPhotoPage({
+          ...mockData,
+          meta: {
+            ...mockData.meta,
+            description: 'A "cat" <script>alert(1)</script>',
+          },
+        })
+      );
+
+      expect(htmlString).not.toContain('<script>alert(1)</script>');
+      expect(htmlString).toContain('&quot;cat&quot;');
     });
   });
 });
