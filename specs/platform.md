@@ -80,6 +80,7 @@ The infrastructure every slice depends on: Firebase Hosting routing, Firestore s
 | `public/404.html`, `public/images/` | `rollup-plugin-copy`                                                        | [assets/](../assets/)                                           |
 
 - Root `npm run build` builds the functions first, then runs `rollup -c`.
+- Both `package.json` files set `engines.node` to `22` and use `@types/node` 22, matching the `nodejs22` runtime and the Node version that CI and deploys use.
 - The functions build deletes `lib/` before running `tsc`, so files from moved or deleted modules don't linger. `npm start` (`tsc --watch`) doesn't.
 - The root project uses TypeScript 6 with [tsconfig.json](../tsconfig.json).
 
@@ -120,7 +121,7 @@ Emulator ports:
 
 ## CI/CD
 
-- **[ci.yml](../.github/workflows/ci.yml)** runs on every push, on Node 22 and 24: `npm ci`, `npm run format:check`, `npm run build`, `npm test`, then `npm test --prefix functions`.
+- **[ci.yml](../.github/workflows/ci.yml)** runs on every push, on Node 22: `npm ci`, `npm run format:check`, `npm run build`, `npm test`, then `npm test --prefix functions`.
 - **[deploy.yml](../.github/workflows/deploy.yml)** runs on pushes to `main`. It uses the `production` environment (`https://daily.cat`), the concurrency group `deploy-production`, and Node 22.
   1. Runs `npm ci` and builds the functions.
   2. Authenticates with GitHub OIDC through Workload Identity Federation (`abraham/firebase-wif`, `vars.FIREBASE_WIF_PROVIDER`, `vars.FIREBASE_WIF_SERVICE_ACCOUNT`).
@@ -132,5 +133,4 @@ Emulator ports:
 
 ## Known issues
 
-1. **Node version requirements don't agree.** The root `engines.node` is `>=18`, the functions package pins `22`, and CI tests 22 and 24.
-2. **`config/config` has no schema check or defaults.** A missing field causes failures at runtime, for example `Number(undefined)` for `lastPage`.
+1. **`config/config` has no schema check or defaults.** A missing field causes failures at runtime, for example `Number(undefined)` for `lastPage`.

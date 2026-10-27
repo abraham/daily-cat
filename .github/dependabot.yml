@@ -14,6 +14,9 @@ updates:
       # @rollup/plugin-typescript needs the TypeScript JS API, which TS 7 removed.
       - dependency-name: typescript
         update-types: ['version-update:semver-major']
+      # Matches the Node 22 runtime; bump together with engines, CI, and firebase.json.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
     groups:
       vitest:
         patterns:
