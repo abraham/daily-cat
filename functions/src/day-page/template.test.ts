@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@lit-labs/ssr';
+import { collectResultSync } from '@lit-labs/ssr/lib/render-result.js';
 import { renderProcessingPage, renderPhotoPage } from './template';
 
 const pageBase = {
@@ -14,11 +15,7 @@ const pageBase = {
 };
 
 function toHtml(result: ReturnType<typeof renderPhotoPage>): string {
-  let htmlString = '';
-  for (const chunk of render(result)) {
-    htmlString += chunk;
-  }
-  return htmlString;
+  return collectResultSync(render(result));
 }
 
 describe('Template', () => {
@@ -42,12 +39,7 @@ describe('Template', () => {
 
       const result = renderProcessingPage(mockData);
 
-      // Convert lit-html template result to string
-      const htmlIterator = render(result);
-      let htmlString = '';
-      for (const chunk of htmlIterator) {
-        htmlString += chunk;
-      }
+      const htmlString = toHtml(result);
 
       // Check that auto-refresh JavaScript is included
       expect(htmlString).toContain('setTimeout(function () {');
@@ -76,12 +68,7 @@ describe('Template', () => {
 
       const result = renderProcessingPage(mockData);
 
-      // Convert lit-html template result to string
-      const htmlIterator = render(result);
-      let htmlString = '';
-      for (const chunk of htmlIterator) {
-        htmlString += chunk;
-      }
+      const htmlString = toHtml(result);
 
       // Check that loading elements are included
       expect(htmlString).toContain('loading-container');
@@ -110,12 +97,7 @@ describe('Template', () => {
 
       const result = renderProcessingPage(mockData);
 
-      // Convert lit-html template result to string
-      const htmlIterator = render(result);
-      let htmlString = '';
-      for (const chunk of htmlIterator) {
-        htmlString += chunk;
-      }
+      const htmlString = toHtml(result);
 
       // Check that fallback message is included
       expect(htmlString).toContain('Processing is taking longer than expected');
@@ -169,12 +151,7 @@ describe('Template', () => {
     it('should render notification button in header', () => {
       const result = renderPhotoPage(mockData);
 
-      // Convert lit-html template result to string
-      const htmlIterator = render(result);
-      let htmlString = '';
-      for (const chunk of htmlIterator) {
-        htmlString += chunk;
-      }
+      const htmlString = toHtml(result);
 
       // Check that notification button is included
       expect(htmlString).toContain('id="notifications-button"');
@@ -188,12 +165,7 @@ describe('Template', () => {
     it('should render both notification on and off icons', () => {
       const result = renderPhotoPage(mockData);
 
-      // Convert lit-html template result to string
-      const htmlIterator = render(result);
-      let htmlString = '';
-      for (const chunk of htmlIterator) {
-        htmlString += chunk;
-      }
+      const htmlString = toHtml(result);
 
       // Check that both notification icons are included
       expect(htmlString).toContain('class="notifications-on hidden"');
@@ -204,12 +176,7 @@ describe('Template', () => {
     it('should render header controls container with notification and share buttons', () => {
       const result = renderPhotoPage(mockData);
 
-      // Convert lit-html template result to string
-      const htmlIterator = render(result);
-      let htmlString = '';
-      for (const chunk of htmlIterator) {
-        htmlString += chunk;
-      }
+      const htmlString = toHtml(result);
 
       // Check that header controls container is included
       expect(htmlString).toContain('class="header-controls"');
@@ -220,12 +187,7 @@ describe('Template', () => {
     it('should include notification toggle JavaScript functionality', () => {
       const result = renderPhotoPage(mockData);
 
-      // Convert lit-html template result to string
-      const htmlIterator = render(result);
-      let htmlString = '';
-      for (const chunk of htmlIterator) {
-        htmlString += chunk;
-      }
+      const htmlString = toHtml(result);
 
       // Since notification functionality is now handled by external notifications.ts module,
       // we just check that the button elements are present for the module to interact with
@@ -261,15 +223,17 @@ describe('Template', () => {
       expect(htmlString).toMatch(/class="cat-image"[^>]*draggable="false"/);
     });
 
+    it('should start with the doctype and contain no Lit hydration markers', () => {
+      const htmlString = toHtml(renderPhotoPage(mockData));
+
+      expect(htmlString.trimStart()).toMatch(/^<!doctype html>/);
+      expect(htmlString).not.toMatch(/<!--\/?lit-|<!--\?-->/);
+    });
+
     it('should position notification button between title and share button', () => {
       const result = renderPhotoPage(mockData);
 
-      // Convert lit-html template result to string
-      const htmlIterator = render(result);
-      let htmlString = '';
-      for (const chunk of htmlIterator) {
-        htmlString += chunk;
-      }
+      const htmlString = toHtml(result);
 
       // Check the order of elements in the header
       const titleIndex = htmlString.indexOf('class="header-title"');
@@ -295,6 +259,7 @@ describe('Template', () => {
     it('should render per-day title and link-preview tags with absolute URLs', () => {
       const htmlString = toHtml(renderPhotoPage(mockData));
 
+      expect(htmlString).toContain('<title>Daily Cat: June 28, 2025</title>');
       expect(htmlString).toContain(
         '<meta property="og:title" content="Daily Cat: June 28, 2025"'
       );
@@ -329,6 +294,19 @@ describe('Template', () => {
 
       expect(htmlString).not.toContain('<script>alert(1)</script>');
       expect(htmlString).toContain('&quot;cat&quot;');
+    });
+
+    it('should escape the title', () => {
+      const htmlString = toHtml(
+        renderPhotoPage({
+          ...mockData,
+          meta: { ...mockData.meta, title: 'A </title><b>x</b> & B' },
+        })
+      );
+
+      expect(htmlString).toContain(
+        '<title>A &lt;/title&gt;&lt;b&gt;x&lt;/b&gt; &amp; B</title>'
+      );
     });
   });
 });

@@ -1,4 +1,5 @@
-import { html, TemplateResult } from 'lit-html';
+// Server-only templates: no hydration markers, and bindings work in <title>.
+import { html, ServerRenderedTemplate as TemplateResult } from '@lit-labs/ssr';
 import {
   backIcon,
   heartIcon,
@@ -252,8 +253,7 @@ function renderPage(
           media="(prefers-color-scheme: dark)"
           content="#1e1e1e"
         />
-        <!-- Static: lit can't bind inside raw-text elements like <title>. -->
-        <title>Daily Cat</title>
+        <title>${data.meta.title}</title>
         <link rel="icon" type="image/png" href="/images/cat-face-small.png" />
         ${renderMetaTags(data.meta)}
         <script src="/index.js" defer></script>

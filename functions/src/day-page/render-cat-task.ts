@@ -1,7 +1,7 @@
-import { render } from '@lit-labs/ssr';
+import { render, ServerRenderedTemplate } from '@lit-labs/ssr';
+import { collectResultSync } from '@lit-labs/ssr/lib/render-result.js';
 import * as logger from 'firebase-functions/logger';
 import { onRequest } from 'firebase-functions/v2/https';
-import { TemplateResult } from 'lit-html';
 import { calculateNavigationUrls, NavigationUrls } from './navigation';
 import { getConfig, SITE_URL, toDateString } from '../platform';
 import { createNewDayRecord, getPhotoForDate } from '../assignment';
@@ -142,12 +142,9 @@ function processingPageData({
   };
 }
 
-function renderToString(templateResult: TemplateResult): string {
-  let html = '';
-  for (const chunk of render(templateResult)) {
-    html += chunk;
-  }
-  return html;
+function renderToString(template: ServerRenderedTemplate): string {
+  // Throws instead of printing "[object Promise]" if a template ever goes async.
+  return collectResultSync(render(template));
 }
 
 /**
