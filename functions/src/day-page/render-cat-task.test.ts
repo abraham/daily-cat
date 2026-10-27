@@ -173,6 +173,99 @@ describe('Cat Function', () => {
     });
   });
 
+  describe('page data', () => {
+    const navigation = {
+      prevDateUrl: '/2026-10-26',
+      showPrevArrow: true,
+      nextDateUrl: '#',
+      showNextArrow: false,
+    };
+    const context = {
+      title: 'Daily Cat: October 27, 2026',
+      url: 'https://daily.cat/2026-10-27',
+      navigation,
+    };
+
+    it('builds the photo page from the photo, page context, and navigation', () => {
+      const photo = {
+        ...mockApiResponse,
+        alt_description: 'a sleepy cat',
+        likes: 1234,
+      };
+
+      expect(myFunctions.photoPageData(photo, context)).toEqual({
+        meta: {
+          title: 'Daily Cat: October 27, 2026',
+          description: `A sleepy cat. Photo by ${photo.user.name} on Unsplash.`,
+          url: 'https://daily.cat/2026-10-27',
+          imageUrl: photo.urls.regular,
+          imageAlt: 'a sleepy cat',
+        },
+        linkUrl: photo.links.html,
+        imageUrl: photo.urls.regular,
+        userProfileImage: photo.user.profile_image.medium,
+        userName: photo.user.name,
+        userUsername: photo.user.username,
+        userProfileUrl: photo.user.links.html,
+        likesCount: (1234).toLocaleString(),
+        altDescription: 'a sleepy cat',
+        tags: photo.tags,
+        ...navigation,
+      });
+    });
+
+    it('falls back to generic text when the photo has no alt description', () => {
+      const data = myFunctions.photoPageData(
+        { ...mockApiResponse, alt_description: null },
+        context
+      );
+
+      expect(data.meta.description).toBe(
+        `A cat photo by ${mockApiResponse.user.name} on Unsplash.`
+      );
+      expect(data.meta.imageAlt).toBe('Cat photo');
+      expect(data.altDescription).toBe('Cat photo');
+    });
+
+    it('builds the processing page with the site image and no photo fields', () => {
+      expect(myFunctions.processingPageData(context)).toEqual({
+        meta: {
+          title: 'Daily Cat: October 27, 2026',
+          description: 'Your daily dose of adorable cat photos',
+          url: 'https://daily.cat/2026-10-27',
+          imageUrl: 'https://daily.cat/images/cat.png',
+          imageAlt: 'Daily Cat - Adorable cat photo',
+        },
+        linkUrl: '',
+        imageUrl: '',
+        userProfileImage: '',
+        userName: '',
+        userUsername: '',
+        userProfileUrl: '',
+        likesCount: '',
+        altDescription: '',
+        tags: [],
+        ...navigation,
+      });
+    });
+  });
+
+  describe('renderToString', () => {
+    it('joins the rendered chunks', async () => {
+      const { render } = await import('@lit-labs/ssr');
+      vi.mocked(render).mockReturnValueOnce(['<p>', 'cat', '</p>']);
+
+      expect(myFunctions.renderToString({})).toBe('<p>cat</p>');
+    });
+
+    it('throws instead of printing a pending async chunk', async () => {
+      const { render } = await import('@lit-labs/ssr');
+      vi.mocked(render).mockReturnValueOnce(['<p>', Promise.resolve([])]);
+
+      expect(() => myFunctions.renderToString({})).toThrow();
+    });
+  });
+
   describe('cat function', () => {
     it('should handle GET requests for root path with completed record', async () => {
       // Mock a completed record

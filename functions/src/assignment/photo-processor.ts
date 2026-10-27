@@ -5,7 +5,7 @@ import { isPhotoIdUsed } from './photo-id-storage';
 import { advanceLastPage, getConfig, unsplashClientId } from '../platform';
 
 /** Waits 1 s, 2 s, 4 s, … up to 10 s before the next attempt. */
-function backoff(attempt: number): Promise<void> {
+export function backoff(attempt: number): Promise<void> {
   const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
   logger.log(`Waiting ${delay}ms before retry...`);
   return new Promise((resolve) => setTimeout(resolve, delay));
@@ -15,7 +15,7 @@ function backoff(attempt: number): Promise<void> {
  * Returns the full details of the first search result that isn't used yet.
  * A result whose details can't be fetched is skipped.
  */
-async function findUnusedPhoto(
+export async function findUnusedPhoto(
   results: catApi.UnsplashSearchPhoto[],
   clientId: string
 ): Promise<catApi.UnsplashPhoto | null> {

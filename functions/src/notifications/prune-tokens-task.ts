@@ -23,7 +23,10 @@ const DEAD_TOKEN_CODES = new Set([
 ]);
 
 /** Tokens whose dry-run send failed with a code that means FCM dropped them. */
-function findDeadTokens(tokens: Token[], responses: SendResponse[]): Token[] {
+export function findDeadTokens(
+  tokens: Token[],
+  responses: SendResponse[]
+): Token[] {
   return tokens.filter((_, i) => {
     const code = responses[i].error?.code;
     return code !== undefined && DEAD_TOKEN_CODES.has(code);
@@ -31,7 +34,7 @@ function findDeadTokens(tokens: Token[], responses: SendResponse[]): Token[] {
 }
 
 /** One call per topic; a failure is logged and the other topics still run. */
-async function unsubscribeDeadTokens(
+export async function unsubscribeDeadTokens(
   messaging: Messaging,
   dead: Token[]
 ): Promise<void> {

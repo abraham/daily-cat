@@ -880,4 +880,100 @@ describe('Notifications', () => {
       expect(mockRemoveItem).toHaveBeenCalledWith('notification_topic');
     });
   });
+
+  describe('button helpers', () => {
+    const setPermission = (permission: NotificationPermission) => {
+      (Notification as any).permission = permission;
+    };
+
+    beforeEach(async () => {
+      localStorage.clear();
+      vi.mocked(fetch).mockResolvedValue({ ok: true } as Response);
+      const firebaseMessaging = await import('firebase/messaging');
+      vi.mocked(firebaseMessaging.getToken).mockResolvedValue(mockToken);
+      vi.mocked(firebaseMessaging.deleteToken).mockResolvedValue(true);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    describe('showSubscriptionStatus', () => {
+      it('refreshes the token right away when already subscribed', async () => {
+        setPermission('granted');
+        localStorage.setItem('notification_token', mockToken);
+        localStorage.setItem('notification_synced_token', mockToken);
+        vi.useFakeTimers();
+        const { getToken } = await import('firebase/messaging');
+        const { showSubscriptionStatus } = await import('./notifications');
+
+        await showSubscriptionStatus();
+
+        expect(getToken).toHaveBeenCalledTimes(1);
+        expect(vi.getTimerCount()).toBe(0);
+      });
+
+      it('checks again after 100 ms when not subscribed yet', async () => {
+        setPermission('default');
+        vi.useFakeTimers();
+        const { getToken } = await import('firebase/messaging');
+        const { showSubscriptionStatus } = await import('./notifications');
+
+        await showSubscriptionStatus();
+        expect(getToken).not.toHaveBeenCalled();
+
+        // Chrome mobile can report the permission late.
+        setPermission('granted');
+        localStorage.setItem('notification_token', mockToken);
+        localStorage.setItem('notification_synced_token', mockToken);
+        await vi.advanceTimersByTimeAsync(100);
+
+        expect(getToken).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('onNotificationsButtonClick', () => {
+      it('subscribes when there is no saved token', async () => {
+        setPermission('granted');
+        const { onNotificationsButtonClick } = await import('./notifications');
+
+        await onNotificationsButtonClick();
+
+        expect(Notification.requestPermission).toHaveBeenCalled();
+        expect(fetch).toHaveBeenCalledWith(
+          expect.stringContaining(`token=${mockToken}`),
+          { method: 'POST' }
+        );
+      });
+
+      it('subscribes when permission was revoked, even with a saved token', async () => {
+        setPermission('denied');
+        localStorage.setItem('notification_token', mockToken);
+        const { onNotificationsButtonClick } = await import('./notifications');
+
+        await onNotificationsButtonClick();
+
+        expect(Notification.requestPermission).toHaveBeenCalled();
+        expect(fetch).not.toHaveBeenCalledWith(expect.anything(), {
+          method: 'DELETE',
+        });
+      });
+
+      it('unsubscribes the saved token when subscribed', async () => {
+        setPermission('granted');
+        localStorage.setItem('notification_token', mockToken);
+        const { deleteToken } = await import('firebase/messaging');
+        const { onNotificationsButtonClick } = await import('./notifications');
+
+        await onNotificationsButtonClick();
+
+        expect(fetch).toHaveBeenCalledWith(`/topics?token=${mockToken}`, {
+          method: 'DELETE',
+        });
+        expect(deleteToken).toHaveBeenCalled();
+        expect(Notification.requestPermission).not.toHaveBeenCalled();
+        expect(localStorage.getItem('notification_token')).toBeNull();
+      });
+    });
+  });
 });

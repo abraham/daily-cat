@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
+import { addDays } from '../platform/dates';
 
 // Load the photo fixture for testing
 const photoFixturePath = path.join(
@@ -677,5 +678,191 @@ describe('Process Available Photos Task', () => {
       'Error in process available photos task:',
       expect.any(Error)
     );
+  });
+});
+
+describe('process available photos helpers', () => {
+  let task: typeof import('./process-available-photos-task');
+  const completed = (id: string) => ({ id, status: 'completed' });
+  const nextDays = (start: string, count: number) =>
+    Array.from({ length: count }, (_, i) => addDays(start, i));
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    mockIsPhotoIdUsed.mockResolvedValue(false);
+    mockGet.mockResolvedValue(mockPhoto);
+    mockSavePhotoForDate.mockResolvedValue(undefined);
+    mockRemoveAvailablePhotoId.mockResolvedValue(undefined);
+    mockGetPhotosForDateRange.mockResolvedValue([]);
+    task = await import('./process-available-photos-task.js');
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  describe('getDatesNeedingPhotosInRange', () => {
+    it('lists every date in the range, inclusive, except completed ones', async () => {
+      mockGetPhotosForDateRange.mockResolvedValue([
+        completed('2026-10-30'),
+        { id: '2026-11-01', status: 'created' },
+      ]);
+
+      await expect(
+        task.getDatesNeedingPhotosInRange('2026-10-29', '2026-11-02')
+      ).resolves.toEqual([
+        '2026-10-29',
+        '2026-10-31',
+        '2026-11-01',
+        '2026-11-02',
+      ]);
+      expect(mockGetPhotosForDateRange).toHaveBeenCalledWith(
+        '2026-10-29',
+        '2026-11-02'
+      );
+    });
+
+    it('returns nothing when every date is completed', async () => {
+      mockGetPhotosForDateRange.mockResolvedValue(
+        nextDays('2026-10-29', 3).map(completed)
+      );
+
+      await expect(
+        task.getDatesNeedingPhotosInRange('2026-10-29', '2026-10-31')
+      ).resolves.toEqual([]);
+    });
+  });
+
+  describe('getDatesNeedingPhotos', () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-10-27T12:00:00.000Z'));
+    });
+
+    it('checks today and the next 29 days first', async () => {
+      const dates = await task.getDatesNeedingPhotos('2026-01-01');
+
+      expect(mockGetPhotosForDateRange).toHaveBeenCalledTimes(1);
+      expect(mockGetPhotosForDateRange).toHaveBeenCalledWith(
+        '2026-10-27',
+        '2026-11-25'
+      );
+      expect(dates).toEqual(nextDays('2026-10-27', 30));
+    });
+
+    it('falls back to minDate through yesterday once the next 30 days are filled', async () => {
+      mockGetPhotosForDateRange.mockImplementation(async (start: string) =>
+        start === '2026-10-27'
+          ? nextDays('2026-10-27', 30).map(completed)
+          : [completed('2026-10-25')]
+      );
+
+      const dates = await task.getDatesNeedingPhotos('2026-10-20');
+
+      expect(mockGetPhotosForDateRange).toHaveBeenLastCalledWith(
+        '2026-10-20',
+        '2026-10-26'
+      );
+      expect(dates).toEqual([
+        '2026-10-20',
+        '2026-10-21',
+        '2026-10-22',
+        '2026-10-23',
+        '2026-10-24',
+        '2026-10-26',
+      ]);
+    });
+  });
+
+  describe('assignPhotoToDate', () => {
+    it('saves the photo for the date and removes it from the available list', async () => {
+      await expect(
+        task.assignPhotoToDate('photo-1', '2026-10-27', 'client')
+      ).resolves.toBe('assigned');
+
+      expect(mockGet).toHaveBeenCalledWith({ clientId: 'client' }, 'photo-1');
+      expect(mockSavePhotoForDate).toHaveBeenCalledWith(
+        '2026-10-27',
+        mockPhoto
+      );
+      expect(mockRemoveAvailablePhotoId).toHaveBeenCalledWith('photo-1');
+    });
+
+    it('skips and removes a photo that is already used', async () => {
+      mockIsPhotoIdUsed.mockResolvedValue(true);
+
+      await expect(
+        task.assignPhotoToDate('photo-1', '2026-10-27', 'client')
+      ).resolves.toBe('skipped');
+
+      expect(mockGet).not.toHaveBeenCalled();
+      expect(mockSavePhotoForDate).not.toHaveBeenCalled();
+      expect(mockRemoveAvailablePhotoId).toHaveBeenCalledWith('photo-1');
+    });
+
+    it('skips and removes a photo that no longer exists', async () => {
+      mockGet.mockRejectedValue(new NotFoundError('gone'));
+
+      await expect(
+        task.assignPhotoToDate('photo-1', '2026-10-27', 'client')
+      ).resolves.toBe('skipped');
+
+      expect(mockSavePhotoForDate).not.toHaveBeenCalled();
+      expect(mockRemoveAvailablePhotoId).toHaveBeenCalledWith('photo-1');
+    });
+
+    it('still skips a missing photo when removing it fails', async () => {
+      mockGet.mockRejectedValue(new NotFoundError('gone'));
+      mockRemoveAvailablePhotoId.mockRejectedValue(new Error('write failed'));
+
+      await expect(
+        task.assignPhotoToDate('photo-1', '2026-10-27', 'client')
+      ).resolves.toBe('skipped');
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Failed to remove not found photo ID photo-1:',
+        expect.any(Error)
+      );
+    });
+
+    it('rethrows other errors without removing the photo', async () => {
+      mockGet.mockRejectedValue(new Error('API down'));
+
+      await expect(
+        task.assignPhotoToDate('photo-1', '2026-10-27', 'client')
+      ).rejects.toThrow('API down');
+      expect(mockRemoveAvailablePhotoId).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('assignPhotos', () => {
+    it('gives each date the next photo that can be assigned', async () => {
+      mockIsPhotoIdUsed.mockImplementation(async (id: string) => id === 'b');
+
+      await expect(
+        task.assignPhotos(['a', 'b', 'c'], ['2026-10-27', '2026-10-28'], 'x')
+      ).resolves.toBe(2);
+
+      expect(mockSavePhotoForDate.mock.calls.map(([date]) => date)).toEqual([
+        '2026-10-27',
+        '2026-10-28',
+      ]);
+      expect(mockGet.mock.calls.map(([, id]) => id)).toEqual(['a', 'c']);
+    });
+
+    it('stops once every date has a photo', async () => {
+      await expect(
+        task.assignPhotos(['a', 'b', 'c'], ['2026-10-27'], 'x')
+      ).resolves.toBe(1);
+
+      expect(mockIsPhotoIdUsed).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns 0 when no photo can be assigned', async () => {
+      mockIsPhotoIdUsed.mockResolvedValue(true);
+
+      await expect(
+        task.assignPhotos(['a', 'b'], ['2026-10-27'], 'x')
+      ).resolves.toBe(0);
+    });
   });
 });

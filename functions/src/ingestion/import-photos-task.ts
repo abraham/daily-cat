@@ -6,7 +6,10 @@ import { isPhotoIdUsed } from '../assignment';
 import { storeMultipleAvailablePhotoIds } from './available-photo-ids-storage';
 
 /** Stores the unused photo IDs from one search page and returns how many. */
-async function importPage(page: number, clientId: string): Promise<number> {
+export async function importPage(
+  page: number,
+  clientId: string
+): Promise<number> {
   const { results } = await list({ clientId, page: page.toString() });
 
   const unusedIds: string[] = [];

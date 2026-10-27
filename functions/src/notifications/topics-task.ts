@@ -64,7 +64,7 @@ function currentHourTopic(): string {
 }
 
 /** The requested `hour-HH` topic, the current hour's if none, or null if invalid. */
-function parseTopic(requested: unknown): string | null {
+export function parseTopic(requested: unknown): string | null {
   if (requested === undefined) {
     return currentHourTopic();
   }
@@ -74,7 +74,7 @@ function parseTopic(requested: unknown): string | null {
 }
 
 /** Best effort: a failure on one topic is logged and the rest still run. */
-async function unsubscribeFromTopics(
+export async function unsubscribeFromTopics(
   token: string,
   topics: string[]
 ): Promise<void> {
