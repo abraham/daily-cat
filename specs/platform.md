@@ -85,6 +85,7 @@ The infrastructure every slice depends on: Firebase Hosting routing, Firestore s
 - Both `package.json` files set `engines.node` to `22` and use `@types/node` 22, matching the `nodejs22` runtime and the Node version that CI and deploys use.
 - The functions build deletes `lib/` before running `tsc`, so files from moved or deleted modules don't linger. `npm start` (`tsc --watch`) doesn't.
 - The root project uses TypeScript 6 with [tsconfig.json](../tsconfig.json).
+- [syncpack](https://syncpack.dev) checks that a dependency listed in both `package.json` files has the same version range in each. [.syncpackrc.json](../.syncpackrc.json) exempts `typescript`, because `@rollup/plugin-typescript` needs TypeScript 6's JS API while the functions use TypeScript 7.
 
 ## Local development
 
@@ -93,6 +94,7 @@ The infrastructure every slice depends on: Firebase Hosting routing, Firestore s
 | `npm ci`                         | Installs root dependencies. `postinstall` runs `npm ci --prefix functions`.                                            |
 | `npm start`                      | `firebase emulators:exec "npm start --prefix functions" --import=seed --ui`. The functions package runs `tsc --watch`. |
 | `npm run format`, `format:check` | Prettier on the whole repo, including Markdown files                                                                   |
+| `npm run deps:check`, `deps:fix` | `syncpack lint` / `syncpack fix`: report or fix version ranges that differ between the two `package.json` files        |
 
 Emulator ports:
 
@@ -123,7 +125,7 @@ Emulator ports:
 
 ## CI/CD
 
-- **[ci.yml](../.github/workflows/ci.yml)** runs on every push, on Node 22: `npm ci`, `npm run format:check`, `npm run build`, `npm test`, then `npm test --prefix functions`.
+- **[ci.yml](../.github/workflows/ci.yml)** runs on every push, on Node 22: `npm ci`, `npm run format:check`, `npm run deps:check`, `npm run build`, `npm test`, then `npm test --prefix functions`.
 - **[deploy.yml](../.github/workflows/deploy.yml)** runs on pushes to `main`. It uses the `production` environment (`https://daily.cat`), the concurrency group `deploy-production`, and Node 22.
   1. Runs `npm ci` and builds the functions.
   2. Authenticates with GitHub OIDC through Workload Identity Federation (`abraham/firebase-wif`, `vars.FIREBASE_WIF_PROVIDER`, `vars.FIREBASE_WIF_SERVICE_ACCOUNT`).

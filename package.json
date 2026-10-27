@@ -14,6 +14,7 @@
     "prettier": "^3.9.10",
     "rollup": "^4.63.6",
     "rollup-plugin-copy": "^3.5.0",
+    "syncpack": "^15.3.3",
     "tslib": "^2.8.1",
     "typescript": "^6.0.3",
     "vitest": "^5.0.0"
@@ -24,6 +25,8 @@
     "deploy": "firebase deploy",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "deps:check": "syncpack lint",
+    "deps:fix": "syncpack fix",
     "postinstall": "npm ci --prefix functions",
     "test": "vitest run",
     "test:ui": "vitest --ui",

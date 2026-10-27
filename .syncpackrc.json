@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/syncpack/schema.json",
+  "source": ["package.json", "functions/package.json"],
+  "versionGroups": [
+    {
+      "label": "Package versions are not dependencies",
+      "dependencyTypes": ["local"],
+      "isIgnored": true
+    },
+    {
+      "label": "@rollup/plugin-typescript needs the TypeScript 6 JS API; functions use TypeScript 7",
+      "dependencies": ["typescript"],
+      "isIgnored": true
+    }
+  ]
+}
