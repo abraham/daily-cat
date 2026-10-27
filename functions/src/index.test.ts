@@ -1,0 +1,29 @@
+import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('firebase-admin/app', () => ({
+  getApps: vi.fn(() => []),
+  initializeApp: vi.fn(() => ({})),
+}));
+
+vi.mock('firebase-admin/firestore', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('firebase-admin/firestore')>()),
+  getFirestore: vi.fn(() => ({})),
+}));
+
+describe('functions entry point', () => {
+  // Firebase deploys a renamed function as a delete plus a create.
+  it('exports exactly the deployed functions', async () => {
+    const functions = await import('./index.js');
+
+    expect(Object.keys(functions).sort()).toEqual([
+      'cat',
+      'importPhotosScheduled',
+      'onDayRecordCreated',
+      'processAvailablePhotosScheduled',
+      'recordPhotoIdOnDayWrite',
+      'sendNotificationsScheduled',
+      'sitemap',
+      'topics',
+    ]);
+  });
+});
