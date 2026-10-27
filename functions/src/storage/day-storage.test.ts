@@ -1,11 +1,17 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { UnsplashPhoto } from '../types/unsplash';
+import { UnsplashPhoto } from '../ingestion';
 import { Timestamp } from 'firebase-admin/firestore';
 
 // Load the photo fixture for testing
-const photoFixturePath = path.join(__dirname, '..', 'fixtures', 'photo.json');
+const photoFixturePath = path.join(
+  __dirname,
+  '..',
+  'ingestion',
+  'fixtures',
+  'photo.json'
+);
 const mockPhoto: UnsplashPhoto = JSON.parse(
   fs.readFileSync(photoFixturePath, 'utf8')
 );

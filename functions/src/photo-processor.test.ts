@@ -1,11 +1,21 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { UnsplashPhoto, UnsplashRandomPhoto } from './types/unsplash';
+import { UnsplashPhoto, UnsplashRandomPhoto } from './ingestion';
 
 // Load fixtures for testing
-const photoFixturePath = path.join(__dirname, 'fixtures', 'photo.json');
-const randomFixturePath = path.join(__dirname, 'fixtures', 'random.json');
+const photoFixturePath = path.join(
+  __dirname,
+  'ingestion',
+  'fixtures',
+  'photo.json'
+);
+const randomFixturePath = path.join(
+  __dirname,
+  'ingestion',
+  'fixtures',
+  'random.json'
+);
 const mockCompletePhoto: UnsplashPhoto = JSON.parse(
   fs.readFileSync(photoFixturePath, 'utf8')
 );
@@ -57,7 +67,7 @@ const mockCatApi = {
   get: vi.fn(),
 };
 
-vi.mock('../src/api/cat-api', () => mockCatApi);
+vi.mock('./ingestion/cat-api', () => mockCatApi);
 
 describe('Photo Processor', () => {
   let photoProcessor: any;

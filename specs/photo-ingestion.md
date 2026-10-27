@@ -8,10 +8,10 @@ Finds cat photos on Unsplash and queues the IDs of photos that haven't been used
 
 ## Entry points
 
-| Entry                         | Trigger                                                                      | Code                                                                  |
-| ----------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `importPhotosScheduled`       | Cloud Scheduler, `every 1 hours`, UTC. Uses the secret `UNSPLASH_CLIENT_ID`. | [import-photos-task.ts](../functions/src/tasks/import-photos-task.ts) |
-| Unsplash client `list`, `get` | Library code. [Day assignment](day-assignment.md) calls it too.              | [cat-api.ts](../functions/src/api/cat-api.ts)                         |
+| Entry                         | Trigger                                                                      | Code                                                                      |
+| ----------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `importPhotosScheduled`       | Cloud Scheduler, `every 1 hours`, UTC. Uses the secret `UNSPLASH_CLIENT_ID`. | [import-photos-task.ts](../functions/src/ingestion/import-photos-task.ts) |
+| Unsplash client `list`, `get` | Library code. [Day assignment](day-assignment.md) calls it too.              | [cat-api.ts](../functions/src/ingestion/cat-api.ts)                       |
 
 ## Data
 
@@ -24,7 +24,7 @@ Finds cat photos on Unsplash and queues the IDs of photos that haven't been used
 
 ## Unsplash client
 
-[cat-api.ts](../functions/src/api/cat-api.ts) sends every request with the header `Authorization: Client-ID <UNSPLASH_CLIENT_ID>`.
+[cat-api.ts](../functions/src/ingestion/cat-api.ts) sends every request with the header `Authorization: Client-ID <UNSPLASH_CLIENT_ID>`.
 
 | Function                     | Request                                                                                      | Returns          |
 | ---------------------------- | -------------------------------------------------------------------------------------------- | ---------------- |
@@ -81,8 +81,10 @@ sequenceDiagram
 
 ## Code and tests
 
-- [import-photos-task.ts](../functions/src/tasks/import-photos-task.ts), [import-photos-task.test.ts](../functions/src/tasks/import-photos-task.test.ts)
-- [cat-api.ts](../functions/src/api/cat-api.ts), [cat-api.test.ts](../functions/src/api/cat-api.test.ts)
-- [available-photo-ids-storage.ts](../functions/src/storage/available-photo-ids-storage.ts), [available-photo-ids-storage.test.ts](../functions/src/storage/available-photo-ids-storage.test.ts)
-- Types: [unsplash.ts](../functions/src/types/unsplash.ts), [errors.ts](../functions/src/types/errors.ts)
-- Fixtures: [functions/src/fixtures/](../functions/src/fixtures/)
+Everything is in [functions/src/ingestion/](../functions/src/ingestion/). Other slices import it only through [index.ts](../functions/src/ingestion/index.ts), which exports the Unsplash client, its types and errors, and the queue reads and deletes that Day assignment uses.
+
+- [import-photos-task.ts](../functions/src/ingestion/import-photos-task.ts), [import-photos-task.test.ts](../functions/src/ingestion/import-photos-task.test.ts)
+- [cat-api.ts](../functions/src/ingestion/cat-api.ts), [cat-api.test.ts](../functions/src/ingestion/cat-api.test.ts)
+- [available-photo-ids-storage.ts](../functions/src/ingestion/available-photo-ids-storage.ts), [available-photo-ids-storage.test.ts](../functions/src/ingestion/available-photo-ids-storage.test.ts)
+- Types: [unsplash.ts](../functions/src/ingestion/unsplash.ts), [errors.ts](../functions/src/ingestion/errors.ts)
+- Fixtures: [functions/src/ingestion/fixtures/](../functions/src/ingestion/fixtures/)

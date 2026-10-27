@@ -1,5 +1,5 @@
 import * as logger from 'firebase-functions/logger';
-import * as catApi from './api/cat-api';
+import * as catApi from './ingestion';
 import { completePhotoForDay } from './storage/day-storage';
 import { isPhotoIdUsed } from './storage/photo-id-storage';
 import { getConfig, unsplashClientId, updateConfig } from './platform';

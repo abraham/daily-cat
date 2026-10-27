@@ -4,7 +4,13 @@ import * as path from 'path';
 import { Timestamp } from 'firebase-admin/firestore';
 
 // Load the actual photo.json fixture
-const photoFixturePath = path.join(__dirname, '..', 'fixtures', 'photo.json');
+const photoFixturePath = path.join(
+  __dirname,
+  '..',
+  'ingestion',
+  'fixtures',
+  'photo.json'
+);
 const mockApiResponse = JSON.parse(fs.readFileSync(photoFixturePath, 'utf8'));
 
 // Mock Firebase Admin

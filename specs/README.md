@@ -81,9 +81,8 @@ flowchart LR
 
 | Path                                                                                                            | Slice                                                      |
 | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| `functions/src/api/`                                                                                            | Photo ingestion                                            |
+| `functions/src/ingestion/`                                                                                      | Photo ingestion                                            |
 | `functions/src/photo-processor.ts`                                                                              | Day assignment                                             |
-| `functions/src/tasks/import-photos-task.ts`                                                                     | Photo ingestion                                            |
 | `functions/src/tasks/find-photo-for-day-task.ts`, `process-available-photos-task.ts`, `record-photo-id-task.ts` | Day assignment                                             |
 | `functions/src/tasks/render-cat-task.ts`, `sitemap-task.ts`                                                     | Day page                                                   |
 | `functions/src/template.ts`, `navigation.ts`, `svg.ts`                                                          | Day page                                                   |

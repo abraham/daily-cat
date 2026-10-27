@@ -5,7 +5,13 @@ import { DayRecord } from '../types/day';
 import { Timestamp } from 'firebase-admin/firestore';
 
 // Load the photo fixture for testing
-const photoFixturePath = path.join(__dirname, '..', 'fixtures', 'photo.json');
+const photoFixturePath = path.join(
+  __dirname,
+  '..',
+  'ingestion',
+  'fixtures',
+  'photo.json'
+);
 const mockPhoto = JSON.parse(fs.readFileSync(photoFixturePath, 'utf8'));
 
 // Mock Firebase Admin

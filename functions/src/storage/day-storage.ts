@@ -5,7 +5,7 @@ import {
   QueryDocumentSnapshot,
 } from 'firebase-admin/firestore';
 import { CompletedDayRecord, DayRecord, NewDayRecord } from '../types/day';
-import { UnsplashPhoto } from '../types/unsplash';
+import { UnsplashPhoto } from '../ingestion';
 import { Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions';
 import { getApp } from '../platform';
