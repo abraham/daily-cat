@@ -8,13 +8,13 @@ Opt-in daily web push. A visitor turns notifications on, and from then on gets o
 
 ## Entry points
 
-| Entry                        | Trigger                                                             | Code                                                                            |
-| ---------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `initNotifications(app)`     | Every page load, from [src/index.ts](../src/index.ts)               | [src/notifications.ts](../src/notifications.ts)                                 |
-| `#notifications-button`      | A click on the button                                               | [src/notifications.ts](../src/notifications.ts)                                 |
-| Messaging service worker     | Push events while no page is in the foreground                      | [src/firebase-messaging-sw.ts](../src/firebase-messaging-sw.ts)                 |
-| `topics`                     | HTTPS `POST` or `DELETE /topics?token=<fcm>`, via a Hosting rewrite | [topics-task.ts](../functions/src/tasks/topics-task.ts)                         |
-| `sendNotificationsScheduled` | Cloud Scheduler, `15 * * * *`, UTC                                  | [send-notifications-task.ts](../functions/src/tasks/send-notifications-task.ts) |
+| Entry                        | Trigger                                                             | Code                                                                                    |
+| ---------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `initNotifications(app)`     | Every page load, from [src/index.ts](../src/index.ts)               | [src/notifications.ts](../src/notifications.ts)                                         |
+| `#notifications-button`      | A click on the button                                               | [src/notifications.ts](../src/notifications.ts)                                         |
+| Messaging service worker     | Push events while no page is in the foreground                      | [src/firebase-messaging-sw.ts](../src/firebase-messaging-sw.ts)                         |
+| `topics`                     | HTTPS `POST` or `DELETE /topics?token=<fcm>`, via a Hosting rewrite | [topics-task.ts](../functions/src/notifications/topics-task.ts)                         |
+| `sendNotificationsScheduled` | Cloud Scheduler, `15 * * * *`, UTC                                  | [send-notifications-task.ts](../functions/src/notifications/send-notifications-task.ts) |
 
 ## Data
 
@@ -63,7 +63,7 @@ Toasts are shown with [src/toast.ts](../src/toast.ts) `showToast(message, type =
 
 ## Server behavior
 
-**`topics`** ([topics-task.ts](../functions/src/tasks/topics-task.ts)):
+**`topics`** ([topics-task.ts](../functions/src/notifications/topics-task.ts)):
 
 - The `token` query parameter is required and must be at least 10 characters. Otherwise the response is 400.
 - **POST**:
@@ -76,7 +76,7 @@ Toasts are shown with [src/toast.ts](../src/toast.ts) `showToast(message, type =
   3. Deletes the document and responds `200 { success, message, unsubscribedTopics }`.
 - Other methods get 405. Unexpected errors get 500.
 
-**`sendNotificationsScheduled`** ([send-notifications-task.ts](../functions/src/tasks/send-notifications-task.ts)): at 15 minutes past each hour, it sends one FCM message to `/topics/hour-HH` for the current UTC hour.
+**`sendNotificationsScheduled`** ([send-notifications-task.ts](../functions/src/notifications/send-notifications-task.ts)): at 15 minutes past each hour, it sends one FCM message to `/topics/hour-HH` for the current UTC hour.
 
 - Title: `Daily Cat`
 - Body: `Today's cat is ready to pounce!`
@@ -117,10 +117,12 @@ sequenceDiagram
 
 ## Code and tests
 
+The server side is in [functions/src/notifications/](../functions/src/notifications/). Its [index.ts](../functions/src/notifications/index.ts) exports only the `topics` and `sendNotificationsScheduled` functions.
+
 - [src/notifications.ts](../src/notifications.ts), [src/notifications.test.ts](../src/notifications.test.ts)
 - [src/firebase-messaging-sw.ts](../src/firebase-messaging-sw.ts), [src/firebase-messaging-sw.test.ts](../src/firebase-messaging-sw.test.ts)
 - [src/toast.ts](../src/toast.ts), [src/toast.test.ts](../src/toast.test.ts)
-- [topics-task.ts](../functions/src/tasks/topics-task.ts), [topics-task.test.ts](../functions/src/tasks/topics-task.test.ts)
-- [send-notifications-task.ts](../functions/src/tasks/send-notifications-task.ts), [send-notifications-task.test.ts](../functions/src/tasks/send-notifications-task.test.ts)
-- [token-storage.ts](../functions/src/storage/token-storage.ts), [token-storage.test.ts](../functions/src/storage/token-storage.test.ts)
-- Types: [token.ts](../functions/src/types/token.ts)
+- [topics-task.ts](../functions/src/notifications/topics-task.ts), [topics-task.test.ts](../functions/src/notifications/topics-task.test.ts)
+- [send-notifications-task.ts](../functions/src/notifications/send-notifications-task.ts), [send-notifications-task.test.ts](../functions/src/notifications/send-notifications-task.test.ts)
+- [token-storage.ts](../functions/src/notifications/token-storage.ts), [token-storage.test.ts](../functions/src/notifications/token-storage.test.ts)
+- Types: [token.ts](../functions/src/notifications/token.ts)

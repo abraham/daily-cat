@@ -4,7 +4,7 @@ import {
   saveTokenDocument,
   deleteTokenDocument,
 } from './token-storage';
-import { Token } from '../types/token';
+import { Token } from './token';
 import { Timestamp } from 'firebase-admin/firestore';
 
 // Mock Firebase Admin

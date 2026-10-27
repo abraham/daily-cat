@@ -114,6 +114,7 @@ Emulator ports:
 | Functions | `npm test --prefix functions` | Vitest, Node                                                       | `functions/src/**/*.test.ts` |
 
 - Tests mock `firebase-functions`, `firebase-admin`, `fetch`, and sibling modules. They don't run against the emulators.
+- [boundaries.test.ts](../functions/src/boundaries.test.ts) fails when non-test code in one slice folder imports another slice other than through its `index.ts`. Tests and the root `index.ts` are exempt.
 - Unsplash responses come from [functions/src/ingestion/fixtures/](../functions/src/ingestion/fixtures/).
 
 ## CI/CD
@@ -130,6 +131,5 @@ Emulator ports:
 
 ## Known issues
 
-1. **[functions/README.md](../functions/README.md) is out of date.** It describes an older layout (`src/cat-api.ts`, `src/types.ts`, `test/`) and an environment variable instead of a secret. It also lists scripts that don't exist: `build:watch`, `serve`, `deploy`, `format`.
-2. **Node version requirements don't agree.** The root `engines.node` is `>=18`, the functions package pins `22`, and CI tests 22 and 24.
-3. **`config/config` has no schema check or defaults.** A missing field causes failures at runtime, for example `Number(undefined)` for `lastPage`.
+1. **Node version requirements don't agree.** The root `engines.node` is `>=18`, the functions package pins `22`, and CI tests 22 and 24.
+2. **`config/config` has no schema check or defaults.** A missing field causes failures at runtime, for example `Number(undefined)` for `lastPage`.

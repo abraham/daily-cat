@@ -1,6 +1,6 @@
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import { getApp } from '../platform';
-import { Token } from '../types/token';
+import { Token } from './token';
 
 const db: Firestore = getFirestore(getApp());
 
