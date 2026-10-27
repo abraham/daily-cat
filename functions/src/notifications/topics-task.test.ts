@@ -19,7 +19,7 @@ vi.mock('firebase-admin/messaging', () => ({
 }));
 
 // Mock storage functions
-vi.mock('../storage/token-storage', () => ({
+vi.mock('./token-storage', () => ({
   getTokenDocument: vi.fn(),
   saveTokenDocument: vi.fn(),
   deleteTokenDocument: vi.fn(),
@@ -86,7 +86,7 @@ describe('topics task', () => {
 
   it('should handle POST request for subscription', async () => {
     const { getTokenDocument, saveTokenDocument } =
-      await import('../storage/token-storage.js');
+      await import('./token-storage.js');
 
     const mockGetTokenDocument = getTokenDocument as any;
     const mockSaveTokenDocument = saveTokenDocument as any;
@@ -117,7 +117,7 @@ describe('topics task', () => {
 
   it('should handle subscription failure when subscribeToTopic fails', async () => {
     const { getTokenDocument, saveTokenDocument } =
-      await import('../storage/token-storage.js');
+      await import('./token-storage.js');
 
     const mockGetTokenDocument = getTokenDocument as any;
     const mockSaveTokenDocument = saveTokenDocument as any;
@@ -149,7 +149,7 @@ describe('topics task', () => {
     mockRequest.method = 'DELETE';
 
     const { getTokenDocument, deleteTokenDocument } =
-      await import('../storage/token-storage.js');
+      await import('./token-storage.js');
 
     const mockGetTokenDocument = getTokenDocument as any;
     const mockDeleteTokenDocument = deleteTokenDocument as any;
@@ -188,7 +188,7 @@ describe('topics task', () => {
   it('should return 404 for DELETE request when token is not found', async () => {
     mockRequest.method = 'DELETE';
 
-    const { getTokenDocument } = await import('../storage/token-storage.js');
+    const { getTokenDocument } = await import('./token-storage.js');
     const mockGetTokenDocument = getTokenDocument as any;
 
     mockGetTokenDocument.mockResolvedValue(null);

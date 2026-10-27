@@ -5,8 +5,8 @@ import {
   getTokenDocument,
   saveTokenDocument,
   deleteTokenDocument,
-} from '../storage/token-storage';
-import { Token } from '../types/token';
+} from './token-storage';
+import { Token } from './token';
 import { Timestamp } from 'firebase-admin/firestore';
 
 /**

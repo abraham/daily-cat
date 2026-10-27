@@ -79,17 +79,16 @@ flowchart LR
 
 ## Repository map
 
-| Path                                                                    | Slice                                                      |
-| ----------------------------------------------------------------------- | ---------------------------------------------------------- |
-| `functions/src/ingestion/`                                              | Photo ingestion                                            |
-| `functions/src/assignment/`                                             | Day assignment                                             |
-| `functions/src/day-page/`                                               | Day page                                                   |
-| `functions/src/tasks/topics-task.ts`, `send-notifications-task.ts`      | Notifications                                              |
-| `functions/src/storage/`                                                | One module per collection, owned by the slice listed above |
-| `functions/src/platform/`                                               | Platform                                                   |
-| `src/`                                                                  | Notifications (client side)                                |
-| `assets/`                                                               | Day page (static files)                                    |
-| `firebase.json`, `firestore.*`, `rollup.config.js`, `seed/`, `.github/` | Platform                                                   |
+| Path                                                                    | Slice                       |
+| ----------------------------------------------------------------------- | --------------------------- |
+| `functions/src/ingestion/`                                              | Photo ingestion             |
+| `functions/src/assignment/`                                             | Day assignment              |
+| `functions/src/day-page/`                                               | Day page                    |
+| `functions/src/notifications/`                                          | Notifications (server side) |
+| `functions/src/platform/`                                               | Platform                    |
+| `src/`                                                                  | Notifications (client side) |
+| `assets/`                                                               | Day page (static files)     |
+| `firebase.json`, `firestore.*`, `rollup.config.js`, `seed/`, `.github/` | Platform                    |
 
 ## Milestones
 
@@ -149,7 +148,7 @@ Rules for every milestone:
 1. Move `topics-task.ts`, `send-notifications-task.ts`, `token-storage.ts`, and `types/token.ts` to `notifications/`.
 2. Delete the empty `api/`, `storage/`, `tasks/`, and `types/` folders.
 3. Add a test that fails when a file imports from another slice's folder other than through its `index.ts`.
-4. Rewrite [functions/README.md](../functions/README.md) for the new layout. This closes Platform known issue 1.
+4. Rewrite [functions/README.md](../functions/README.md) for the new layout. It described an older layout, an environment variable instead of the secret, and scripts that don't exist.
 
 ### 7. Tighten cross-slice contracts
 
