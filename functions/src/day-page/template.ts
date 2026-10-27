@@ -51,7 +51,10 @@ function renderTags(tags: Array<{ type: string; title: string }>) {
 
 function renderPrevArrow(showPrevArrow: boolean, prevDateUrl: string) {
   return showPrevArrow
-    ? html`<a href="${prevDateUrl}" class="nav-arrow left" title="Previous"
+    ? html`<a
+        href="${prevDateUrl}"
+        class="icon-button nav-arrow left"
+        title="Previous"
         >${backIcon()}</a
       >`
     : '';
@@ -59,7 +62,10 @@ function renderPrevArrow(showPrevArrow: boolean, prevDateUrl: string) {
 
 function renderNextArrow(showNextArrow: boolean, nextDateUrl: string) {
   return showNextArrow
-    ? html`<a href="${nextDateUrl}" class="nav-arrow right" title="Next"
+    ? html`<a
+        href="${nextDateUrl}"
+        class="icon-button nav-arrow right"
+        title="Next"
         >${nextIcon()}</a
       >`
     : '';
@@ -76,7 +82,7 @@ function renderHeader(data: TemplateData): TemplateResult {
       <div class="header-controls">
         <button
           id="notifications-button"
-          class="notifications-button hidden"
+          class="icon-button notifications-button hidden"
           title="Toggle notifications"
           type="button"
         >
@@ -85,7 +91,7 @@ function renderHeader(data: TemplateData): TemplateResult {
         </button>
         <button
           id="share-button"
-          class="share-button hidden"
+          class="icon-button share-button hidden"
           title="Share this page"
           type="button"
         >
@@ -100,7 +106,7 @@ function renderUserProfile(data: TemplateData): TemplateResult {
   return html`
     <div class="user-profile">
       <div class="user-row">
-        <div style="display: flex; align-items: center; gap: 12px">
+        <div class="user-summary">
           <img src="${data.userProfileImage}" alt="User profile" />
           <div class="user-info">
             <div class="user-name">${data.userName}</div>
@@ -131,6 +137,7 @@ function renderPhoto(data: TemplateData): TemplateResult {
           class="cat-image"
           src="${data.imageUrl}"
           alt="${data.altDescription}"
+          draggable="false"
         />
       </a>
     </div>
@@ -169,12 +176,8 @@ function renderBody(
   return html`
     <body>
       <div id="toast" class="toast"></div>
-      <div class="container">
-        <div class="left-column"></div>
-        <div class="center-column">
-          ${renderHeader(data)} ${children} ${renderFooter()}
-        </div>
-        <div class="right-column"></div>
+      <div class="page">
+        ${renderHeader(data)} ${children} ${renderFooter()}
       </div>
       <script>
         // Check if Web Share API is supported and show share button

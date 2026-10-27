@@ -178,7 +178,9 @@ describe('Template', () => {
 
       // Check that notification button is included
       expect(htmlString).toContain('id="notifications-button"');
-      expect(htmlString).toContain('class="notifications-button hidden"');
+      expect(htmlString).toContain(
+        'class="icon-button notifications-button hidden"'
+      );
       expect(htmlString).toContain('title="Toggle notifications"');
       expect(htmlString).toContain('type="button"');
     });
@@ -245,9 +247,18 @@ describe('Template', () => {
       const htmlString = toHtml(renderPhotoPage(mockData));
 
       expect(htmlString).toContain('id="toast" class="toast"');
-      expect(htmlString).toContain('class="share-button hidden"');
+      expect(htmlString).toContain('class="icon-button share-button hidden"');
       expect(htmlString).toContain('class="notifications-on hidden"');
       expect(htmlString).toContain('class="notifications-off"');
+    });
+
+    it('should render one page wrapper with no inline styles', () => {
+      const htmlString = toHtml(renderPhotoPage(mockData));
+
+      expect(htmlString).toContain('<div class="page">');
+      expect(htmlString).not.toContain('left-column');
+      expect(htmlString).not.toContain('style=');
+      expect(htmlString).toMatch(/class="cat-image"[^>]*draggable="false"/);
     });
 
     it('should position notification button between title and share button', () => {
@@ -270,8 +281,8 @@ describe('Template', () => {
     });
 
     it('should render the previous arrow only when it is shown', () => {
-      expect(toHtml(renderPhotoPage(mockData))).toContain(
-        'href="/2025-06-27" class="nav-arrow left"'
+      expect(toHtml(renderPhotoPage(mockData))).toMatch(
+        /href="\/2025-06-27"\s+class="icon-button nav-arrow left"/
       );
 
       const onMinDate = toHtml(

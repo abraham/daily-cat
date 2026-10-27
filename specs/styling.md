@@ -1,6 +1,6 @@
 # Styling and dark theme
 
-Part of the [architecture overview](README.md). Status: milestone T1 is **done**; T2 to T5 are **proposed**.
+Part of the [architecture overview](README.md). Status: milestones T1 and T2 are **done**; T3 to T5 are **proposed**.
 
 ## Purpose
 
@@ -24,14 +24,15 @@ Non-goals:
 
 ## Current state
 
-- Since T1, all day-page CSS lives in [assets/styles.css](../assets/styles.css), which every day page links from `<head>`. Its rules are exactly the ones that were inlined before, so everything below still describes them. `404.html` doesn't use it yet.
+- Since T1, all day-page CSS lives in [assets/styles.css](../assets/styles.css), which every day page links from `<head>`. `404.html` doesn't use it yet.
 - Before T1, about 550 lines of CSS sat inside the `renderPage()` template literal in [template.ts](../functions/src/day-page/template.ts) and were re-sent with almost every request. The processing page also emitted a second `<style>` block inside `<body>` for the spinner.
+- Since T2, the stylesheet is organized by section and mobile-first, with one `@media (min-width: 1025px)` block and no `!important`. The header, footer, and profile are solid white, the icon buttons share `.icon-button`, and the dead code is gone. It went from 625 to 458 lines. The bullets below that describe the old structure are kept for the record and marked as fixed.
 - [svg.ts](../functions/src/day-page/svg.ts) hard-codes icon fills (`#333` and `#1f1f1f`). The buttons change `color` on hover, but the icons don't follow.
 - There are 11 hard-coded colors and no custom properties. `#666` appears 9 times and `#333` 7 times.
-- There are 23 separate `@media (max-width: 1024px)` blocks, written desktop-first. One `!important` exists only to win against a rule that comes later in the file.
-- `.nav-arrow`, `.share-button`, and `.notifications-button` repeat about 15 declarations each. The arrows and share button are given `position: absolute`, then reset to `static`.
-- The header, profile, and footer use a translucent white background with `backdrop-filter: blur(10px)`, but nothing ever scrolls behind them.
-- Dead code: the `.footer .separator` rule, `calendarIcon()`, `scroll-behavior: smooth` (no anchor links), and vendor prefixes such as `-khtml-user-drag`.
+- Fixed in T2: there were 23 separate `@media (max-width: 1024px)` blocks, written desktop-first, and one `!important` that only existed to win against a rule later in the file.
+- Fixed in T2: `.nav-arrow`, `.share-button`, and `.notifications-button` repeated about 15 declarations each, and the arrows and share button were given `position: absolute`, then reset to `static`.
+- Fixed in T2: the header, profile, and footer used a translucent white background with `backdrop-filter: blur(10px)`, though nothing ever scrolls behind them. The toast keeps its blur, because it floats over the page.
+- Fixed in T2: dead code, namely the `.footer .separator` rule, `calendarIcon()`, `scroll-behavior: smooth`, and vendor prefixes such as `-khtml-user-drag`.
 - The toast types `info`, `success`, and `error` have no styles, so they look the same. `.toast.show` sets the same `transform` as `.toast`, so only opacity animates.
 - Accessibility:
   - `user-scalable=no` blocks pinch zoom, which fails WCAG 1.4.4.
@@ -108,14 +109,14 @@ The light `--link` (today's `#007acc`) passes with no margin, at 4.51:1. Any cha
 
 ### Layout and components
 
-- **Page:** `.page` replaces the three-column container. It is a single column with `max-width: 1024px; margin-inline: auto` and `min-height: 100vh; min-height: 100dvh`. The empty `.left-column` and `.right-column` elements go away.
-- **Header:** a grid with `grid-template-columns: 1fr auto 1fr`. The arrows sit in the left cell, the title in the middle, and the notifications and share buttons in the right cell. Nothing is absolutely positioned, so the title can't overlap the controls on narrow screens.
+- **Page:** `.page` replaces the three-column container. It is a single column with `max-width: 1024px; margin-inline: auto` and `height: 100vh; height: 100dvh`. It has to be a fixed `height`, not `min-height`: the photo area is a flex child that fills the remaining space and clips the photo to the viewport. The empty `.left-column` and `.right-column` elements go away.
+- **Header:** a grid with `grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr)`. The arrows sit in the left cell, the title in the middle, and the notifications and share buttons in the right cell. Nothing is absolutely positioned, so the title can't overlap the controls on narrow screens. The two button groups have `height: 0`, and their 44–48 px buttons overflow the row, centered. This keeps the header's height set by the title, as it was before.
 - **`.icon-button`:** one class for the previous and next arrows, the notifications button, and the share button. It sets the 44 px circle (48 px on small screens), centering, hover and active colors, and the pressed scale. `.nav-arrow`, `.share-button`, and `.notifications-button` keep only what is specific to them. The JavaScript keeps using the existing IDs and classes.
 - **Surfaces:** the header, profile, and footer use solid `--surface` with no `backdrop-filter`.
 - **User profile:** the inline `style` attribute becomes a `.user-summary` class.
 - **Photo:** the image gets `draggable="false"` and keeps `user-select: none`. The old drag prefixes go away.
 - **Toast:** `success` and `error` get a 4 px left border in `--success` or `--error`, and `info` has none. The hidden state is `translate(-50%, -8px)` and the shown state is `translate(-50%, 0)`, so it slides in. The transition lists `opacity`, `transform`, and `visibility` instead of `all`.
-- **Breakpoints:** mobile-first. Base rules are the current small-screen values, and one `@media (min-width: 1025px)` section holds the larger values. This keeps today's 1024 px switch point and removes the `!important`. Font sizes that differ by 1–2 px between the two use `clamp()` instead.
+- **Breakpoints:** mobile-first. Base rules are the current small-screen values, and one `@media (min-width: 1025px)` section holds the larger values. This keeps today's 1024 px switch point and removes the `!important`. Font sizes that differ by 1–2 px between the two could later use `clamp()`, but that changes sizes between the breakpoints, so it isn't part of T2.
 
 ### Accessibility
 
@@ -158,7 +159,7 @@ Each one is a separate PR with `npm run build`, `npm test`, and `npm test --pref
 
 No visual change. A whitespace-insensitive comparison confirmed the stylesheet holds exactly the old rules, in the old order.
 
-### T2. Clean up
+### T2. Clean up (done)
 
 1. Remove the dead code: `.footer .separator`, `calendarIcon()`, `scroll-behavior`, the old vendor prefixes, and the `position: absolute` rules that are reset later.
 2. Add `.icon-button`, the grid header, `.page`, and `.user-summary`. Remove the empty column elements.
@@ -166,6 +167,15 @@ No visual change. A whitespace-insensitive comparison confirmed the stylesheet h
 4. Replace the translucent surfaces and `backdrop-filter` with solid colors.
 
 No intended visual change. The surfaces become fully opaque, which only matters where something could show through, and nothing does.
+
+What the rewrite had to preserve, because the old rules overrode each other:
+
+- On small screens the header's padding is really 15 px on all sides, not the 10 px in its media query, because the safe-area block later in the file overrode it.
+- The footer's padding is 10 px top, 15 px bottom, and 20 px on the sides at every width, for the same reason.
+- The notifications button keeps its `font-size` (18 px, or 20 px on desktop), because the icon spans inside it are positioned by their line height.
+- The image keeps `-webkit-user-drag` behavior through `draggable="false"` on the element.
+
+How it was checked: a script rendered the photo and processing pages from T1 and T2 with the same data, in headless Chromium at widths 375, 768, 1024, 1025, 1100, 1280, and 1281 px. It compared the position and size of every key element, the hover colors, and full-page screenshots. The photo page matched pixel for pixel at every width. The processing page matched except for 24 pixels of anti-aliasing in the title text, at widths where the 1024 px column is centered on a half pixel (1025, 1027, 1281). The title's position is identical to 1/64 px in both versions; the difference comes from the new markup, not the CSS.
 
 ### T3. Tokens
 
