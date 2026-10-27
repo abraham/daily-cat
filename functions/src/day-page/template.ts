@@ -17,7 +17,7 @@ export interface PageMeta {
   imageAlt: string;
 }
 
-interface TemplateData {
+export interface TemplateData {
   meta: PageMeta;
   linkUrl: string;
   imageUrl: string;
