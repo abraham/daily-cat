@@ -315,6 +315,7 @@ button:focus-visible {
   justify-content: center;
   padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
   overflow: hidden;
+  container-type: size;
 }
 
 .photo-container a {
@@ -327,7 +328,8 @@ button:focus-visible {
 
 .cat-image {
   max-width: 100%;
-  max-height: 100%;
+  /* The link's height is auto, so 100% would not limit tall photos. */
+  max-height: 100cqh;
   margin: 0 8px;
   object-fit: contain;
   border-radius: 8px;
