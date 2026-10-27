@@ -8,6 +8,26 @@ import { createNewDayRecord, getPhotoForDate } from '../assignment';
 import { renderPhotoPage, renderProcessingPage } from './template';
 
 const DEFAULT_DESCRIPTION = 'Your daily dose of adorable cat photos';
+const HOUR = 60 * 60;
+const DAY = 24 * HOUR;
+const PROCESSING_CACHE_CONTROL = 'public, max-age=1, s-maxage=1';
+
+/**
+ * A finished past day only changes when the site is redeployed. Today's page
+ * changes at the next UTC midnight: `/` moves on and the next-day arrow appears.
+ */
+export function photoPageCacheControl(date: string, now: Date): string {
+  if (date < now.toISOString().split('T')[0]) {
+    return `public, max-age=${HOUR}, s-maxage=${DAY}`;
+  }
+  const nextMidnight = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate() + 1
+  );
+  const untilMidnight = Math.floor((nextMidnight - now.getTime()) / 1000);
+  return `public, max-age=${Math.min(HOUR, untilMidnight)}, s-maxage=${untilMidnight}`;
+}
 
 function formatDate(date: string): string {
   return new Date(`${date}T00:00:00.000Z`).toLocaleDateString('en-US', {
@@ -27,6 +47,7 @@ export const cat = onRequest(async (request, response) => {
   }
 
   try {
+    const now = new Date();
     const config = await getConfig();
     // Extract date from URL path
     const path = request.url.split('?')[0]; // Remove query params
@@ -34,7 +55,7 @@ export const cat = onRequest(async (request, response) => {
 
     if (path === '/') {
       // Root path - use current date
-      requestedDate = new Date().toISOString().split('T')[0];
+      requestedDate = now.toISOString().split('T')[0];
     } else {
       // Extract date from path (format: /yyyy-mm-dd)
       const dateMatch = path.match(/^\/(\d{4}-\d{2}-\d{2})$/);
@@ -65,7 +86,7 @@ export const cat = onRequest(async (request, response) => {
       }
 
       // Check if the requested date is in the future
-      const currentDate = new Date().toISOString().split('T')[0];
+      const currentDate = now.toISOString().split('T')[0];
       if (requestedDate > currentDate) {
         response.status(404).send('Future dates are not available.');
         return;
@@ -83,6 +104,7 @@ export const cat = onRequest(async (request, response) => {
     const title = `Daily Cat: ${formatDate(requestedDate)}`;
 
     let templateResult: TemplateResult;
+    let cacheControl: string;
 
     if (dayRecord && dayRecord.status === 'completed') {
       // Use existing photo for completed records
@@ -119,6 +141,7 @@ export const cat = onRequest(async (request, response) => {
         nextDateUrl,
         showNextArrow,
       });
+      cacheControl = photoPageCacheControl(requestedDate, now);
     } else {
       logger.log('No completed record found for date:', requestedDate);
 
@@ -151,6 +174,7 @@ export const cat = onRequest(async (request, response) => {
         nextDateUrl,
         showNextArrow,
       });
+      cacheControl = PROCESSING_CACHE_CONTROL;
     }
 
     // Convert lit-html template result to string
@@ -160,7 +184,7 @@ export const cat = onRequest(async (request, response) => {
       html += chunk;
     }
 
-    response.set('Cache-Control', 'public, max-age=1, s-maxage=1');
+    response.set('Cache-Control', cacheControl);
     response.status(200);
     response.send(html);
   } catch (error) {

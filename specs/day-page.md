@@ -91,10 +91,14 @@ Non-GET requests get 405. Errors get 500.
 
 ## Caching
 
-| Response  | `Cache-Control`                 | Why                                                      |
-| --------- | ------------------------------- | -------------------------------------------------------- |
-| Day pages | `public, max-age=1, s-maxage=1` | So a page shows its photo as soon as processing finishes |
-| Sitemap   | `public, max-age=3600`          |                                                          |
+| Response                            | `Cache-Control`                                                                          | Why                                                                                                                     |
+| ----------------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Photo page for a past day           | `public, max-age=3600, s-maxage=86400`                                                   | The page only changes on a redeploy or a `minDate` change. Browsers match the 1-hour cache Hosting gives `/styles.css`. |
+| Photo page for today, including `/` | `s-maxage` = seconds until the next UTC midnight, `max-age` = the same, capped at 1 hour | At midnight `/` shows the next day, and today's page gains its next-day arrow                                           |
+| Processing page                     | `public, max-age=1, s-maxage=1`                                                          | So a page shows its photo as soon as processing finishes                                                                |
+| Sitemap                             | `public, max-age=3600`                                                                   |                                                                                                                         |
+
+`photoPageCacheControl(date, now)` in [render-cat-task.ts](../functions/src/day-page/render-cat-task.ts) picks the photo page values. The handler reads the clock once per request, so the date check, `/`, and the cache time agree.
 
 ## Invariants and contracts
 
