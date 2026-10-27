@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { DayRecord } from '../types/day';
+import { DayRecord } from './day';
 import { Timestamp } from 'firebase-admin/firestore';
 
 // Load the photo fixture for testing
@@ -54,14 +54,14 @@ vi.mock('firebase-admin/firestore', async () => {
 
 // Mock the storage modules
 const mockSetDayRecordProcessing = vi.fn();
-vi.mock('../storage/day-storage', () => ({
+vi.mock('./day-storage', () => ({
   setDayRecordProcessing: mockSetDayRecordProcessing,
 }));
 
 // Mock the photo processor
 const mockProcessPhotoForDay = vi.fn();
 const mockUnsplashClientId = 'mock-unsplash-client-id';
-vi.mock('../photo-processor', () => ({
+vi.mock('./photo-processor', () => ({
   processPhotoForDay: mockProcessPhotoForDay,
 }));
 vi.mock('../platform/secrets', () => ({

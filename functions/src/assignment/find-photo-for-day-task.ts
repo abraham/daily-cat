@@ -1,9 +1,9 @@
 import * as logger from 'firebase-functions/logger';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
-import { DayRecord } from '../types/day';
-import { processPhotoForDay } from '../photo-processor';
+import { DayRecord } from './day';
+import { processPhotoForDay } from './photo-processor';
 import { unsplashClientId } from '../platform';
-import { setDayRecordProcessing } from '../storage/day-storage';
+import { setDayRecordProcessing } from './day-storage';
 
 /**
  * Firebase Function that triggers when a new document is created in the 'days' collection.

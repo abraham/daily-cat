@@ -79,19 +79,18 @@ flowchart LR
 
 ## Repository map
 
-| Path                                                                                                            | Slice                                                      |
-| --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| `functions/src/ingestion/`                                                                                      | Photo ingestion                                            |
-| `functions/src/photo-processor.ts`                                                                              | Day assignment                                             |
-| `functions/src/tasks/find-photo-for-day-task.ts`, `process-available-photos-task.ts`, `record-photo-id-task.ts` | Day assignment                                             |
-| `functions/src/tasks/render-cat-task.ts`, `sitemap-task.ts`                                                     | Day page                                                   |
-| `functions/src/template.ts`, `navigation.ts`, `svg.ts`                                                          | Day page                                                   |
-| `functions/src/tasks/topics-task.ts`, `send-notifications-task.ts`                                              | Notifications                                              |
-| `functions/src/storage/`                                                                                        | One module per collection, owned by the slice listed above |
-| `functions/src/platform/`                                                                                       | Platform                                                   |
-| `src/`                                                                                                          | Notifications (client side)                                |
-| `assets/`                                                                                                       | Day page (static files)                                    |
-| `firebase.json`, `firestore.*`, `rollup.config.js`, `seed/`, `.github/`                                         | Platform                                                   |
+| Path                                                                    | Slice                                                      |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `functions/src/ingestion/`                                              | Photo ingestion                                            |
+| `functions/src/assignment/`                                             | Day assignment                                             |
+| `functions/src/tasks/render-cat-task.ts`, `sitemap-task.ts`             | Day page                                                   |
+| `functions/src/template.ts`, `navigation.ts`, `svg.ts`                  | Day page                                                   |
+| `functions/src/tasks/topics-task.ts`, `send-notifications-task.ts`      | Notifications                                              |
+| `functions/src/storage/`                                                | One module per collection, owned by the slice listed above |
+| `functions/src/platform/`                                               | Platform                                                   |
+| `src/`                                                                  | Notifications (client side)                                |
+| `assets/`                                                               | Day page (static files)                                    |
+| `firebase.json`, `firestore.*`, `rollup.config.js`, `seed/`, `.github/` | Platform                                                   |
 
 ## Milestones
 

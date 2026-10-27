@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { DayRecord } from '../types/day';
+import { DayRecord } from './day';
 import { Timestamp } from 'firebase-admin/firestore';
 
 // Load the photo fixture for testing
@@ -57,7 +57,7 @@ vi.mock('firebase-admin/firestore', () => ({
 
 // Mock the photo-id-storage module
 const mockStorePhotoId = vi.fn();
-vi.mock('../storage/photo-id-storage', () => ({
+vi.mock('./photo-id-storage', () => ({
   storePhotoId: mockStorePhotoId,
 }));
 

@@ -2,7 +2,7 @@ import * as logger from 'firebase-functions/logger';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { list } from './cat-api';
 import { getConfig, unsplashClientId, updateConfig } from '../platform';
-import { isPhotoIdUsed } from '../storage/photo-id-storage';
+import { isPhotoIdUsed } from '../assignment';
 import { storeMultipleAvailablePhotoIds } from './available-photo-ids-storage';
 
 /**

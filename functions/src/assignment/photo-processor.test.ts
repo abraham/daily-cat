@@ -1,17 +1,19 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { UnsplashPhoto, UnsplashRandomPhoto } from './ingestion';
+import { UnsplashPhoto, UnsplashRandomPhoto } from '../ingestion';
 
 // Load fixtures for testing
 const photoFixturePath = path.join(
   __dirname,
+  '..',
   'ingestion',
   'fixtures',
   'photo.json'
 );
 const randomFixturePath = path.join(
   __dirname,
+  '..',
   'ingestion',
   'fixtures',
   'random.json'
@@ -44,7 +46,7 @@ const mockDayStorage = {
   completePhotoForDay: vi.fn(),
 };
 
-vi.mock('../src/storage/day-storage', () => mockDayStorage);
+vi.mock('./day-storage', () => mockDayStorage);
 
 // Mock config storage module
 const mockConfigStorage = {
@@ -52,14 +54,14 @@ const mockConfigStorage = {
   updateConfig: vi.fn(),
 };
 
-vi.mock('./platform/config-storage', () => mockConfigStorage);
+vi.mock('../platform/config-storage', () => mockConfigStorage);
 
 // Mock photo ID storage module
 const mockPhotoIdStorage = {
   isPhotoIdUsed: vi.fn(),
 };
 
-vi.mock('../src/storage/photo-id-storage', () => mockPhotoIdStorage);
+vi.mock('./photo-id-storage', () => mockPhotoIdStorage);
 
 // Mock cat-api module
 const mockCatApi = {
@@ -67,7 +69,7 @@ const mockCatApi = {
   get: vi.fn(),
 };
 
-vi.mock('./ingestion/cat-api', () => mockCatApi);
+vi.mock('../ingestion/cat-api', () => mockCatApi);
 
 describe('Photo Processor', () => {
   let photoProcessor: any;
