@@ -1,6 +1,3 @@
-# Dependencies
-node_modules/
-
 # Generated/build files
 functions/lib/
 functions/test/compiled.test.js
