@@ -7,13 +7,13 @@ workflows:
         - 'actions/checkout@v7.0.1'
         - 'actions/setup-node@v7.1.0'
     '.github/workflows/deploy.yml':
-        - 'abraham/firebase-wif@v0.2.1'
+        - 'abraham/firebase-wif@v0.3.1'
         - 'actions/checkout@v7.0.1'
         - 'actions/setup-node@v7.1.0'
 dependencies:
-    'abraham/firebase-wif@v0.2.1':
-        ref: 'v0.2.1'
-        commit: 'sha1-e4a526efa5ff407acb4803981ce528c6e47b3e24'
+    'abraham/firebase-wif@v0.3.1':
+        ref: 'v0.3.1'
+        commit: 'sha1-c0e51ca771105835679fe13f0483267ac5030674'
         owner_id: 3341
         repo_id: 1426258812
     'actions/checkout@v7.0.1':
