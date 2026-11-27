@@ -12,7 +12,7 @@
     "firebase-tools": "^15.36.0",
     "jsdom": "^31.0.1",
     "prettier": "3.10.1",
-    "rollup": "^4.68.4",
+    "rollup": "^4.68.8",
     "rollup-plugin-copy": "^3.5.0",
     "syncpack": "^15.3.3",
     "tslib": "^2.9.1",
